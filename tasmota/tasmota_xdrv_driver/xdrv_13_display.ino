@@ -141,6 +141,12 @@ const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log
 #define D_CMND_DISP_SCROLLTEXT "ScrollText"
 #define D_CMND_DISP_REINIT "reinit"
 
+// RGB panel sync guard, recovers a shifted image (see uDisplay_RGB_panel.cpp)
+#if defined(USE_UNIVERSAL_DISPLAY) && defined(SOC_LCD_RGB_SUPPORTED)
+#define USE_DISPLAY_RGB_GUARD
+bool udisp_rgb_guard_poll(char *buf, size_t len);
+#endif
+
 enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_EVERY_50_MSECOND, FUNC_DISPLAY_EVERY_SECOND,
                      FUNC_DISPLAY_MODEL, FUNC_DISPLAY_MODE, FUNC_DISPLAY_POWER,
                      FUNC_DISPLAY_CLEAR, FUNC_DISPLAY_DRAW_FRAME,
@@ -2367,6 +2373,15 @@ void DisplayReInitDriver(void) {
   ResponseCmndDone();
 }
 
+#ifdef USE_DISPLAY_RGB_GUARD
+void DisplayRgbGuardEverySecond(void) {
+  char buf[200];
+  if (udisp_rgb_guard_poll(buf, sizeof(buf))) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: RGB resync %s"), buf);
+  }
+}
+#endif // USE_DISPLAY_RGB_GUARD
+
 /*********************************************************************************************\
  * Optional drivers
 \*********************************************************************************************/
@@ -3095,6 +3110,9 @@ bool Xdrv13(uint32_t function) {
         DisplaySetPower();
         break;
       case FUNC_EVERY_SECOND:
+#ifdef USE_DISPLAY_RGB_GUARD
+        DisplayRgbGuardEverySecond();
+#endif  // USE_DISPLAY_RGB_GUARD
 #ifdef USE_GRAPH
         DisplayCheckGraph();
 #endif  // USE_GRAPH

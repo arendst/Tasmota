@@ -27,7 +27,8 @@ All notable changes to this project will be documented in this file.
 - LVGL touch more responsive (#25172)
 - VEML7700 lux/white rounding, add new command (#25150)
 - WifiManager name the setup AP as it is turned on (#25169)
-- Berry `lv.start()` raises an error instead of crashing when the display can't start
+- Berry `lv.start()` raises an error instead of crashing when the display can't start (#25193)
+- ESP32-S3 RGB display permanent image shift after flash writes, DMA sync guard
 
 ### Removed
 
