@@ -52,4 +52,9 @@ private:
 
 };
 
+// Sync guard: true if a new DMA restart report is available since last call, formatted in buf
+bool udisp_rgb_guard_poll(char *buf, size_t len);
+// Sync guard: LVGL rendering started (true) or finished (false), non-urgent DMA restarts wait for a quiet period
+void udisp_rgb_guard_busy(bool busy);
+
 #endif //SOC_LCD_RGB_SUPPORTED

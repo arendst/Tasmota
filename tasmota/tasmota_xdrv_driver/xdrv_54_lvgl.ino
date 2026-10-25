@@ -435,6 +435,13 @@ static const int lv_tick_interval_ms = 5;
 
 static void lv_tick_handler(void) { lv_tick_inc(lv_tick_interval_ms); }
 
+// RGB PANEL SYNC GUARD ----------------------------------------------------
+
+#if defined(USE_UNIVERSAL_DISPLAY) && defined(SOC_LCD_RGB_SUPPORTED)
+// LVGL rendering started/finished: the RGB sync guard delays non-urgent DMA restarts meanwhile
+void udisp_rgb_guard_busy(bool busy);
+#endif
+
 // TOUCHSCREEN STUFF -------------------------------------------------------
 
 uint32_t Touch_Status(int32_t sel);
@@ -550,6 +557,14 @@ bool start_lvgl(const char * uconfig) {
   lv_display_set_dpi(lvgl_glue->lv_display, 160);          // set display to 160 DPI instead of default 130 DPI to avoid some rounding in styles
   lv_display_set_flush_cb(lvgl_glue->lv_display, lv_flush_callback);
   lv_display_set_buffers(lvgl_glue->lv_display, lvgl_glue->lv_pixel_buf, lvgl_glue->lv_pixel_buf2, lvgl_buffer_size * (LV_COLOR_DEPTH / 8), LV_DISPLAY_RENDER_MODE_PARTIAL);
+#if defined(USE_UNIVERSAL_DISPLAY) && defined(SOC_LCD_RGB_SUPPORTED)
+  {
+    // lambda, not a function: the .ino prototype generator would declare it before lvgl.h is included
+    lv_event_cb_t render_cb = [](lv_event_t * e) { udisp_rgb_guard_busy(lv_event_get_code(e) == LV_EVENT_RENDER_START); };
+    lv_display_add_event_cb(lvgl_glue->lv_display, render_cb, LV_EVENT_RENDER_START, NULL);
+    lv_display_add_event_cb(lvgl_glue->lv_display, render_cb, LV_EVENT_RENDER_READY, NULL);
+  }
+#endif
 
   // Initialize LvGL input device (touchscreen already started)
   lvgl_glue->lv_indev = lv_indev_create();
