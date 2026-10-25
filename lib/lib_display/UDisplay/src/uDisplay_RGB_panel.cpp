@@ -11,6 +11,7 @@
 #include "esp_cpu.h"
 #include "esp_attr.h"
 #include <string.h>
+#include "tasmota_options.h"                // UDISPLAY_RGB_xxx options from my_user_config.h / user_config_override.h
 extern void AddLog(uint32_t loglevel, const char* formatP, ...);
 
 // ======================================================

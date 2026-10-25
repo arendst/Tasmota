@@ -895,6 +895,13 @@
 // -- Universal Display Driver ---------------------------------
 // #define USE_UNIVERSAL_DISPLAY                   // New universal display driver for both I2C and SPI
     #define MAX_TOUCH_BUTTONS 16                 // Virtual touch buttons
+//  #define UDISPLAY_RGB_NO_GUARD                // RGB panel: disable the DMA sync guard that fixes the image shift after flash writes
+//  #define UDISPLAY_RGB_GUARD_IDF_RESTART       // RGB panel ESP32-S3: guard always uses the IDF DMA restart (with LCD FIFO reset)
+//  #define UDISPLAY_RGB_GUARD_EOF_READ          // RGB panel ESP32-S3: keep the IDF GDMA EOF mode (last data read from memory)
+//  #define UDISPLAY_RGB_GUARD_THR_US 6          // RGB panel guard: large shift threshold in us, detected over 4 frames
+//  #define UDISPLAY_RGB_GUARD_FINE_THR_PX 36    // RGB panel guard: smallest shift threshold in pixels, detected over 32 frames
+//  #define UDISPLAY_RGB_GUARD_FINE_THR_NS 1000  // RGB panel guard: floor of the smallest shift threshold in ns
+//  #define UDISPLAY_RGB_GUARD_DEFER_MAX_S 10    // RGB panel guard: max wait in seconds for a quiet frame buffer before a confirm restart
 
 // -- SPI sensors ---------------------------------
 //#define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
