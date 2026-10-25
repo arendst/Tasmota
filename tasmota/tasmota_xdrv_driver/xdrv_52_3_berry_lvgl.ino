@@ -111,7 +111,7 @@ public:
 };
 LVBE_globals lvbe;
 
-extern void start_lvgl(const char * uconfig);
+extern bool start_lvgl(const char * uconfig);
 extern void lv_ex_get_started_1(void);
 
 extern "C" {
@@ -496,7 +496,10 @@ extern "C" {
       if (argc == 1) {
         uconfig = be_tostring(vm, 1);
       }
-      start_lvgl(uconfig);
+      if (!start_lvgl(uconfig)) {
+        // abort here, otherwise any following lv.* call crashes with LVGL not initialized
+        be_raise(vm, "internal_error", "LVGL could not start, check display configuration (display.ini, Option A3)");
+      }
 
       // call lv.splash_remove() to kill any current splash screen
       if (be_getglobal(vm, "lv")) {

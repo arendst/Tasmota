@@ -467,18 +467,21 @@ void lvgl_touchscreen_read(lv_indev_t *indev_drv, lv_indev_data_t *data) {
  ************************************************************/
 extern Renderer *Init_uDisplay(const char *desc);
 
-void start_lvgl(const char * uconfig);
-void start_lvgl(const char * uconfig) {
+// Returns true if LVGL is running (already or newly started), false on failure
+bool start_lvgl(const char * uconfig);
+bool start_lvgl(const char * uconfig) {
 
   if (lvgl_glue != nullptr) {
     AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_LVGL "LVGL was already initialized");
-    return;
+    return true;
   }
 
   if (!renderer || uconfig) {
     renderer  = Init_uDisplay((char*)uconfig);
-    AddLog(LOG_LEVEL_ERROR, "LVG: Could not start Universal Display");
-    if (!renderer) return;
+    if (!renderer) {
+      AddLog(LOG_LEVEL_ERROR, "LVG: Could not start Universal Display");
+      return false;
+    }
   }
 
   renderer->DisplayOnff(true);
@@ -539,7 +542,7 @@ void start_lvgl(const char * uconfig) {
     delete lvgl_glue;
     lvgl_glue = nullptr;
     AddLog(LOG_LEVEL_ERROR, "LVG: Could not allocate buffers");
-    return;
+    return false;
   }
 
   // Initialize LvGL display driver
@@ -610,6 +613,7 @@ void start_lvgl(const char * uconfig) {
   }
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LVGL "LVGL initialized"));
+  return true;
 }
 
 /*********************************************************************************************\
