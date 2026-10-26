@@ -39,7 +39,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0
+          uv pip install --system pioarduino==6.2.0.post1
       - name: Run PlatformIO
         env:
           PYTHONIOENCODING: utf-8
@@ -71,7 +71,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0
+          uv pip install --system pioarduino==6.2.0.post1
       - name: Run PlatformIO
         env:
           PYTHONIOENCODING: utf-8
@@ -139,7 +139,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0
+          uv pip install --system pioarduino==6.2.0.post1
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Run PlatformIO
         env:
@@ -172,7 +172,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0
+          uv pip install --system pioarduino==6.2.0.post1
       - name: Run PlatformIO
         env:
           PYTHONIOENCODING: utf-8
