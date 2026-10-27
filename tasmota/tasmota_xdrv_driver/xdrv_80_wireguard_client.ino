@@ -32,6 +32,10 @@
 static const char WIREGUARD_CONF_FNAME[] = "/wireguard.conf";
 static const char WIREGUARD_NETMASK[] = "0.0.0.0";
 
+#ifndef WG_ENDPOINT_RECHECK_SEC
+#define WG_ENDPOINT_RECHECK_SEC   60    // while peer is down, re-resolve Endpoint every N seconds
+#endif
+
 const char kWireGuardCommands[] PROGMEM = "WG|"   // Prefix
   "Connect|Stop";
 
@@ -48,7 +52,9 @@ struct Wireguard_t {
   bool auto_connect = false;
   bool started = false;
   bool peer_up = false;
+  bool endpoint_is_ip = false;  // Endpoint is a literal IP, no need to re-resolve
   int8_t peer_status = -1;    // known state: -1 unknown, 0 DOWN, 1 UP
+  uint16_t recheck_counter = 0; // seconds since last Endpoint check / connect retry
   uint32_t connected_since_utc = 0;
   String endpoint;
   LList<allowed_ips_t> allowed_ips;
@@ -126,6 +132,8 @@ bool WireguardLoadConfig(const char *filename) {
   }
   // now parse values
   Wireguard.config.endpoint = Wireguard.endpoint.c_str();
+  IPAddress endpoint_literal;
+  Wireguard.endpoint_is_ip = endpoint_literal.fromString(Wireguard.endpoint);
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("WG : reading '%s' address:%s/%s netmask:%s endpoint:%s:%i allowed_ips_str:'%s' PersistentKeepalive:%i"),
                           filename,
@@ -230,11 +238,29 @@ void CmndWGStop(void) {
   ResponseCmndChar(PSTR("Success"));
 }
 
+// WireguardCheckEndpoint
+//
+// Re-resolve Endpoint name; if its IP changed (dynamic DNS), restart the tunnel.
+// WireGuard resolves the name only once at connect time and never tracks changes.
+void WireguardCheckEndpoint(void) {
+  if (Wireguard.endpoint_is_ip) { return; }
+  IPAddress new_ip;
+  if (!WifiHostByName(Wireguard.endpoint.c_str(), new_ip)) { return; }   // DNS failed, retry later
+  IPAddress old_ip(&Wireguard.config.endpoint_ip);
+  if (new_ip == old_ip) { return; }                                       // unchanged, let WG keep retrying
+  AddLog(LOG_LEVEL_INFO, PSTR("WG : Endpoint '%s' changed %s -> %s, reconnecting"),
+         Wireguard.endpoint.c_str(), old_ip.toString().c_str(), new_ip.toString().c_str());
+  WireguardStop();
+  WireguardConnect();     // resolves the name again and re-creates the peer
+}
+
 // Loop every second
 void WireguardLoop(void) {
+  if (!Wireguard.configured) { return; }
   if (Wireguard.started) {
     esp_err_t err = esp_wireguard_peer_is_up(&Wireguard.ctx);
     if (err == ESP_OK) {
+      Wireguard.recheck_counter = 0;
       if (Wireguard.peer_status != 1) {
         Wireguard.peer_status = 1;
         if (Rtc.utc_time >= START_VALID_TIME) {           // record the connection time only if we have a valid time
@@ -251,6 +277,16 @@ void WireguardLoop(void) {
         Wireguard.peer_status = 0;
         AddLog(LOG_LEVEL_INFO, PSTR("WG : Wireguard peer DOWN"));
       }
+      if (++Wireguard.recheck_counter >= WG_ENDPOINT_RECHECK_SEC) {
+        Wireguard.recheck_counter = 0;
+        WireguardCheckEndpoint();
+      }
+    }
+  } else if (Wireguard.auto_connect && !TasmotaGlobal.global_state.network_down) {
+    // AutoConnect failed earlier (e.g. DNS not ready at network up), retry periodically
+    if (++Wireguard.recheck_counter >= WG_ENDPOINT_RECHECK_SEC) {
+      Wireguard.recheck_counter = 0;
+      WireguardConnect();
     }
   }
 }
