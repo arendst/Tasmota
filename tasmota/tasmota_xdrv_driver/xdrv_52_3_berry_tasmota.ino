@@ -245,6 +245,20 @@ extern "C" {
     be_return(vm);
   }
 
+#ifdef USE_HEAP_MAP
+  // Berry: tasmota.heapmap([label:string [, header:bool]]) -> nil
+  //
+  // Log a heap map row with the given label (default "berry"), header forces the table header
+  int32_t l_heapmap(struct bvm *vm);
+  int32_t l_heapmap(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    const char *label = (top >= 1 && be_isstring(vm, 1)) ? be_tostring(vm, 1) : "berry";
+    bool header = (top >= 2) ? be_tobool(vm, 2) : false;
+    HeapMap(label, header);
+    be_return_nil(vm);
+  }
+#endif  // USE_HEAP_MAP
+
   // Berry: tasmota.wifi() -> map
   //
   int32_t l_wifi(struct bvm *vm);
@@ -289,17 +303,24 @@ extern "C" {
         if (ESP_OK == esp_wifi_sta_get_ap_info(&ap_info)) {
           const char * security = "";
           switch (ap_info.authmode) {
-            case WIFI_AUTH_OPEN:              security = "open";  break;
-            case WIFI_AUTH_WEP:               security = "wep";   break;
-            case WIFI_AUTH_WPA_PSK:           security = "wpa";   break;
+            case WIFI_AUTH_OPEN:
+              security = "open";  break;
+            case WIFI_AUTH_WEP:
+              security = "wep";   break;
+            case WIFI_AUTH_WPA_PSK:
+              security = "wpa";   break;
             case WIFI_AUTH_WPA2_PSK:
             case WIFI_AUTH_WPA_WPA2_PSK:
-            case WIFI_AUTH_WPA2_ENTERPRISE:   security = "wpa2";  break;
+            case WIFI_AUTH_WPA2_ENTERPRISE:
+              security = "wpa2";  break;
             case WIFI_AUTH_WPA3_PSK:
             case WIFI_AUTH_WPA2_WPA3_PSK:
             case WIFI_AUTH_WPA3_ENT_192:
+          #if ESP_IDF_VERSION_MAJOR < 6
             case WIFI_AUTH_WPA3_EXT_PSK:
-            case WIFI_AUTH_WPA3_EXT_PSK_MIXED_MODE: security = "wpa3"; break;
+            case WIFI_AUTH_WPA3_EXT_PSK_MIXED_MODE:
+          #endif
+              security = "wpa3"; break;
             default:                          break;
           }
           be_map_insert_str(vm, "security", security);

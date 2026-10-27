@@ -1129,7 +1129,7 @@ bool XdrvCallDriver(uint32_t driver, uint32_t function) {
     uint32_t listed = kXdrvList[x];
 #endif
     if (driver == listed) {
-      return xdrv_func_ptr[x](function);
+      return HEAP_MAP_CALL("xdrv", driver, function, xdrv_func_ptr[x](function));
     }
   }
   return false;
@@ -1149,7 +1149,7 @@ bool XdrvCallNextJsonAppend(void) {
       return false;
     }
   } while (!XdrvActive(xdrv_index));
-  xdrv_func_ptr[xdrv_index](FUNC_JSON_APPEND);
+  HEAP_MAP_CALL("xdrv", pgm_read_byte(kXdrvList + xdrv_index), FUNC_JSON_APPEND, xdrv_func_ptr[xdrv_index](FUNC_JSON_APPEND));
   return true;
 }
 
@@ -1188,7 +1188,7 @@ bool XdrvCall(uint32_t function) {
     }
 #endif  // DEBUG_COMMAND_HANG
 
-    result = xdrv_func_ptr[x](function);
+    result = HEAP_MAP_CALL("xdrv", pgm_read_byte(kXdrvList + x), function, xdrv_func_ptr[x](function));
 
 #ifdef USE_WEBSERVER
     if (FUNC_WEB_SENSOR == function) { 

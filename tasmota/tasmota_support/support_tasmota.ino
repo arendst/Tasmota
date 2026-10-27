@@ -1153,6 +1153,17 @@ void PerformEverySecond(void)
 #endif
   }
 
+#if defined(ESP32) && defined(USE_HEAP_MAP)
+  if (BOOT_LOOP_TIME == TasmotaGlobal.uptime) {
+    HEAP_MAP(PSTR("boot"))                       // end of boot
+    HeapMapGlobal.boot_done = true;              // with HEAP_MAP_EVENTS_BOOT_ONLY stop logging stages and driver calls
+  } else if (HEAP_MAP_PERIOD && (TasmotaGlobal.uptime > BOOT_LOOP_TIME) && (0 == (TasmotaGlobal.uptime % HEAP_MAP_PERIOD))) {
+    char stage[16];
+    snprintf_P(stage, sizeof(stage), PSTR("up %us"), (unsigned int)TasmotaGlobal.uptime);
+    HeapMap(stage, false);                       // periodic row
+  }
+#endif  // ESP32 and USE_HEAP_MAP
+
   if (TasmotaGlobal.power_on_delay) {
     if (1 == Settings->param[P_POWER_ON_DELAY2]) {       // SetOption47 1
       // Allow relay power on once network is available
@@ -1653,6 +1664,11 @@ void Every250mSeconds(void)
   case 3:
     {
       if (!TasmotaGlobal.global_state.network_down) {
+#if defined(ESP32) && defined(USE_HEAP_MAP)
+        if (!HeapMapGlobal.network_up) {               // network just connected, before network services start
+          HEAP_MAP(PSTR("network_connect"))
+        }
+#endif  // USE_HEAP_MAP
 #ifdef FIRMWARE_MINIMAL
 //#ifdef CONFIG_IDF_TARGET_ESP32C3
 #ifdef ESP32
@@ -1700,6 +1716,12 @@ void Every250mSeconds(void)
         // send FUNC_NETWORK_UP to all modules
 //        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WIF: Sending FUNC_NETWORK_UP"));
         XdrvXsnsCall(FUNC_NETWORK_UP);
+#if defined(ESP32) && defined(USE_HEAP_MAP)
+        if (!HeapMapGlobal.network_up) {               // FUNC_NETWORK_UP is sent every second, log only on transition to up
+          HeapMapGlobal.network_up = true;
+          HEAP_MAP(PSTR("network_started"))      // network services (webserver, mDNS, ...) started
+        }
+#endif  // USE_HEAP_MAP
 
         MqttCheck();
       } else {
@@ -1711,6 +1733,9 @@ void Every250mSeconds(void)
         // send FUNC_NETWORK_DOWN to all modules
 //        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WIF: Sending FUNC_NETWORK_DOWN"));
         XdrvXsnsCall(FUNC_NETWORK_DOWN);
+#if defined(ESP32) && defined(USE_HEAP_MAP)
+        HeapMapGlobal.network_up = false;
+#endif  // USE_HEAP_MAP
       }                                           // Every x.75 second
     }
     break;
