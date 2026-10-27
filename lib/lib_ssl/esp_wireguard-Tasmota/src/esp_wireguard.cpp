@@ -147,16 +147,8 @@ static esp_err_t esp_wireguard_connect_internal(wireguard_ctx_t *ctx, const ip_a
         goto fail;
     }
 
-    if (ctx->netif == NULL) {
-        err = esp_wireguard_netif_create(ctx->config);
-        if (err != ESP_OK) {
-            AddLog(LOG_LEVEL_INFO, PSTR("WG : netif_create err %d"), err);
-            goto fail;
-        }
-        ctx->netif = wg_netif;
-        // ctx->netif_default = netif_default;
-    }
-
+    // Resolve the endpoint before creating the netif, so that a DNS failure
+    // does not create and immediately destroy the netif on each retry
     if (endpoint_ip) {
         ip_addr_copy(ctx->config->endpoint_ip, *endpoint_ip);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WG : using pre-resolved endpoint %s"), ipaddr_ntoa(&ctx->config->endpoint_ip));
@@ -173,6 +165,16 @@ static esp_err_t esp_wireguard_connect_internal(wireguard_ctx_t *ctx, const ip_a
         ctx->config->endpoint_ip = remote_addr;
 #endif
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WG : hostByName '%s' resolved to %s"), ctx->config->endpoint, remote_addr.toString().c_str());
+    }
+
+    if (ctx->netif == NULL) {
+        err = esp_wireguard_netif_create(ctx->config);
+        if (err != ESP_OK) {
+            AddLog(LOG_LEVEL_INFO, PSTR("WG : netif_create err %d"), err);
+            goto fail;
+        }
+        ctx->netif = wg_netif;
+        // ctx->netif_default = netif_default;
     }
 
     /* Initialize the first WireGuard peer structure */
