@@ -14,6 +14,19 @@
 #include <cmath>
 #endif
 #include "IRtimer.h"
+#if defined(ESP32) && !defined(UNIT_TEST)
+// On ESP32 the carrier is made in software (see mark()). Run that loop from
+// IRAM, switch the pin by register and wait with the ROM delay, so the carrier
+// no longer depends on flash cache timing and on where the code lands in flash.
+// Measured on an ESP32-D0WD-V3 @ 160 MHz with digitalWrite(), delayMicroseconds()
+// and the code in flash: 35 kHz instead of 38 kHz, 28.7 kHz in a larger build.
+#include "esp_attr.h"
+#include "esp_rom_sys.h"
+#include "hal/gpio_ll.h"
+#define IRSEND_IRAM IRAM_ATTR
+#else
+#define IRSEND_IRAM
+#endif
 
 /// Constructor for an IRsend object.
 /// @param[in] IRsendPin Which GPIO pin to use when sending an IR command.
@@ -50,15 +63,19 @@ void IRsend::begin() {
 }
 
 /// Turn off the IR LED.
-void IRsend::ledOff() {
-#ifndef UNIT_TEST
+void IRSEND_IRAM IRsend::ledOff() {
+#if defined(ESP32) && !defined(UNIT_TEST)
+  gpio_ll_set_level(&GPIO, IRpin, outputOff);
+#elif !defined(UNIT_TEST)
   digitalWrite(IRpin, outputOff);
 #endif
 }
 
 /// Turn on the IR LED.
-void IRsend::ledOn() {
-#ifndef UNIT_TEST
+void IRSEND_IRAM IRsend::ledOn() {
+#if defined(ESP32) && !defined(UNIT_TEST)
+  gpio_ll_set_level(&GPIO, IRpin, outputOn);
+#elif !defined(UNIT_TEST)
   digitalWrite(IRpin, outputOn);
 #endif
 }
@@ -111,11 +128,13 @@ void IRsend::enableIROut(uint32_t freq, uint8_t duty) {
 #if ALLOW_DELAY_CALLS
 /// An ESP8266 RTOS watch-dog timer friendly version of delayMicroseconds().
 /// @param[in] usec Nr. of uSeconds to delay for.
-void IRsend::_delayMicroseconds(uint32_t usec) {
+void IRSEND_IRAM IRsend::_delayMicroseconds(uint32_t usec) {
   // delayMicroseconds() is only accurate to 16383us.
   // Ref: https://www.arduino.cc/en/Reference/delayMicroseconds
   if (usec <= kMaxAccurateUsecDelay) {
-#ifndef UNIT_TEST
+#if defined(ESP32) && !defined(UNIT_TEST)
+    esp_rom_delay_us(usec);
+#elif !defined(UNIT_TEST)
     delayMicroseconds(usec);
 #endif
   } else {
@@ -154,7 +173,7 @@ void IRsend::_delayMicroseconds(uint32_t usec) {
 ///   Hence, for greater compatibility & choice, we don't use that method.
 /// Ref:
 ///   https://www.analysir.com/blog/2017/01/29/updated-esp8266-nodemcu-backdoor-upwm-hack-for-ir-signals/
-uint16_t IRsend::mark(uint16_t usec) {
+uint16_t IRSEND_IRAM IRsend::mark(uint16_t usec) {
   // Handle the simple case of no required frequency modulation.
   if (!modulation || _dutycycle >= 100) {
     ledOn();
@@ -193,7 +212,7 @@ uint16_t IRsend::mark(uint16_t usec) {
 /// Sends an IR space for the specified number of microseconds.
 /// A space is no output, so the PWM output is disabled.
 /// @param[in] time Time in microseconds (us).
-void IRsend::space(uint32_t time) {
+void IRSEND_IRAM IRsend::space(uint32_t time) {
   ledOff();
   if (time == 0) return;
   _delayMicroseconds(time);
@@ -229,10 +248,19 @@ int8_t IRsend::calibrate(uint16_t hz) {
   // Calculate the actual period from the actual time & the actual pulses
   // generated.
   double_t actualPeriod = (double_t)timeTaken / (double_t)pulses;
-  // Store the difference between the actual time per period vs. calculated.
-  periodOffset = (int8_t)((double_t)calcPeriod - actualPeriod);
+  // Store the difference between the actual time per period vs. calculated,
+  // rounded to the nearest microsecond. Truncating towards zero left the
+  // carrier at 37 kHz on an ESP32 where the best offset is about -1.7 us.
+  double_t diff = (double_t)calcPeriod - actualPeriod;
+  periodOffset = (int8_t)(diff < 0 ? diff - 0.5 : diff + 0.5);
   return periodOffset;
 }
+
+/// Set the period offset (in uSeconds) used for the software carrier.
+/// @param[in] offset The offset, e.g. the result of an earlier calibrate().
+/// @note Lets several IRsend objects share one calibration. It takes effect
+///  with the next enableIROut(), which every send method calls.
+void IRsend::setPeriodOffset(int8_t offset) { periodOffset = offset; }
 
 /// Generic method for sending data that is common to most protocols.
 /// Will send leading or trailing 0's if the nbits is larger than the number
