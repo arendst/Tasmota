@@ -217,7 +217,7 @@ bool mpr21_found = false;
 void Mpr121Init(struct mpr121 *pS, bool initial)
 {
 	// Loop through I2C addresses
-	for (uint32_t i = 0; i < sizeof(pS->i2c_addr[i]); i++) {
+	for (uint32_t i = 0; i < nitems(pS->i2c_addr); i++) {
 
     if (initial && !I2cSetDevice(pS->i2c_addr[i])) { continue; }
 
@@ -327,7 +327,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 {
 
 	// Loop through sensors
-	for (uint32_t i = 0; i < sizeof(pS->i2c_addr[i]); i++) {
+	for (uint32_t i = 0; i < nitems(pS->i2c_addr); i++) {
 
 		// Check if sensor is connected
 		if (pS->connected[i]) {
