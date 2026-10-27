@@ -54,6 +54,8 @@ struct Wireguard_t {
   bool started = false;
   bool peer_up = false;
   bool endpoint_is_ip = false;  // Endpoint is a literal IP, no need to re-resolve
+  bool reconnect_pending = false;  // Retry a failed DDNS-triggered reconnect
+  bool network_available = false;  // Track edges; FUNC_NETWORK_UP repeats every second
   int8_t peer_status = -1;    // known state: -1 unknown, 0 DOWN, 1 UP
   uint32_t recheck_counter = 0; // seconds since last Endpoint check / connect retry
   uint32_t connected_since_utc = 0;
@@ -157,6 +159,7 @@ bool WireguardConnect(const ip_addr_t *endpoint_ip) {
                               : esp_wireguard_connect(&Wireguard.ctx);
   if (err == ESP_OK) {
     Wireguard.started = true;
+    Wireguard.reconnect_pending = false;
     Wireguard.peer_status = -1;
     Wireguard.connected_since_utc = 0;
     Wireguard.recheck_counter = 0;
@@ -249,8 +252,10 @@ void CmndWGStop(void) {
     return;
   }
 
-  // Always cancel automatic retries, including after a failed AutoConnect.
+  // Always cancel automatic retries, including after a failed AutoConnect
+  // or a failed DDNS-triggered reconnect.
   Wireguard.auto_connect = false;
+  Wireguard.reconnect_pending = false;
   Wireguard.recheck_counter = 0;
 
   if (!Wireguard.started && !Wireguard.ctx.netif) {
@@ -282,6 +287,7 @@ void WireguardCheckEndpoint(void) {
   new_endpoint_ip = new_ip;
 #endif
 
+  Wireguard.reconnect_pending = true;
   WireguardStop();
   if (!WireguardConnect(&new_endpoint_ip)) {
     AddLog(LOG_LEVEL_INFO, PSTR("WG : Failed to reconnect to Endpoint '%s' (%s)"),
@@ -317,8 +323,9 @@ void WireguardLoop(void) {
         WireguardCheckEndpoint();
       }
     }
-  } else if (Wireguard.auto_connect && !TasmotaGlobal.global_state.network_down) {
-    // AutoConnect failed earlier (e.g. DNS not ready at network up), retry periodically
+  } else if ((Wireguard.auto_connect || Wireguard.reconnect_pending) &&
+             !TasmotaGlobal.global_state.network_down) {
+    // Retry failed AutoConnect and DDNS-triggered reconnects periodically.
     if (++Wireguard.recheck_counter >= WG_ENDPOINT_RECHECK_SEC) {
       Wireguard.recheck_counter = 0;
       WireguardConnect();
@@ -327,8 +334,14 @@ void WireguardLoop(void) {
 }
 
 void WireguardNetworkUpDown(bool up) {
+  // FUNC_NETWORK_UP/DOWN repeats every second. Only act on transitions so a
+  // failed connect is retried by WireguardLoop at WG_ENDPOINT_RECHECK_SEC.
+  if (Wireguard.network_available == up) { return; }
+  Wireguard.network_available = up;
+  Wireguard.recheck_counter = 0;
+
   if (up) {
-    if (!Wireguard.started && Wireguard.auto_connect) {
+    if (!Wireguard.started && (Wireguard.auto_connect || Wireguard.reconnect_pending)) {
       WireguardConnect();
     }
   } else {
