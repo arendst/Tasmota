@@ -1,7 +1,7 @@
 #
-# Matter_Plugin_Sensor_Doorbell_Btn.be - Doorbell (0x0148) mapped to a Tasmota Button
+# Matter_Plugin_2_Sensor_Doorbell_Btn.be - Doorbell (0x0148) mapped to a Tasmota Button
 #
-# Copyright (C) 2026
+# Copyright (C) 2026  Ludovic BOUÉ
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,9 +32,12 @@
 # CLUSTERS (Client):
 # - 0x0556: Chime (M) - NOT IMPLEMENTED in this plug-in (see NOTES)
 #
+# CONFORMANCE: the mandatory Chime client is missing, so this endpoint is not
+# a fully conformant Doorbell.
+#
 # NOTES:
-# - Phase 1 (this file): Switch cluster only. Button presses emit
-#   InitialPress and ShortRelease events. No multi-press.
+# - Switch cluster: button presses emit InitialPress and ShortRelease
+#   events. No multi-press.
 # - FeatureMap is 0x06 (MS + MSR). The device type only mandates MS, but the
 #   Switch cluster's own event conformance ties ShortRelease (0x03) to the
 #   MSR feature, so MSR must also be set since this plug-in emits it.
@@ -44,15 +47,39 @@
 #   plug-in: consolidate_clusters() merges the parent's cluster map, so
 #   inheriting the generic switch would keep MultiPressMax in the list.
 # - Binding (0x001E) is implemented as a foundation for a future Chime
-#   client: a controller can read/write the binding table (list of
-#   {node, group, endpoint, cluster, fabric_index}) and it persists across
-#   reboots in this endpoint's plugins_config entry. Nothing yet ACTS on
-#   the stored bindings: no outbound Invoke is sent to a bound Chime server.
+#   client. The Binding attribute is a fabric-scoped list[TargetStruct]:
+#   each fabric's entries are stored in its own Fabric object (persisted
+#   with the fabric and removed with it), writes require a CASE session,
+#   fabric-filtered reads only return the accessing fabric's entries.
+#   Nothing yet ACTS on the stored bindings: no outbound Invoke is sent to
+#   a bound Chime server.
 # - The Chime client (0x0556) itself requires outbound Invoke support
 #   (CASE-initiator session establishment, operational discovery, and
 #   Invoke Request origination/response handling), none of which exist in
 #   the Berry Matter stack yet. It is therefore not declared as a cluster
 #   here, and no command is ever sent when the button is pressed.
+#################################################################################
+
+#################################################################################
+# Matter 1.6.1 Binding Cluster (0x001E)
+#################################################################################
+# ATTRIBUTES:
+# ID     | Name    | Type              | Quality | Access   | Conf
+# -------|---------|-------------------|---------|----------|-----
+# 0x0000 | Binding | list[TargetStruct]| N       | RW F VM  | M
+#
+# TargetStruct (fabric-scoped):
+# ID   | Name        | Type        | Constraint | Conf
+# -----|-------------|-------------|------------|---------
+# 1    | Node        | node-id     | all        | Endpoint
+# 2    | Group       | group-id    | min 1      | !Endpoint
+# 3    | Endpoint    | endpoint-no | all        | !Group
+# 4    | Cluster     | cluster-id  | all        | O
+# 254  | FabricIndex | fabric-idx  |            | M
+#
+# Valid entries are therefore {Group, [Cluster]} or {Node, Endpoint, [Cluster]}.
+# FabricIndex sent by the client is ignored: the accessing fabric owns
+# every entry it writes.
 #################################################################################
 
 # Matter plug-in for core behavior
@@ -74,12 +101,11 @@ class Matter_Plugin_Sensor_Doorbell_Btn : Matter_Plugin_Device
     0x003B: [0, 1],                                 # Switch 1.12 - no MultiPressMax
   })
   static var TYPES = { 0x0148: 2 }                  # Doorbell - Matter 1.6.1 Device Library Rev 2
-  static var MAX_BINDINGS = 10                      # arbitrary cap, same order of magnitude as GroupKeyMap
+  static var MAX_BINDINGS = 10                      # per fabric, same order of magnitude as GroupKeyMap
 
   var tasmota_switch_index                          # Switch number in Tasmota (one based)
   var shadow_position
-  var bindings                                      # list of maps: node/group/endpoint/cluster/fabric_index
-  var _bindings_write_staged                        # staged list during a chunked write transaction
+  var _bindings_write_staged                        # staged list of the accessing fabric during a write transaction
   var _bindings_write_failed                        # true if any chunk of the current write failed
   var _bindings_write_exchange_id                   # exchange id of the in-progress write transaction
   var _bindings_write_session                       # session of the in-progress write transaction
@@ -93,7 +119,6 @@ class Matter_Plugin_Sensor_Doorbell_Btn : Matter_Plugin_Device
     self.tasmota_switch_index = int(config.find('button', 1))
     if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
     self.shadow_position = 0             # CurrentPosition is not nullable
-    self.bindings = config.find('bindings', [])
   end
 
   #############################################################
@@ -109,18 +134,17 @@ class Matter_Plugin_Sensor_Doorbell_Btn : Matter_Plugin_Device
   #############################################################
   # read_attribute
   #
-  # Switch cluster is handled here. Other clusters are delegated
-  # to the parent class.
+  # Binding and Switch clusters are handled here. Other clusters
+  # are delegated to the parent class.
   def read_attribute(session, ctx, tlv_solo)
     var cluster = ctx.cluster
     var attribute = ctx.attribute
 
     if cluster == 0x001E
       if attribute == 0x0000            # Binding - list[TargetStruct]
-        return self.binding_list_to_tlv()
+        return self.binding_list_to_tlv(session, ctx.fabric_filtered)
       end
-    end
-    if cluster == 0x003B
+    elif cluster == 0x003B
       if   attribute == 0x0000          # NumberOfPositions
         return tlv_solo.set(0x06 #-TLV.U4-#, 2)
       elif attribute == 0x0001          # CurrentPosition
@@ -147,10 +171,18 @@ class Matter_Plugin_Sensor_Doorbell_Btn : Matter_Plugin_Device
   def write_attribute(session, ctx, write_data)
     if ctx.cluster == 0x001E
       if ctx.attribute == 0x0000        # Binding - list[TargetStruct]
+        # Fabric-scoped data needs an accessing fabric (CASE). A PASE
+        # session has none and must not create entries for any fabric.
+        var fabric = (session != nil) ? session.get_fabric() : nil
+        if fabric == nil
+          ctx.status = 0x7E #-matter.UNSUPPORTED_ACCESS-#
+          return false
+        end
         try
-          return self.write_bindings_operation(session.get_fabric(), ctx, write_data)
+          return self.write_bindings_operation(fabric, ctx, write_data)
         except .. as e, m
           log("MTR: invalid Binding write: " + str(e) + "|" + str(m), 2)
+          self._bindings_write_failed = true    # never commit a transaction with a malformed chunk
           ctx.status = 0x8D #-matter.INVALID_DATA_TYPE-#
           return false
         end
@@ -183,12 +215,13 @@ class Matter_Plugin_Sensor_Doorbell_Btn : Matter_Plugin_Device
   def end_write_request(msg, more_chunked_messages)
     if more_chunked_messages   return end
 
-    if self._bindings_write_staged != nil && !self._bindings_write_failed
-      self.bindings = self._bindings_write_staged
-      self.persist_bindings()
+    var fabric = (msg != nil && msg.session != nil) ? msg.session.get_fabric() : nil
+    if fabric != nil && self._bindings_write_staged != nil && !self._bindings_write_failed
+      fabric.replace_bindings(self.endpoint, self._bindings_write_staged)
       self.attribute_updated(0x001E, 0x0000)
     end
 
+    # Failed staged lists are discarded; partial lists are never persisted.
     self._bindings_write_staged = nil
     self._bindings_write_exchange_id = nil
     self._bindings_write_session = nil
@@ -197,107 +230,130 @@ class Matter_Plugin_Sensor_Doorbell_Btn : Matter_Plugin_Device
   #############################################################
   # binding_list_to_tlv
   #
-  # Encode the persisted binding table for the Binding attribute.
-  def binding_list_to_tlv()
-    var TLV = matter.TLV
-    var result = TLV.Matter_TLV_array()
-    for entry : self.bindings
-      var out = result.add_struct(nil)
-      if entry.find('node') != nil      out.add_TLV(1, 0x07 #-TLV.U8-#, entry.find('node')) end
-      if entry.find('group') != nil     out.add_TLV(2, 0x05 #-TLV.U2-#, entry.find('group')) end
-      if entry.find('endpoint') != nil  out.add_TLV(3, 0x05 #-TLV.U2-#, entry.find('endpoint')) end
-      if entry.find('cluster') != nil   out.add_TLV(4, 0x06 #-TLV.U4-#, entry.find('cluster')) end
-      out.add_TLV(0xFE, 0x04 #-TLV.U1-#, entry.find('fabric_index', 1))
+  # Encode the Binding attribute. A fabric-filtered read returns only the
+  # accessing fabric's entries. An unfiltered read returns the entries of
+  # all fabrics: no TargetStruct field is fabric-sensitive, so nothing
+  # needs to be omitted for other fabrics.
+  def binding_list_to_tlv(session, fabric_filtered)
+    var result = matter.TLV.Matter_TLV_array()
+    if fabric_filtered
+      var fabric = (session != nil) ? session.get_fabric() : nil
+      if fabric != nil
+        self.add_fabric_bindings_tlv(result, fabric)
+      end
+    elif self.device.sessions != nil
+      for fabric : self.device.sessions.active_fabrics()
+        self.add_fabric_bindings_tlv(result, fabric)
+      end
     end
     return result
+  end
+
+  # Append the TargetStructs stored by `fabric` for this endpoint
+  def add_fabric_bindings_tlv(result, fabric)
+    for entry : fabric.get_bindings(self.endpoint)
+      var out = result.add_struct(nil)
+      out.add_TLV(1, 0x07 #-TLV.U8-#, entry.find('node'))       # int64, skipped if nil
+      out.add_TLV(2, 0x06 #-TLV.U4-#, entry.find('group'))
+      out.add_TLV(3, 0x06 #-TLV.U4-#, entry.find('endpoint'))
+      out.add_TLV(4, 0x06 #-TLV.U4-#, entry.find('cluster'))
+      out.add_TLV(0xFE, 0x06 #-TLV.U4-#, fabric.get_fabric_index())
+    end
   end
 
   #############################################################
   # normalize_binding_entry
   #
-  # Validate a single incoming TargetStruct and convert it to JSON-safe
-  # storage. Exactly one of Node or Group must be present, per spec.
-  def normalize_binding_entry(encoded, fabric)
+  # Validate a single incoming TargetStruct against the field conformance
+  # ({Group, [Cluster]} or {Node, Endpoint, [Cluster]}) and convert it to
+  # storage. Node is kept as int64 so 64-bit node ids survive persistence.
+  # The client's FabricIndex is ignored.
+  #
+  # Returns the normalized map, or nil if the entry violates a constraint.
+  # Raises an exception if the element is not a structure.
+  def normalize_binding_entry(encoded)
+    if !isinstance(encoded, matter.TLV.Matter_TLV_struct)
+      raise "value_error", "TargetStruct expected"
+    end
     var node = encoded.findsubval(1)
     var group = encoded.findsubval(2)
     var endpoint = encoded.findsubval(3)
     var cluster = encoded.findsubval(4)
-    var fabric_index = encoded.findsubval(0xFE)
 
-    if (node == nil) == (group == nil)              # exactly one of the two
-      return nil
-    end
-    if fabric_index != nil && fabric_index != 0 && fabric != nil && fabric_index != fabric.get_fabric_index()
-      return nil
-    end
     var normalized = {}
-    if node != nil       normalized['node'] = node end
-    if group != nil       normalized['group'] = group end
-    if endpoint != nil    normalized['endpoint'] = endpoint end
-    if cluster != nil     normalized['cluster'] = cluster end
-    normalized['fabric_index'] = fabric != nil ? fabric.get_fabric_index() : (fabric_index ? fabric_index : 1)
+    if group != nil                                 # groupcast target
+      if node != nil || endpoint != nil                         return nil end
+      if type(group) != 'int' || group < 1 || group > 0xFFFF    return nil end
+      normalized['group'] = group
+    else                                            # unicast target
+      if node == nil || endpoint == nil                         return nil end
+      if type(node) == 'int'
+        node = int64.fromu32(node)                  # minimally encoded node-id
+      elif !isinstance(node, int64)
+        return nil
+      end
+      if type(endpoint) != 'int' || endpoint < 0 || endpoint > 0xFFFE   return nil end
+      normalized['node'] = node
+      normalized['endpoint'] = endpoint
+    end
+    if cluster != nil
+      if type(cluster) != 'int'                                 return nil end
+      normalized['cluster'] = cluster
+    end
     return normalized
   end
 
   #############################################################
   # write_bindings_operation
   #
-  # Apply whole-list, append, replace, or delete semantics to a staged
-  # Binding list so chunked writes are committed atomically, mirroring
-  # Matter_Plugin_1_Root's write_group_key_map_operation.
+  # Apply whole-list, append, replace, or delete semantics to the staged
+  # Binding list of the accessing fabric so chunked writes are committed
+  # atomically, mirroring Matter_Plugin_1_Root's
+  # write_group_key_map_operation.
   def write_bindings_operation(fabric, ctx, write_data)
     if self._bindings_write_failed
       ctx.status = 0x80 #-matter.INVALID_ACTION-#
       return false
     end
     var staged = self._bindings_write_staged
-    if staged == nil   staged = self.bindings.copy() end
+    if staged == nil   staged = fabric.get_bindings(self.endpoint).copy() end
 
-    if !ctx.list_index_present
-      var replacement = []
-      if !isinstance(write_data, list) || size(write_data) > self.MAX_BINDINGS
-        self._bindings_write_failed = true
-        ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
-        return false
+    if !ctx.list_index_present                      # replace the whole list
+      if !isinstance(write_data, list)
+        raise "value_error", "list expected"
       end
+      if size(write_data) > self.MAX_BINDINGS
+        return self.bindings_write_error(ctx, 0x89 #-matter.RESOURCE_EXHAUSTED-#)
+      end
+      var replacement = []
       for encoded : write_data
-        var norm = self.normalize_binding_entry(encoded, fabric)
+        var norm = self.normalize_binding_entry(encoded)
         if norm == nil
-          self._bindings_write_failed = true
-          ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
-          return false
+          return self.bindings_write_error(ctx, 0x87 #-matter.CONSTRAINT_ERROR-#)
         end
         replacement.push(norm)
       end
       staged = replacement
-    elif ctx.list_index_is_null
-      if size(staged) >= self.MAX_BINDINGS
-        self._bindings_write_failed = true
-        ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
-        return false
-      end
-      var norm = self.normalize_binding_entry(ctx.write_tlv, fabric)
+    elif ctx.list_index_is_null                     # append
+      var norm = self.normalize_binding_entry(ctx.write_tlv)
       if norm == nil
-        self._bindings_write_failed = true
-        ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
-        return false
+        return self.bindings_write_error(ctx, 0x87 #-matter.CONSTRAINT_ERROR-#)
+      end
+      if size(staged) >= self.MAX_BINDINGS
+        return self.bindings_write_error(ctx, 0x89 #-matter.RESOURCE_EXHAUSTED-#)
       end
       staged.push(norm)
-    else
+    else                                            # replace or delete at index
       var index = ctx.list_index
       if index == nil || index < 0 || index >= size(staged)
-        self._bindings_write_failed = true
-        ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
-        return false
+        return self.bindings_write_error(ctx, 0x87 #-matter.CONSTRAINT_ERROR-#)
       end
       if ctx.write_tlv != nil && ctx.write_tlv.typ == 0x14 #-TLV.NULL-#
         staged.remove(index)
       else
-        var norm = self.normalize_binding_entry(ctx.write_tlv, fabric)
+        var norm = self.normalize_binding_entry(ctx.write_tlv)
         if norm == nil
-          self._bindings_write_failed = true
-          ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
-          return false
+          return self.bindings_write_error(ctx, 0x87 #-matter.CONSTRAINT_ERROR-#)
         end
         staged[index] = norm
       end
@@ -305,26 +361,18 @@ class Matter_Plugin_Sensor_Doorbell_Btn : Matter_Plugin_Device
 
     self._bindings_write_staged = staged
     if ctx.list_write_final
-      self.bindings = staged
+      fabric.replace_bindings(self.endpoint, staged)
       self._bindings_write_staged = nil
-      self.persist_bindings()
       self.attribute_updated(ctx.cluster, ctx.attribute)
     end
     return true
   end
 
-  #############################################################
-  # persist_bindings
-  #
-  # Save the binding table into this endpoint's own plugins_config entry
-  # so it survives a reboot, the same way the user-facing SCHEMA fields do.
-  def persist_bindings()
-    var ep_str = str(self.endpoint)
-    var conf = self.device.plugins_config.find(ep_str)
-    if conf == nil   conf = {}   self.device.plugins_config[ep_str] = conf   end
-    conf['bindings'] = self.bindings
-    self.device.plugins_persist = true
-    self.device.save_param()
+  # Mark the current write transaction as failed and report `status`
+  def bindings_write_error(ctx, status)
+    self._bindings_write_failed = true
+    ctx.status = status
+    return false
   end
 
   #############################################################
