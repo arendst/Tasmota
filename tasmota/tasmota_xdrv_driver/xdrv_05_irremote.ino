@@ -169,6 +169,11 @@ void IrSendInit(void)
 {
   irsend = new IRsend(Pin(GPIO_IRSEND), IR_SEND_INVERTED, IR_SEND_USE_MODULATION); // an IR led is at GPIO_IRSEND
   irsend->begin();
+#ifdef ESP32
+  // The carrier is made in software and its speed varies with the build, so
+  // measure it once (a 65 ms carrier burst without data) and correct the period.
+  AddLog(LOG_LEVEL_DEBUG, PSTR("IR : Carrier period offset %d us"), irsend->calibrate(38000));
+#endif
 }
 
 #ifdef USE_IR_RECEIVE
