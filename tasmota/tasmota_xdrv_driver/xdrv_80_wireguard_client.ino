@@ -35,6 +35,7 @@ static const char WIREGUARD_NETMASK[] = "0.0.0.0";
 #ifndef WG_ENDPOINT_RECHECK_SEC
 #define WG_ENDPOINT_RECHECK_SEC   60    // while peer is down, re-resolve Endpoint every N seconds
 #endif
+static_assert(WG_ENDPOINT_RECHECK_SEC > 0, "WG_ENDPOINT_RECHECK_SEC must be greater than zero");
 
 const char kWireGuardCommands[] PROGMEM = "WG|"   // Prefix
   "Connect|Stop";
@@ -54,7 +55,7 @@ struct Wireguard_t {
   bool peer_up = false;
   bool endpoint_is_ip = false;  // Endpoint is a literal IP, no need to re-resolve
   int8_t peer_status = -1;    // known state: -1 unknown, 0 DOWN, 1 UP
-  uint16_t recheck_counter = 0; // seconds since last Endpoint check / connect retry
+  uint32_t recheck_counter = 0; // seconds since last Endpoint check / connect retry
   uint32_t connected_since_utc = 0;
   String endpoint;
   LList<allowed_ips_t> allowed_ips;
@@ -146,15 +147,19 @@ bool WireguardLoadConfig(const char *filename) {
 
 // WireguardConnect
 //
-// Connect to peer
-bool WireguardConnect(void) {
+// Connect to peer, optionally using an Endpoint IP already resolved by the caller
+bool WireguardConnect(const ip_addr_t *endpoint_ip) {
   if (!Wireguard.configured || Wireguard.started) {
     return false;
   }
 
-  esp_err_t err = esp_wireguard_connect(&Wireguard.ctx);
+  esp_err_t err = endpoint_ip ? esp_wireguard_connect_with_ip(&Wireguard.ctx, endpoint_ip)
+                              : esp_wireguard_connect(&Wireguard.ctx);
   if (err == ESP_OK) {
     Wireguard.started = true;
+    Wireguard.peer_status = -1;
+    Wireguard.connected_since_utc = 0;
+    Wireguard.recheck_counter = 0;
     if (!Wireguard.allowed_ips.isEmpty()) {
       for (const allowed_ips_t & allowedip : Wireguard.allowed_ips) {
         err = esp_wireguard_add_allowed_ip(&Wireguard.ctx, allowedip.addr, allowedip.mask);
@@ -173,7 +178,19 @@ bool WireguardConnect(void) {
     }
     return true;
   }
+
+  // A failed connect can leave a netif or peer partially initialized.
+  if (Wireguard.ctx.netif) {
+    esp_wireguard_disconnect(&Wireguard.ctx);
+  }
+  Wireguard.started = false;
+  Wireguard.peer_status = -1;
+  Wireguard.connected_since_utc = 0;
   return false;
+}
+
+bool WireguardConnect(void) {
+  return WireguardConnect(nullptr);
 }
 
 // WireguardStop
@@ -181,12 +198,15 @@ bool WireguardConnect(void) {
 // Stop the current Wireguard connection
 // Do nothing if there is no connection
 void WireguardStop(void) {
-  if (!Wireguard.configured || !Wireguard.started) {
+  if (!Wireguard.configured || !Wireguard.ctx.netif) {
     return;
   }
-  // stop wireguard
+  // Stop a complete or partially initialized WireGuard connection.
   esp_wireguard_disconnect(&Wireguard.ctx);
   Wireguard.started = false;
+  Wireguard.peer_status = -1;
+  Wireguard.connected_since_utc = 0;
+  Wireguard.recheck_counter = 0;
   AddLog(LOG_LEVEL_INFO, PSTR("WG : Wireguard peer DOWN"));
 }
 
@@ -228,12 +248,16 @@ void CmndWGStop(void) {
     ResponseCmndChar(PSTR("Not configured"));
     return;
   }
-  if (!Wireguard.started) {
+
+  // Always cancel automatic retries, including after a failed AutoConnect.
+  Wireguard.auto_connect = false;
+  Wireguard.recheck_counter = 0;
+
+  if (!Wireguard.started && !Wireguard.ctx.netif) {
     ResponseCmndChar(PSTR("Not started"));
     return;
   }
-  // stop wireguard
-  Wireguard.auto_connect = false;   // prevent auto-reconnect when we asked for a manual stop
+
   WireguardStop();
   ResponseCmndChar(PSTR("Success"));
 }
@@ -250,8 +274,19 @@ void WireguardCheckEndpoint(void) {
   if (new_ip == old_ip) { return; }                                       // unchanged, let WG keep retrying
   AddLog(LOG_LEVEL_INFO, PSTR("WG : Endpoint '%s' changed %s -> %s, reconnecting"),
          Wireguard.endpoint.c_str(), old_ip.toString().c_str(), new_ip.toString().c_str());
+
+  ip_addr_t new_endpoint_ip;
+#ifdef ESP32
+  new_ip.to_ip_addr_t(&new_endpoint_ip);
+#else
+  new_endpoint_ip = new_ip;
+#endif
+
   WireguardStop();
-  WireguardConnect();     // resolves the name again and re-creates the peer
+  if (!WireguardConnect(&new_endpoint_ip)) {
+    AddLog(LOG_LEVEL_INFO, PSTR("WG : Failed to reconnect to Endpoint '%s' (%s)"),
+           Wireguard.endpoint.c_str(), new_ip.toString().c_str());
+  }
 }
 
 // Loop every second

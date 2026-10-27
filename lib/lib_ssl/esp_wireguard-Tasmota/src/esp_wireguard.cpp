@@ -133,13 +133,16 @@ esp_err_t esp_wireguard_init(wireguard_config_t *config, wireguard_ctx_t *ctx)
     return ESP_OK;
 }
 
-esp_err_t esp_wireguard_connect(wireguard_ctx_t *ctx)
+static esp_err_t esp_wireguard_connect_internal(wireguard_ctx_t *ctx, const ip_addr_t *endpoint_ip)
 {
     esp_err_t err = ESP_FAIL;
     err_t lwip_err = -1;
-    IPAddress remote_addr;
 
     if (!ctx) {
+        err = ESP_ERR_INVALID_ARG;
+        goto fail;
+    }
+    if (endpoint_ip && ip_addr_isany(endpoint_ip)) {
         err = ESP_ERR_INVALID_ARG;
         goto fail;
     }
@@ -154,17 +157,23 @@ esp_err_t esp_wireguard_connect(wireguard_ctx_t *ctx)
         // ctx->netif_default = netif_default;
     }
 
-    // Add include "ESP8266WiFi.h" for this to work
-    if (!WiFiHelper::hostByName(ctx->config->endpoint, remote_addr)) {
-        AddLog(LOG_LEVEL_INFO, PSTR("WG : hostByName failed '%s'"), ctx->config->endpoint);
-        goto fail;
-    }
+    if (endpoint_ip) {
+        ip_addr_copy(ctx->config->endpoint_ip, *endpoint_ip);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WG : using pre-resolved endpoint %s"), ipaddr_ntoa(&ctx->config->endpoint_ip));
+    } else {
+        IPAddress remote_addr;
+        // Add include "ESP8266WiFi.h" for this to work
+        if (!WiFiHelper::hostByName(ctx->config->endpoint, remote_addr)) {
+            AddLog(LOG_LEVEL_INFO, PSTR("WG : hostByName failed '%s'"), ctx->config->endpoint);
+            goto fail;
+        }
 #ifdef ESP32
-    remote_addr.to_ip_addr_t(&ctx->config->endpoint_ip);
+        remote_addr.to_ip_addr_t(&ctx->config->endpoint_ip);
 #else
-    ctx->config->endpoint_ip = remote_addr;
+        ctx->config->endpoint_ip = remote_addr;
 #endif
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WG : hostByName '%s' resolved to %s"), ctx->config->endpoint, remote_addr.toString().c_str());
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("WG : hostByName '%s' resolved to %s"), ctx->config->endpoint, remote_addr.toString().c_str());
+    }
 
     /* Initialize the first WireGuard peer structure */
     err = esp_wireguard_peer_init(ctx->config, &peer);
@@ -198,26 +207,38 @@ fail:
     return err;
 }
 
+esp_err_t esp_wireguard_connect(wireguard_ctx_t *ctx)
+{
+    return esp_wireguard_connect_internal(ctx, NULL);
+}
+
+esp_err_t esp_wireguard_connect_with_ip(wireguard_ctx_t *ctx, const ip_addr_t *endpoint_ip)
+{
+    if (!endpoint_ip) { return ESP_ERR_INVALID_ARG; }
+    return esp_wireguard_connect_internal(ctx, endpoint_ip);
+}
+
 esp_err_t esp_wireguard_disconnect(wireguard_ctx_t *ctx)
 {
-    err_t lwip_err;
     if (!ctx || !ctx->netif) { return ESP_ERR_INVALID_ARG; }
 
     // Clear the IP address to gracefully disconnect any clients while the
     // peers are still valid
     netif_set_ipaddr(ctx->netif, IP4_ADDR_ANY4);
 
-    lwip_err = wireguardif_disconnect(ctx->netif, wireguard_peer_index);
-    if (lwip_err != ERR_OK) {
-        AddLog(LOG_LEVEL_INFO, PSTR("WG : wireguardif_disconnect: peer_index: %" PRIu8 " err: %i"), wireguard_peer_index, lwip_err);
-    }
+    if (wireguard_peer_index != WIREGUARDIF_INVALID_INDEX) {
+        err_t lwip_err = wireguardif_disconnect(ctx->netif, wireguard_peer_index);
+        if (lwip_err != ERR_OK) {
+            AddLog(LOG_LEVEL_INFO, PSTR("WG : wireguardif_disconnect: peer_index: %" PRIu8 " err: %i"), wireguard_peer_index, lwip_err);
+        }
 
-    lwip_err = wireguardif_remove_peer(ctx->netif, wireguard_peer_index);
-    if (lwip_err != ERR_OK) {
-        AddLog(LOG_LEVEL_INFO, PSTR("WG : wireguardif_remove_peer: peer_index: %" PRIu8 " err: %i"), wireguard_peer_index, lwip_err);
-    }
+        lwip_err = wireguardif_remove_peer(ctx->netif, wireguard_peer_index);
+        if (lwip_err != ERR_OK) {
+            AddLog(LOG_LEVEL_INFO, PSTR("WG : wireguardif_remove_peer: peer_index: %" PRIu8 " err: %i"), wireguard_peer_index, lwip_err);
+        }
 
-    wireguard_peer_index = WIREGUARDIF_INVALID_INDEX;
+        wireguard_peer_index = WIREGUARDIF_INVALID_INDEX;
+    }
     wireguardif_shutdown(ctx->netif);
     netif_remove(ctx->netif);
     wireguardif_fini(ctx->netif);
