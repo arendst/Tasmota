@@ -787,6 +787,22 @@ class Matter_Device
     for ep: eps
       self.attribute_updated(ep, 0x001D, 0x0003, false)
     end
+    self.prune_bindings()
+  end
+
+  #############################################################
+  # Drop fabric-scoped Binding tables of endpoints that no longer expose
+  # the Binding cluster (endpoint removed or type changed)
+  #
+  def prune_bindings()
+    if self.sessions == nil   return end
+    var keep = []
+    for pi: self.plugins
+      if pi.contains_cluster(0x001E)   keep.push(pi.get_endpoint()) end
+    end
+    for fabric: self.sessions.active_fabrics()
+      fabric.keep_bindings_for(keep)
+    end
   end
 
   #############################################################
