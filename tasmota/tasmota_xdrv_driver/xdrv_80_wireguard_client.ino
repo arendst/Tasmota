@@ -207,10 +207,12 @@ void WireguardStop(void) {
   // Stop a complete or partially initialized WireGuard connection.
   esp_wireguard_disconnect(&Wireguard.ctx);
   Wireguard.started = false;
+  if (Wireguard.peer_status != 0) {     // WireguardLoop already logged DOWN
+    AddLog(LOG_LEVEL_INFO, PSTR("WG : Wireguard peer DOWN"));
+  }
   Wireguard.peer_status = -1;
   Wireguard.connected_since_utc = 0;
   Wireguard.recheck_counter = 0;
-  AddLog(LOG_LEVEL_INFO, PSTR("WG : Wireguard peer DOWN"));
 }
 
 /*********************************************************************************************\
