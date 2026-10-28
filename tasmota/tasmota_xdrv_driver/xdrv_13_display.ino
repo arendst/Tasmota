@@ -509,6 +509,9 @@ void DisplayText(void)
         // if string in buffer print it
         dp -= decode_te(linebuf);
         if ((uint32_t)dp - (uint32_t)linebuf) {
+#ifdef USE_DISPLAY_MODES1TO5
+          if (!Settings->display_mode) {
+#endif  // USE_DISPLAY_MODES1TO5
           if (!fill) {
             *dp = 0;
           } else {
@@ -518,9 +521,6 @@ void DisplayText(void)
             // right align
             alignright(linebuf);
           }
-#ifdef USE_DISPLAY_MODES1TO5
-          if (!Settings->display_mode) {
-#endif  // USE_DISPLAY_MODES1TO5
           if (col > 0 && lin > 0) {
             // use col and lin
             DisplayDrawStringAt(col, lin, linebuf, fg_color, 1);
@@ -634,6 +634,8 @@ void DisplayText(void)
             // pad field with spaces fxx
             var = atoiv(cp, &fill);
             cp += var;
+            if (fill >= DISPLAY_BUFFER_COLS)  { fill = DISPLAY_BUFFER_COLS - 1; }
+            if (fill <= -DISPLAY_BUFFER_COLS) { fill = -(DISPLAY_BUFFER_COLS - 1); }
             break;
 #ifdef USE_UFILESYS
           case 'P':
