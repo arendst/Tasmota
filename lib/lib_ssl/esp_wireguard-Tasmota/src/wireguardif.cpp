@@ -974,7 +974,7 @@ static void wireguardif_tmr(void *arg) {
 
 
 err_t wireguardif_init(struct netif *netif) {
-	err_t result;
+	err_t result = ERR_MEM;
 	esp_err_t err = ESP_FAIL;
 	struct wireguardif_init_data *init_data;
 	wireguard_device_t *device;
