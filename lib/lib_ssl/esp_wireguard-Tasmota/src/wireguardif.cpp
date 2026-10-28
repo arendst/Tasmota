@@ -1078,6 +1078,8 @@ err_t wireguardif_init(struct netif *netif) {
 
 						result = ERR_OK;
 					} else {
+						// wireguard_device_init() copies the private key before it can fail
+						crypto_zero(device, sizeof(wireguard_device_t));
 						mem_free(device);
 						device = NULL;
 						udp_remove(udp);
@@ -1129,6 +1131,8 @@ void wireguardif_shutdown(struct netif *netif) {
 
 void wireguardif_fini(struct netif *netif) {
 	if (netif && netif->state) {
+		// Wipe the private key, cookie secret and peer state before releasing the memory
+		crypto_zero(netif->state, sizeof(wireguard_device_t));
 		free(netif->state);
 		netif->state = NULL;
 	}
