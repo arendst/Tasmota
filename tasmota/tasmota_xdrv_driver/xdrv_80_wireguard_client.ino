@@ -254,18 +254,21 @@ void CmndWGStop(void) {
     return;
   }
 
-  // Always cancel automatic retries, including after a failed AutoConnect
-  // or a failed DDNS-triggered reconnect.
-  Wireguard.auto_connect = false;
-  Wireguard.reconnect_pending = false;
-  Wireguard.recheck_counter = 0;
-
-  if (!Wireguard.started && !Wireguard.ctx.netif) {
+  // Cancel a running tunnel, or a retry that has not brought the interface up yet
+  // (failed AutoConnect or a failed DDNS-triggered reconnect).
+  bool retry_pending = Wireguard.auto_connect || Wireguard.reconnect_pending;
+  bool interface_up = Wireguard.started || Wireguard.ctx.netif;
+  if (!retry_pending && !interface_up) {
     ResponseCmndChar(PSTR("Not started"));
     return;
   }
 
-  WireguardStop();
+  Wireguard.auto_connect = false;
+  Wireguard.reconnect_pending = false;
+  Wireguard.recheck_counter = 0;
+  if (interface_up) {
+    WireguardStop();
+  }
   ResponseCmndChar(PSTR("Success"));
 }
 
