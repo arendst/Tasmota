@@ -903,11 +903,11 @@ static bool should_send_keepalive(wireguard_peer_t *peer) {
 	return result;
 }
 
-static bool should_destroy_current_keypair(wireguard_peer_t *peer) {
+static bool should_destroy_keypair(wireguard_keypair_t *keypair) {
 	bool result = false;
-	if (peer->curr_keypair.valid &&
-			(wireguard_expired(peer->curr_keypair.keypair_millis, REJECT_AFTER_TIME) ||
-			(peer->curr_keypair.sending_counter >= REJECT_AFTER_MESSAGES))
+	if (keypair->valid &&
+			(wireguard_expired(keypair->keypair_millis, REJECT_AFTER_TIME) ||
+			(keypair->sending_counter >= REJECT_AFTER_MESSAGES))
 		) {
 		result = true;
 	}
@@ -945,9 +945,13 @@ static void wireguardif_tmr(void *arg) {
 				peer->ip = peer->connect_ip;
 				peer->port = peer->connect_port;
 			}
-			if (should_destroy_current_keypair(peer)) {
-				// Destroy current keypair
+			if (should_destroy_keypair(&peer->curr_keypair)) {
+				// Destroy expired or exhausted current keypair
 				keypair_destroy(&peer->curr_keypair);
+			}
+			if (should_destroy_keypair(&peer->prev_keypair)) {
+				// Previous keypairs have the same rejection limits as current ones
+				keypair_destroy(&peer->prev_keypair);
 			}
 			if (should_send_keepalive(peer)) {
 				wireguardif_send_keepalive(device, peer);

@@ -138,7 +138,7 @@ static esp_err_t esp_wireguard_connect_internal(wireguard_ctx_t *ctx, const ip_a
     esp_err_t err = ESP_FAIL;
     err_t lwip_err = -1;
 
-    if (!ctx) {
+    if (!ctx || !ctx->config) {
         err = ESP_ERR_INVALID_ARG;
         goto fail;
     }
