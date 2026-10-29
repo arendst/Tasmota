@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - ESP32-S3 RGB display permanent image shift after flash writes, DMA sync guard
 - Boot loop when using a literal WIFI_DEFAULT_HOSTNAME
 - Wireguard reconnect when a dynamic DNS `Endpoint` changes IP
+- WebAsync rare crash and race conditions
 
 ### Removed
 
