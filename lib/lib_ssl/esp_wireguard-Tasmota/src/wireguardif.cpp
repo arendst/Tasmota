@@ -903,11 +903,11 @@ static bool should_send_keepalive(wireguard_peer_t *peer) {
 	return result;
 }
 
-static bool should_destroy_current_keypair(wireguard_peer_t *peer) {
+static bool should_destroy_keypair(wireguard_keypair_t *keypair) {
 	bool result = false;
-	if (peer->curr_keypair.valid &&
-			(wireguard_expired(peer->curr_keypair.keypair_millis, REJECT_AFTER_TIME) ||
-			(peer->curr_keypair.sending_counter >= REJECT_AFTER_MESSAGES))
+	if (keypair->valid &&
+			(wireguard_expired(keypair->keypair_millis, REJECT_AFTER_TIME) ||
+			(keypair->sending_counter >= REJECT_AFTER_MESSAGES))
 		) {
 		result = true;
 	}
@@ -945,9 +945,13 @@ static void wireguardif_tmr(void *arg) {
 				peer->ip = peer->connect_ip;
 				peer->port = peer->connect_port;
 			}
-			if (should_destroy_current_keypair(peer)) {
-				// Destroy current keypair
+			if (should_destroy_keypair(&peer->curr_keypair)) {
+				// Destroy expired or exhausted current keypair
 				keypair_destroy(&peer->curr_keypair);
+			}
+			if (should_destroy_keypair(&peer->prev_keypair)) {
+				// Previous keypairs have the same rejection limits as current ones
+				keypair_destroy(&peer->prev_keypair);
 			}
 			if (should_send_keepalive(peer)) {
 				wireguardif_send_keepalive(device, peer);
@@ -970,7 +974,7 @@ static void wireguardif_tmr(void *arg) {
 
 
 err_t wireguardif_init(struct netif *netif) {
-	err_t result;
+	err_t result = ERR_MEM;
 	esp_err_t err = ESP_FAIL;
 	struct wireguardif_init_data *init_data;
 	wireguard_device_t *device;
@@ -1074,6 +1078,8 @@ err_t wireguardif_init(struct netif *netif) {
 
 						result = ERR_OK;
 					} else {
+						// wireguard_device_init() copies the private key before it can fail
+						crypto_zero(device, sizeof(wireguard_device_t));
 						mem_free(device);
 						device = NULL;
 						udp_remove(udp);
@@ -1125,6 +1131,8 @@ void wireguardif_shutdown(struct netif *netif) {
 
 void wireguardif_fini(struct netif *netif) {
 	if (netif && netif->state) {
+		// Wipe the private key, cookie secret and peer state before releasing the memory
+		crypto_zero(netif->state, sizeof(wireguard_device_t));
 		free(netif->state);
 		netif->state = NULL;
 	}
