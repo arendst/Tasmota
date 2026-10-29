@@ -697,10 +697,13 @@ extern "C" {
     } else if (be_isbytes(vm, 2)) {
       size_t len = 0;
       const uint8_t * p = (const uint8_t *) be_tobytes(vm, 2, &len);
-      // drž payload, aby ho GC nevyhodil kým beží job
-      be_pushvalue(vm, 2);
-      be_setmember(vm, 1, ".__async_hold");
       int32_t rc = cl->asyncPOSTStart((uint8_t*)p, len);
+      if (rc == 1) {
+        // Keep the payload alive only after the worker accepts ownership.
+        // It remains rooted as argument 2 throughout this native call.
+        be_pushvalue(vm, 2);
+        be_setmember(vm, 1, ".__async_hold");
+      }
       be_pushint(vm, rc);
       be_return(vm);
     }

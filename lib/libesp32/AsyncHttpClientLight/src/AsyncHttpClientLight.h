@@ -71,6 +71,11 @@
 #define HTTPC_ERROR_READ_TIMEOUT         (-11)
 #endif
 
+// sync call refused: an async job of this client is still running
+#ifndef HTTPC_ERROR_ASYNC_BUSY
+#define HTTPC_ERROR_ASYNC_BUSY           (-12)
+#endif
+
 #ifndef HTTP_TCP_BUFFER_SIZE
 #define HTTP_TCP_BUFFER_SIZE 1460
 #endif
@@ -170,6 +175,9 @@ public:
   void asyncAbort();
 
 private:
+#ifdef ESP32
+  void asyncWaitDone();     // abort + wait for an in-flight async job
+#endif
   int readBodyToStreamString(StreamString& s, int size_limit);
 
   struct IClientLite {
@@ -236,6 +244,8 @@ private:
   int  writeToStreamDataBlock(Stream * stream, int size);
   bool writeAllWithOneReconnect(const uint8_t* data, size_t len, bool allow_retry_if_zero_sent);
 
+  enum AsyncOp_t : uint8_t { AOP_NONE=0, AOP_GET=1, AOP_POST=2 };
+
 #ifdef ESP32
   struct Job {
     typedef int (*Fn)(void* arg);
@@ -250,7 +260,7 @@ private:
   int  runJob(Job::Fn fn, void* arg);
 
   // Non-blocking job start (for async mode): 1=queued, 0=busy, <0=error.
-  int  startJob(Job::Fn fn, void* arg);
+  int  startJob(Job::Fn fn, void* arg, AsyncOp_t op);
 #endif
 
   struct SendBufArg { AsyncHttpClientLight* self; const char* method; uint8_t* payload; size_t size; };
@@ -318,7 +328,6 @@ private:
   // -------------------------
   // Async internal state
   // -------------------------
-  enum AsyncOp_t : uint8_t { AOP_NONE=0, AOP_GET=1, AOP_POST=2 };
   AsyncOp_t     _asyncOp = AOP_NONE;
   AsyncState_t  _asyncState = ASYNC_IDLE;
   volatile bool _asyncAbortReq = false;
