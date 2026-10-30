@@ -85,8 +85,9 @@ Matter_Plugin (Base Class)
     ├── Matter_Plugin_Sensor_Air_Quality
     │   ├── Matter_Plugin_Bridge_Sensor_Air_Quality
     │   └── Matter_Plugin_Virt_Sensor_Air_Quality
-    └── Matter_Plugin_Sensor_GenericSwitch_Btn
-        └── Matter_Plugin_Virt_Sensor_GenericSwitch_Btn
+    ├── Matter_Plugin_Sensor_GenericSwitch_Btn
+    │   └── Matter_Plugin_Virt_Sensor_GenericSwitch_Btn
+    └── Matter_Plugin_Sensor_Doorbell_Btn
 ```
 
 ## Base Classes
@@ -315,6 +316,17 @@ static var CLUSTERS = { 0x001D: [0,1,2,3] }  # Descriptor cluster
 - **Clusters**: `0x003B` (Switch)
 - **Purpose**: Virtual button endpoint for completed remote gestures
 - **Behavior**: Ignores physical GPIO callbacks; `MtrUpdate` accepts integer `Presses` values from 1 through 5, emits the corresponding Generic Switch events, and returns to released `CurrentPosition = 0`. Omitting `Presses` queries state; invalid values return an error without publishing events.
+
+### Matter_Plugin_Sensor_Doorbell_Btn
+- **File**: `Matter_Plugin_2_Sensor_Doorbell_Btn.be`
+- **Type**: `"doorbell_btn"`
+- **Display Name**: `"Doorbell/Button"`
+- **Parent**: `Matter_Plugin_Device` (not the Generic Switch, so `MultiPressMax` is not inherited)
+- **Matter Device Type**: `0x0148` (Doorbell, revision 2)
+- **Clusters**: `0x003B` (Switch), `0x001E` (Binding)
+- **Features**: MomentarySwitch, MomentarySwitchRelease (`FeatureMap = 0x06`); emits InitialPress and ShortRelease only
+- **Binding**: fabric-scoped table stored in each `Matter_Fabric` (`bindings` member, removed with the fabric, pruned when the endpoint is removed or retyped); writes require a CASE session; not used yet
+- **Limitation**: the mandatory Chime client (`0x0556`) is not implemented, so the endpoint is not a fully conformant Doorbell
 
 ## Plugin Selection Logic
 

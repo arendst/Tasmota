@@ -940,6 +940,212 @@ def test_generic_switch()
 end
 test_generic_switch()
 
+def test_doorbell()
+  # Doorbell is a reduced Switch cluster contract: MS+MSR only (InitialPress
+  # and ShortRelease), no multi-press. Mirrors test_generic_switch's harness.
+  class TestDoorbellEvents
+    var published
+    def init() self.published = [] end
+    def publish_event(endpoint, cluster, event_id, urgent, priority, data0, data1, data2)
+      self.published.push({"endpoint": endpoint, "cluster": cluster, "event": event_id})
+    end
+  end
+
+  class TestDoorbellSessions
+    var fabrics
+    def init(fabrics) self.fabrics = fabrics end
+    def active_fabrics() return self.fabrics end
+  end
+
+  class TestDoorbellDevice : matter.Device
+    var updates
+    def init()
+      self.plugins = []
+      self.events = TestDoorbellEvents()
+      self.updates = []
+    end
+    def attribute_updated(endpoint, cluster, attribute, fabric_specific)
+      self.updates.push([endpoint, cluster, attribute])
+    end
+  end
+
+  var doorbell_device = TestDoorbellDevice()
+  var doorbell = matter.Plugin_Sensor_Doorbell_Btn(doorbell_device, 40, {"button": 1})
+  doorbell_device.plugins = [doorbell]
+
+  var ctx = matter.Path(40, 0x003B, 0x0000)
+  assert(doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val == 2, "NumberOfPositions must be 2")
+  ctx.attribute = 0x0001
+  assert(doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val == 0, "new Doorbell CurrentPosition must start released")
+
+  ctx.attribute = 0xFFFC
+  assert(doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val == 0x06, "FeatureMap must be MS+MSR since ShortRelease is emitted")
+
+  ctx.attribute = 0xFFFA
+  var advertised = []
+  for event : doorbell.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val
+    advertised.push(event.val)
+  end
+  assert(size(advertised) == 2 && advertised.find(1) != nil && advertised.find(3) != nil,
+         "EventList must contain only InitialPress and ShortRelease")
+
+  # Wrong button index is ignored entirely.
+  doorbell_device.button_handler(9, 1, 1, 0)
+  assert(size(doorbell_device.events.published) == 0 && size(doorbell_device.updates) == 0)
+
+  # Press then release emits InitialPress then ShortRelease and tracks position.
+  doorbell_device.button_handler(1, 1, 1, 0)
+  assert(doorbell.shadow_position == 1)
+  assert(size(doorbell_device.events.published) == 1 && doorbell_device.events.published[0]["event"] == 1)
+  doorbell_device.button_handler(1, 1, 0, 0)
+  assert(doorbell.shadow_position == 0)
+  assert(size(doorbell_device.events.published) == 2 && doorbell_device.events.published[1]["event"] == 3)
+
+  # Multi-press status (mode 2) is not declared for this device type: no event, no position change.
+  doorbell_device.events.published.clear()
+  doorbell_device.button_handler(1, 2, 0, 2)
+  assert(size(doorbell_device.events.published) == 0)
+  assert(doorbell.shadow_position == 0)
+  assert(json.load(doorbell.state_json())["Switch"] == 0)
+  print("  local Doorbell initialization, routing and metadata: OK")
+
+  # Binding (0x001E): fabric-scoped list[TargetStruct] stored per fabric.
+  var fabric2 = matter.Fabric(store)
+  fabric2.set_fabric_index(2)
+  var session2 = TestSession(fabric2)
+  doorbell_device.sessions = TestDoorbellSessions([fabric, fabric2])
+
+  def bind_target(node, group, endpoint, cluster)
+    var entry = TLV.Matter_TLV_struct()
+    entry.add_TLV(1, 0x07, node)
+    entry.add_TLV(2, 0x06, group)
+    entry.add_TLV(3, 0x06, endpoint)
+    entry.add_TLV(4, 0x06, cluster)
+    return TLV.parse(entry.tlv2raw())             # decode as received from the wire
+  end
+  var xid = 50
+  # Single-message write: whole list (list_index_present=false), append
+  # (ListIndex=null) or replace/delete at an index. Returns [result, status].
+  def bind_write(sess, entries, index_present, index)
+    var wctx = matter.Path(40, 0x001E, 0x0000)
+    var msg = TestMessage(xid, sess)
+    xid += 1
+    doorbell.begin_write_request(msg)
+    wctx.list_index_present = bool(index_present)
+    wctx.list_index_is_null = bool(index_present) && index == nil
+    wctx.list_index = index
+    wctx.list_write_final = true
+    var data = entries
+    if index_present
+      wctx.write_tlv = entries
+      data = (entries != nil) ? entries.val : nil
+    end
+    var res = doorbell.write_attribute(sess, wctx, data)
+    doorbell.end_write_request(msg, false)
+    return [res, wctx.status]
+  end
+  def bind_read(sess, filtered)
+    var rctx = matter.Path(40, 0x001E, 0x0000)
+    rctx.fabric_filtered = filtered
+    return TLV.parse(doorbell.read_attribute(sess, rctx, TLV.Matter_TLV_item()).tlv2raw())
+  end
+
+  assert(size(bind_read(session, true).val) == 0)
+
+  # Unicast entry, then group entry appended via ListIndex=null.
+  assert(bind_write(session, [bind_target(1234, nil, 1, 0x0556)])[0])
+  assert(size(fabric.get_bindings(40)) == 1)
+  assert(fabric.get_bindings(40)[0]['node'] == int64(1234))
+  assert(bind_write(session, bind_target(nil, 5, nil, 0x0556), true, nil)[0])
+  assert(size(fabric.get_bindings(40)) == 2)
+
+  # A second fabric has its own list: replacing it leaves fabric 1 intact.
+  assert(bind_write(session2, [bind_target(2222, nil, 1, 0x0556)])[0])
+  assert(size(fabric.get_bindings(40)) == 2 && size(fabric2.get_bindings(40)) == 1)
+  var filtered2 = bind_read(session2, true).val
+  assert(size(filtered2) == 1 && filtered2[0].findsubval(1) == int64(2222) && filtered2[0].findsubval(0xFE) == 2,
+         "fabric-filtered read returns only the accessing fabric")
+  assert(size(bind_read(session2, false).val) == 3, "unfiltered read returns all fabrics")
+  # Index 0 of fabric 2 is fabric 2's own entry.
+  assert(bind_write(session2, TLV.Matter_TLV_item().set(0x14, nil), true, 0)[0])
+  assert(size(fabric.get_bindings(40)) == 2 && size(fabric2.get_bindings(40)) == 0)
+
+  # TargetStruct conformance: {Group,[Cluster]} or {Node,Endpoint,[Cluster]}.
+  for bad : [bind_target(1, 1, nil, nil), bind_target(1, nil, nil, nil),
+             bind_target(nil, 5, 1, nil), bind_target(nil, 0, nil, nil),
+             bind_target(nil, nil, 1, nil)]
+    var r = bind_write(session, [bad])
+    assert(!r[0] && r[1] == 0x87, "invalid TargetStruct must be rejected")
+  end
+  assert(size(fabric.get_bindings(40)) == 2)
+
+  # A client FabricIndex is ignored: the accessing fabric owns the entry.
+  var foreign = bind_target(4444, nil, 2, nil)
+  foreign.add_TLV(0xFE, 0x06, 7)
+  assert(bind_write(session, foreign, true, nil)[0])
+  var filtered1 = bind_read(session, true).val
+  assert(size(filtered1) == 3 && filtered1[2].findsubval(0xFE) == 1)
+
+  # PASE (no fabric) cannot write fabric-scoped data.
+  var no_fabric = bind_write(TestSession(nil), [bind_target(1, nil, 1, nil)])
+  assert(!no_fabric[0] && no_fabric[1] == 0x7E)
+
+  # Capacity: RESOURCE_EXHAUSTED for a whole list or an append past the cap.
+  var many = []
+  for i : 1..doorbell.MAX_BINDINGS + 1   many.push(bind_target(i, nil, 1, nil)) end
+  var too_many = bind_write(session, many)
+  assert(!too_many[0] && too_many[1] == 0x89)
+  many.pop()
+  assert(bind_write(session, many)[0])
+  var full = bind_write(session, bind_target(99, nil, 1, nil), true, nil)
+  assert(!full[0] && full[1] == 0x89)
+  assert(size(fabric.get_bindings(40)) == doorbell.MAX_BINDINGS)
+
+  # A malformed chunk aborts a chunked transaction: the staged empty list
+  # of the first message is not committed.
+  var cmsg = TestMessage(90, session)
+  var cctx = matter.Path(40, 0x001E, 0x0000)
+  doorbell.begin_write_request(cmsg)
+  cctx.list_index_present = false
+  cctx.list_write_final = false
+  assert(doorbell.write_attribute(session, cctx, []))
+  doorbell.end_write_request(cmsg, true)
+  doorbell.begin_write_request(cmsg)
+  cctx = matter.Path(40, 0x001E, 0x0000)
+  cctx.list_index_present = true
+  cctx.list_index_is_null = true
+  cctx.list_write_final = true
+  cctx.write_tlv = TLV.Matter_TLV_item().set(0x06, 5)
+  assert(!doorbell.write_attribute(session, cctx, 5) && cctx.status == 0x8D)
+  doorbell.end_write_request(cmsg, false)
+  assert(size(fabric.get_bindings(40)) == doorbell.MAX_BINDINGS)
+
+  # 64-bit node ids, including one with the high bit set, survive fabric
+  # persistence and are encoded on 8 bytes.
+  var big_node = int64.fromu32(0x55667788, 0x11223344)
+  var high_node = int64.fromu32(0x00000001, 0xFFFFFFF0)
+  assert(bind_write(session, [bind_target(big_node, nil, 1, 0x0556), bind_target(high_node, nil, 2, nil)])[0])
+  # Same encoding as Fabric.writejson() for the `bindings` member (the test
+  # Fabric subclass hides parent members from introspection-based tojson()).
+  var persisted = json.load('{"fabric_index":1,"bindings":' + json.dump(fabric.bindings) + '}')
+  var restored = matter.Fabric.fromjson(store, persisted)
+  assert(restored.get_bindings(40)[0]['node'] == big_node)
+  assert(restored.get_bindings(40)[1]['node'] == high_node)
+  var big_raw = bind_read(session, true).val[0].findsub(1)
+  assert(big_raw.typ == 0x07 && big_raw.val == big_node)
+
+  # Removing or retyping the endpoint drops its bindings in every fabric.
+  assert(bind_write(session2, [bind_target(2222, nil, 1, nil)])[0])
+  doorbell_device.prune_bindings()
+  assert(size(fabric.get_bindings(40)) == 2 && size(fabric2.get_bindings(40)) == 1)
+  doorbell_device.plugins = []
+  doorbell_device.prune_bindings()
+  assert(size(fabric.get_bindings(40)) == 0 && size(fabric2.get_bindings(40)) == 0)
+  doorbell_device.plugins = [doorbell]
+  print("  Doorbell Binding fabric scoping, validation and persistence: OK")
+end
+test_doorbell()
+
 # ConfigurationVersion changes with endpoint composition and is persisted.
 var config_device = TestConfigurationDevice()
 config_device.signal_endpoints_changed()

@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - BLE timeout and eQ3 TRV enhancements (#25173)
 - TuyaMCU pace outgoing frames so the MCU is never written to back-to-back (#25151)
 - Heap Map optional feature fur detailed memory usage at boot
+- Matter Doorbell (0x0148) device type mapped to a Button, with fabric-scoped Binding storage (Chime client not yet implemented)
 
 ### Breaking Changed
 - BTHome un-reverse MAC address usage for command `MI32Keys` to make it consistent
