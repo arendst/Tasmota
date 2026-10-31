@@ -90,6 +90,7 @@ class be_class_webclient (scope: global, name: webclient) {
     collect_headers, func(wc_collect_headers)
     get_header, func(wc_get_header)
 
+    connected, func(wc_connected)
     close, func(wc_close)
     // header helpers (both spellings kept for compatibility)
     addheader, func(wc_addheader)

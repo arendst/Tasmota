@@ -4877,7 +4877,7 @@ next_line:
         }
 
 #ifdef ESP8266
-        if (mp->meter_ss->begin(mp->params)) {
+        if (mp->meter_ss->begin(mp->params, smode)) {
           mp->meter_ss->flush();
         }
         if (mp->meter_ss->hardwareSerial()) {

@@ -6,7 +6,7 @@ Use this as the authoring prompt for a new file in `tasmota/displaydesc/`. It de
 
 - Store the file as `/display.ini`; enable uDisplay with any GPIO set to `Option A3`. Terminate it with `#`.
 - `:H` is required and must be first. Put `:F` before `:A`. Fields are comma-separated.
-- Do **not** use spaces in descriptor lines or inline comments: a space ends parsing for that line. A whole line beginning with `;` is a comment. uTouch instruction lines are the exception: they require single spaces between opcode and operands.
+- Do **not** use spaces in descriptor lines or comments: a space ends the line, and the text after it is parsed as a new data line of the current section. This applies to `;` comment lines too. For example, a spaced comment after `:B` overwrote the `:B` values and broke the color byte order. Spaced comments are harmless only before `:H`. uTouch instruction lines are the exception: they require single spaces between opcode and operands.
 - Numbers are decimal except controller bytes, addresses, `:0`–`:3`, and `:b`, which are hexadecimal. Hex accepts `2A` or `0x2A`; write controller bytes as two uppercase hex digits.
 - `*` substitutes the matching Tasmota GPIO assignment; `-1` means not connected. Missing values become `255`, so always provide flag fields.
 - Source priority is `/display.ini`, then Scripter `>d`, disabled `Rule3` (all spaces become line breaks, so no uTouch scripts), then `DSP_ROM_DESC`. In-memory sources are limited to 999 bytes; keep `DSP_ROM_DESC` below 1000 bytes.
@@ -20,6 +20,7 @@ Use this as the authoring prompt for a new file in `tasmota/displaydesc/`. It de
 | `I2C` / `I2C2` | `addr(H),scl,sda,rst` | `I2C2` selects bus 2. `*` maps SCL/SDA and `Display Rst`. |
 | `SPI` | `bus,cs,clk,mosi,dc,bl,rst,miso,mhz` | Bus `1` HW SPI, `2` HW HSPI, `3` fast software SPI (GPIO < 32), `4` slow software SPI. `dc=-1` selects 3-wire 9-bit SPI; `miso` is the e-paper BUSY pin. |
 | `PAR` | `8\|16,rst,cs,dc,wr,rd,bl,d0..d7[,d8..d15],mhz` | ESP32-S3 I80 only; use explicit pins. |
+| `QSPI` | `bus,cs,clk,d0,d1,d2,d3,bl,rst,mhz[,lines]` | ESP32 only; explicit pins (`*` not substituted). Bus `1` SPI2, `2` SPI3. Optional `lines`: `4` (default) sends pixels on D0–D3 with `32 00 2C 00`; `1` sends them on D0 only with `02 00 2C 00`, about 4x slower, as a workaround when D1–D3 are unreliable. For QSPI AMOLED controllers (SH8601, CO5300...): `:I`, `:A`, `:R`, `:0`–`:3`, `:i`, `:o`/`:O`, `:D` use plain DCS bytes; the driver adds the `02 00 cmd 00` / `32 00 2C 00` framing. |
 | `RGB` | `de,vsync,hsync,pclk,bl,B0..B4,G0..G5,R0..R4,mhz` | ESP32-S3; use explicit pins. Also write `:V`; use `:B,...,02` for this pin order. |
 | `DSI` | `lanes,te,bl,rst,ldo_ch,ldo_mv,pclk_hz,lane_mbps,rgb_order,endian` | ESP32-P4 only. `pclk_hz` is Hz; `te`, `rgb_order`, and `endian` are presently unused. Also write `:V`. |
 
@@ -85,7 +86,7 @@ Write only options that apply to the chosen bus/controller. For a color SPI/PAR 
 | `:R` | `madctl[,startline]` (H) | Rotation register, normally `36`; optional start-line command. |
 | `:0`–`:3` | `madctl,xoff,yoff,touch` (H) | Per rotation. Offsets are hex. On RGB, use only `:n,touch`. |
 | `:P` | `bits` (D) | Pixel transfer size; default 16, use `18` for RGB666 panels such as SPI ILI9488. |
-| `:D` | `opcode` (H) | Dimmer command plus brightness byte; SPI/I2C only. |
+| `:D` | `opcode` (H) | Dimmer command plus brightness byte; SPI/QSPI/I2C only. |
 | `:b` | `flags` (H) | Backlight: bit `01` active low; bit `02` digital on/off only. |
 | `:B` | `lines,flags` (D) | LVGL buffer lines (default 40). Flags: `02` swap color bytes, `08` e-paper BUSY active low, `16` invert monochrome B/W, `32` use PSRAM buffers. Bit `01` DMA has no current effect. |
 | `:V` RGB | `hpol,hfp,hpw,hbp,vpol,vfp,vpw,vbp,pclk_neg` (D) | `0` polarity means idle low. |
@@ -133,11 +134,15 @@ Use uTouch rather than legacy `:TI`, `:TS`, and `:TR`; legacy tags require optio
 - SPI form: `:UTI,name,S1,cs,rst,irq`; bus numbering matches `:H`; `*` maps to `TS SPI CS`, `TS RST`, and `TS IRQ`.
 - Resistive PAR form: `:UTI,name,R`.
 - An IRQ means `:UTT` runs only after an interrupt. Each script has a 64-byte compiled limit; keep it short.
+- Scripts are polled every 50 ms. A failed or short I2C read ends the script with result `0` and clears `A[]`, so `:UTT` reports "not touched" instead of stale data.
+- Operands are separated by single spaces. A single `;` line inside a script is skipped, but a second consecutive `;` line and any text after the operands are scanned for opcode names. Prefer `;` comment lines before `:UTI`.
+- There is no shift opcode: `SCL 0 16` multiplies `R` by 16 (shift left 4), `AND` masks it.
 
 | Opcode | Parameters | Effect |
 |---|---|---|
 | `RD` / `RDM` | `reg(H)` / `reg(H),count(D)` | Read 1 / many bytes from an 8-bit I2C register into `A[]`. |
 | `RDW` / `RDWM` | `reg(H)` / `reg(H),count(D)` | Same with a 16-bit register. |
+| `RDL` / `RDLM` | `reg(H)` / `reg(H),count(D)` | Same with a 32-bit big-endian register address (ex: CHSC5816). |
 | `WR` / `WRW` | `reg,value` (H) | Write to 8-/16-bit I2C register. |
 | `CP`, `CPM`, `CPR` | hex values | Compare `A[0]`, any listed value (`CPM` count is hex), or `R`. |
 | `MV` | `index(D),mode(D)` | Copy `A[index]` to `R`: mode 1 byte, 2 big-endian word, 3 little-endian word. |

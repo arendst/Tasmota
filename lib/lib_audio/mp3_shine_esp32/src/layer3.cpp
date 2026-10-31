@@ -10,6 +10,7 @@
 #include "l3loop.h"
 #include "bitstream.h"
 #include "l3bitstream.h"
+#include "esp_cpu.h"
 #include "esp_heap_caps.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
@@ -226,8 +227,7 @@ Counters 2664123380 : 2664123448 : 2666717886 : 2668665908 : 2668859025
 
 
 static unsigned char *shine_encode_buffer_internal(shine_global_config *config, int *written, int stride) {
-  counter[0] = portGET_RUN_TIME_COUNTER_VALUE();      // TASMOTA more portable solution
-  // counter[0] = xthal_get_ccount();
+  counter[0] = (uint32_t)esp_cpu_get_cycle_count();
   if(config->mpeg.frac_slots_per_frame) {
     config->mpeg.padding   = (config->mpeg.slot_lag <= (config->mpeg.frac_slots_per_frame - 1.0));
     config->mpeg.slot_lag += (config->mpeg.padding - config->mpeg.frac_slots_per_frame);
@@ -235,22 +235,18 @@ static unsigned char *shine_encode_buffer_internal(shine_global_config *config, 
 
   config->mpeg.bits_per_frame = 8*(config->mpeg.whole_slots_per_frame + config->mpeg.padding);
   config->mean_bits = (config->mpeg.bits_per_frame - config->sideinfo_len)/config->mpeg.granules_per_frame;
-  counter[1] = portGET_RUN_TIME_COUNTER_VALUE();      // TASMOTA more portable solution
-  // counter[1] = xthal_get_ccount();
+  counter[1] = (uint32_t)esp_cpu_get_cycle_count();
   /* apply mdct to the polyphase output */
   // put on core 1
   shine_mdct_sub(config, stride);
-  counter[2] = portGET_RUN_TIME_COUNTER_VALUE();      // TASMOTA more portable solution
-  // counter[2] = xthal_get_ccount();
+  counter[2] = (uint32_t)esp_cpu_get_cycle_count();
   /* bit and noise allocation */
   //put on core 0
   shine_iteration_loop(config);
-  counter[3] = portGET_RUN_TIME_COUNTER_VALUE();      // TASMOTA more portable solution
-  // counter[3] = xthal_get_ccount();
+  counter[3] = (uint32_t)esp_cpu_get_cycle_count();
   /* write the frame to the bitstream */
   shine_format_bitstream(config);
-  counter[4] = portGET_RUN_TIME_COUNTER_VALUE();      // TASMOTA more portable solution
-  // counter[4] = xthal_get_ccount();
+  counter[4] = (uint32_t)esp_cpu_get_cycle_count();
   /* Return data. */
   *written = config->bs.data_position;
   config->bs.data_position = 0;

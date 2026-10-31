@@ -167,7 +167,7 @@ bool XnrgCall(uint32_t function) {
 
   if (FUNC_PRE_INIT == function) {
     for (uint32_t x = 0; x < xnrg_present; x++) {
-      xnrg_func_ptr[x](function);
+      HEAP_MAP_CALL("xnrg", (TasmotaGlobal.energy_driver) ? TasmotaGlobal.energy_driver : (HEAP_MAP_ID_POS | x), function, xnrg_func_ptr[x](function));
       if (TasmotaGlobal.energy_driver) {
         xnrg_active = x;
         return true;  // Stop further driver investigation
@@ -175,7 +175,7 @@ bool XnrgCall(uint32_t function) {
     }
   }
   else if (TasmotaGlobal.energy_driver) {
-    return xnrg_func_ptr[xnrg_active](function);
+    return HEAP_MAP_CALL("xnrg", TasmotaGlobal.energy_driver, function, xnrg_func_ptr[xnrg_active](function));
   }
   return false;
 }

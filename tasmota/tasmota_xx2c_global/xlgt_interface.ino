@@ -99,7 +99,7 @@ bool XlgtCall(uint32_t function) {
 
   if (FUNC_MODULE_INIT == function) {
     for (uint32_t x = 0; x < xlgt_present; x++) {
-      xlgt_func_ptr[x](function);
+      HEAP_MAP_CALL("xlgt", (TasmotaGlobal.light_driver) ? TasmotaGlobal.light_driver : (HEAP_MAP_ID_POS | x), function, xlgt_func_ptr[x](function));
       if (TasmotaGlobal.light_driver) {
         xlgt_active = x;
         return true;  // Stop further driver investigation
@@ -107,7 +107,7 @@ bool XlgtCall(uint32_t function) {
     }
   }
   else if (TasmotaGlobal.light_driver) {
-    return xlgt_func_ptr[xlgt_active](function);
+    return HEAP_MAP_CALL("xlgt", TasmotaGlobal.light_driver, function, xlgt_func_ptr[xlgt_active](function));
   }
   return false;
 }

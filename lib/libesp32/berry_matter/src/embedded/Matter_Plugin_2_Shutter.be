@@ -309,6 +309,17 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   end
 
   #############################################################
+  # get_accepted_commands
+  #
+  # Window Covering: UpOrOpen, DownOrClose, StopMotion, GoToLiftPercentage
+  def get_accepted_commands(cluster)
+    if cluster == 0x0102
+      return bytes("00010205")
+    end
+    return super(self).get_accepted_commands(cluster)
+  end
+
+  #############################################################
   # parse sensor
   #
   # parse the output from `ShutterPosition`

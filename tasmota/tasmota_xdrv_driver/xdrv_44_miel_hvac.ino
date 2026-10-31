@@ -68,6 +68,13 @@
  *              RX stream resyncs byte-by-byte on a mismatch, replies wait the RTU
  *              turnaround silence and are dropped once the master has already re-polled -
  *              keeps a shared bus and rates above 9600 baud reliable
+ *   Task       the RS485 port is served by its own FreeRTOS task, so the slave keeps
+ *              answering while the main loop is blocked (WiFi / MQTT reconnect, flash
+ *              writes).  Reads come from a register snapshot the main loop refreshes
+ *              every ~25 ms and after every write.  Writes are executed by the main loop
+ *              (the task waits up to 150 ms for the result and returns the exception, if
+ *              any); if the main loop is stalled the write is acknowledged and applied
+ *              as soon as it runs again.  Snapshot older than 30 s -> exception 04
  *
  *   Addresses below are the raw 0-based protocol offset used on the wire, with the
  *   5-digit Modicon / PLC address in ().
@@ -820,27 +827,73 @@ struct miel_hvac_capabilities
 
 #if defined(USE_MIEL_HVAC_MODBUS_SLAVE) && defined(ESP32)
 /*
- * Modbus RTU slave state.  A second RS485 serial port that exposes every
- * driver state as read registers and every driver function as write
- * registers/coils, so the unit can be driven directly from a PLC.
+ * Modbus RTU slave state.  A second RS485 port that exposes every driver state as
+ * read registers and every driver function as write registers/coils, so the unit can
+ * be driven directly from a PLC.
+ *
+ * The RS485 side runs in its own FreeRTOS task, so a stall of the Tasmota main loop
+ * (WiFi / MQTT reconnect, flash writes, ...) does not silence the slave.  The task
+ * only touches data of its own:
+ *   - reads are answered from a snapshot of the register map that the main loop
+ *     refreshes every few milliseconds (and straight after every write),
+ *   - writes are queued to the main loop, which runs the miel_hvac_apply_* setters
+ *     exactly as the console commands do, and the task replies with the result.
+ * Nothing of the driver state is shared between the two threads except the snapshot
+ * (guarded by a mutex), the write queue and a few counters.
  */
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/queue.h>
+#include <freertos/semphr.h>
+
 #define MIEL_HVAC_MB_BUFLEN           260
 #define MIEL_HVAC_MB_DEFAULT_ADDRESS  1
 #define MIEL_HVAC_MB_DEFAULT_BAUDRATE 9600
 #define MIEL_HVAC_MB_MIN_BAUDRATE     1200
 #define MIEL_HVAC_MB_MAX_BAUDRATE     115200
 
+#define MIEL_HVAC_MB_INPUT_COUNT      0x100   /* input registers 0x0000..0x00ff */
+#define MIEL_HVAC_MB_HOLD_COUNT       0x1a    /* holding registers 0x0000..0x0019 */
+#define MIEL_HVAC_MB_DI_COUNT         7       /* discrete inputs 0..6 */
+#define MIEL_HVAC_MB_COIL_COUNT       5       /* coils 0..4 */
+
+#define MIEL_HVAC_MB_SNAP_PERIOD_MS   25      /* main loop refreshes the snapshot this often */
+#define MIEL_HVAC_MB_SNAP_MAX_AGE_MS  30000   /* older than this the slave answers "failure" */
+#define MIEL_HVAC_MB_WRITE_WAIT_MS    150     /* how long the task waits for a write result */
+#define MIEL_HVAC_MB_WRITE_QUEUE      4
+#define MIEL_HVAC_MB_TASK_STACK       4096
+#define MIEL_HVAC_MB_TASK_PRIO        2
+
 /* Modbus exception codes */
 #define MIEL_HVAC_MB_EXC_FUNCTION     0x01
 #define MIEL_HVAC_MB_EXC_ADDRESS      0x02
 #define MIEL_HVAC_MB_EXC_VALUE        0x03
 #define MIEL_HVAC_MB_EXC_FAILURE      0x04
+#define MIEL_HVAC_MB_EXC_BUSY         0x06
+
+/* Register map snapshot, built by the main loop and read by the RS485 task. */
+struct miel_hvac_mb_snap
+{
+	uint16_t in[MIEL_HVAC_MB_INPUT_COUNT];
+	uint16_t hold[MIEL_HVAC_MB_HOLD_COUNT];
+	uint8_t  di;                   /* discrete inputs, bit n = input n */
+	uint8_t  coil;                 /* coils, bit n = coil n */
+};
+
+/* A write request handed from the RS485 task to the main loop (PDU without CRC). */
+struct miel_hvac_mb_wreq
+{
+	uint32_t seq;
+	uint16_t len;
+	uint8_t  broadcast;
+	uint8_t  pdu[MIEL_HVAC_MB_BUFLEN];
+};
 
 struct miel_hvac_mb_softc
 {
 	TasmotaSerial *sc_serial;
 	int8_t   sc_txen_pin;
-	uint8_t  sc_address;
+	volatile uint8_t sc_address;
 	uint8_t  sc_sconfig;
 	uint32_t sc_baudrate;
 	uint32_t sc_t35_us;      /* 3.5-char inter-frame gap, microseconds */
@@ -848,10 +901,36 @@ struct miel_hvac_mb_softc
 	uint16_t sc_len;
 	bool     sc_no_reply;    /* suppress the response for a stale request */
 	uint8_t  sc_buf[MIEL_HVAC_MB_BUFLEN];
-	uint32_t sc_requests;
-	uint32_t sc_crc_errors;
-	uint32_t sc_exceptions;
-	uint32_t sc_overruns;
+	volatile uint32_t sc_requests;
+	volatile uint32_t sc_crc_errors;
+	volatile uint32_t sc_exceptions;
+	volatile uint32_t sc_overruns;
+
+	/*
+	 * Execution context used by the main loop to run a queued write with the
+	 * same request handlers as before: the reply is captured instead of
+	 * transmitted and handed back to the RS485 task.
+	 */
+	bool     sc_capture;
+	uint16_t sc_caplen;
+	uint8_t  sc_cap[MIEL_HVAC_MB_BUFLEN];
+
+	/* RS485 task side (RS485 context only) */
+	struct miel_hvac_mb_softc *sc_x;       /* execution context */
+	TaskHandle_t       sc_task;
+	volatile bool      sc_stop;
+	volatile bool      sc_task_done;
+	QueueHandle_t      sc_wq;              /* struct miel_hvac_mb_wreq */
+	SemaphoreHandle_t  sc_wdone;           /* a write result is ready */
+	SemaphoreHandle_t  sc_snap_mux;
+	uint32_t           sc_wseq;
+	volatile uint32_t  sc_wres_seq;
+	volatile uint16_t  sc_wres_len;
+	uint8_t            sc_wres[MIEL_HVAC_MB_BUFLEN];
+	struct miel_hvac_mb_snap sc_snap;
+	volatile uint32_t  sc_snap_ms;         /* millis() of the last snapshot */
+	volatile bool      sc_snap_valid;
+	uint32_t           sc_snap_built_ms;
 };
 #endif  /* USE_MIEL_HVAC_MODBUS_SLAVE && ESP32 */
 
@@ -2934,6 +3013,16 @@ miel_hvac_mb_reply(struct miel_hvac_mb_softc *mb, uint8_t *buf, uint16_t len)
 	uint16_t crc;
 	uint32_t since, quiet;
 
+	if (mb->sc_capture)
+	{
+		/* write run on the main loop: hand the PDU back to the RS485 task */
+		if (len > sizeof(mb->sc_cap))
+			len = sizeof(mb->sc_cap);
+		memcpy(mb->sc_cap, buf, len);
+		mb->sc_caplen = len;
+		return;
+	}
+
 	if (mb->sc_no_reply)
 		return;   /* master already re-polled - a late answer would derail it */
 
@@ -2942,10 +3031,10 @@ miel_hvac_mb_reply(struct miel_hvac_mb_softc *mb, uint8_t *buf, uint16_t len)
 	buf[len++] = (uint8_t)(crc >> 8);
 
 	/*
-	 * Modbus RTU turnaround: keep quiet for ~3.5 char times after the last
-	 * received byte so the master (and an auto-direction transceiver) has
-	 * switched from transmit to receive before the response starts.
-	 */
+     * Modbus RTU turnaround: keep quiet for ~3.5 char times after the last
+     * received byte so the master (and an auto-direction transceiver) has
+     * switched from transmit to receive before the response starts.
+     */
 	since = micros() - mb->sc_last_us;
 	quiet = mb->sc_t35_us > 3500 ? 3500 : mb->sc_t35_us;
 	if (since < quiet)
@@ -2961,10 +3050,10 @@ miel_hvac_mb_reply(struct miel_hvac_mb_softc *mb, uint8_t *buf, uint16_t len)
 	else
 	{
 		/*
-		 * Auto-direction transceiver: just queue the frame.  flush() is
-		 * avoided here because on ESP32 it also discards the RX buffer,
-		 * which would drop the next request on a busy bus.
-		 */
+         * Auto-direction transceiver: just queue the frame.  flush() is
+         * avoided here because on ESP32 it also discards the RX buffer,
+         * which would drop the next request on a busy bus.
+         */
 		mb->sc_serial->write(buf, len);
 	}
 }
@@ -2978,7 +3067,9 @@ miel_hvac_mb_exception(struct miel_hvac_mb_softc *mb, uint8_t fc, uint8_t code)
 	r[1] = fc | 0x80;
 	r[2] = code;
 
-	mb->sc_exceptions++;
+	/* the counter belongs to the RS485 task, which counts the captured ones itself */
+	if (!mb->sc_capture)
+		mb->sc_exceptions++;
 	miel_hvac_mb_reply(mb, r, 3);
 }
 
@@ -3273,12 +3364,74 @@ miel_hvac_mb_write_coil(struct miel_hvac_softc *sc, uint16_t addr, bool on)
 	return (MIEL_HVAC_APPLY_BAD_ADDR);
 }
 
-static void
-miel_hvac_mb_do_read_regs(struct miel_hvac_softc *sc, uint8_t fc)
+/*
+ * Copy the register snapshot.  False when the main loop has not refreshed it for
+ * MIEL_HVAC_MB_SNAP_MAX_AGE_MS (it is hung), so the master gets an exception
+ * rather than readings of unknown age.
+ */
+static bool
+miel_hvac_mb_snap_get(struct miel_hvac_mb_softc *mb, struct miel_hvac_mb_snap *out)
 {
-	struct miel_hvac_mb_softc *mb = sc->sc_mb;
+	bool ok = false;
+
+	if (xSemaphoreTake(mb->sc_snap_mux, pdMS_TO_TICKS(20)) != pdTRUE)
+		return (false);
+	if (mb->sc_snap_valid
+		&& (uint32_t)(millis() - mb->sc_snap_ms) < MIEL_HVAC_MB_SNAP_MAX_AGE_MS)
+	{
+		memcpy(out, &mb->sc_snap, sizeof(*out));
+		ok = true;
+	}
+	xSemaphoreGive(mb->sc_snap_mux);
+
+	return (ok);
+}
+
+/* The diagnostics counters belong to the RS485 task, so they are read live. */
+static uint16_t
+miel_hvac_mb_snap_input(struct miel_hvac_mb_softc *mb,
+	const struct miel_hvac_mb_snap *snap, uint16_t addr, bool *ok)
+{
+    *ok = true;
+
+	switch (addr)
+	{
+	case 0x0050: return ((uint16_t)mb->sc_requests);
+	case 0x0051: return ((uint16_t)mb->sc_crc_errors);
+	case 0x0052: return ((uint16_t)mb->sc_exceptions);
+	case 0x0053: return ((uint16_t)mb->sc_overruns);
+	}
+	if (addr < MIEL_HVAC_MB_INPUT_COUNT)
+		return (snap->in[addr]);
+
+    *ok = false;
+	return (0);
+}
+
+static uint16_t
+miel_hvac_mb_snap_holding(struct miel_hvac_mb_softc *mb,
+	const struct miel_hvac_mb_snap *snap, uint16_t addr, bool *ok)
+{
+    *ok = true;
+
+	/* mirrors of input registers 0x0050 / 0x0051 (see miel_hvac_mb_reg_holding) */
+	if (addr == 0x0015)
+		return ((uint16_t)mb->sc_requests);
+	if (addr == 0x0016)
+		return ((uint16_t)mb->sc_crc_errors);
+	if (addr < MIEL_HVAC_MB_HOLD_COUNT)
+		return (snap->hold[addr]);
+
+    *ok = false;
+	return (0);
+}
+
+static void
+miel_hvac_mb_do_read_regs(struct miel_hvac_mb_softc *mb, uint8_t fc)
+{
 	uint16_t start = ((uint16_t)mb->sc_buf[2] << 8) | mb->sc_buf[3];
 	uint16_t count = ((uint16_t)mb->sc_buf[4] << 8) | mb->sc_buf[5];
+	struct miel_hvac_mb_snap snap;
 	uint8_t r[MIEL_HVAC_MB_BUFLEN];
 	uint16_t i;
 
@@ -3289,6 +3442,11 @@ miel_hvac_mb_do_read_regs(struct miel_hvac_softc *sc, uint8_t fc)
 		miel_hvac_mb_exception(mb, fc, MIEL_HVAC_MB_EXC_VALUE);
 		return;
 	}
+	if (!miel_hvac_mb_snap_get(mb, &snap))
+	{
+		miel_hvac_mb_exception(mb, fc, MIEL_HVAC_MB_EXC_FAILURE);
+		return;
+	}
 
 	r[0] = mb->sc_address;
 	r[1] = fc;
@@ -3297,8 +3455,8 @@ miel_hvac_mb_do_read_regs(struct miel_hvac_softc *sc, uint8_t fc)
 	{
 		bool ok = true;
 		uint16_t v = (fc == 0x03)
-			? miel_hvac_mb_reg_holding(sc, start + i, &ok)
-			: miel_hvac_mb_reg_input(sc, start + i, &ok);
+			? miel_hvac_mb_snap_holding(mb, &snap, start + i, &ok)
+			: miel_hvac_mb_snap_input(mb, &snap, start + i, &ok);
 		if (!ok)
 		{
 			miel_hvac_mb_exception(mb, fc, MIEL_HVAC_MB_EXC_ADDRESS);
@@ -3312,11 +3470,11 @@ miel_hvac_mb_do_read_regs(struct miel_hvac_softc *sc, uint8_t fc)
 }
 
 static void
-miel_hvac_mb_do_read_bits(struct miel_hvac_softc *sc, uint8_t fc)
+miel_hvac_mb_do_read_bits(struct miel_hvac_mb_softc *mb, uint8_t fc)
 {
-	struct miel_hvac_mb_softc *mb = sc->sc_mb;
 	uint16_t start = ((uint16_t)mb->sc_buf[2] << 8) | mb->sc_buf[3];
 	uint16_t count = ((uint16_t)mb->sc_buf[4] << 8) | mb->sc_buf[5];
+	struct miel_hvac_mb_snap snap;
 	uint8_t r[MIEL_HVAC_MB_BUFLEN];
 	uint16_t nbytes, i;
 
@@ -3327,6 +3485,11 @@ miel_hvac_mb_do_read_bits(struct miel_hvac_softc *sc, uint8_t fc)
 		miel_hvac_mb_exception(mb, fc, MIEL_HVAC_MB_EXC_VALUE);
 		return;
 	}
+	if (!miel_hvac_mb_snap_get(mb, &snap))
+	{
+		miel_hvac_mb_exception(mb, fc, MIEL_HVAC_MB_EXC_FAILURE);
+		return;
+	}
 
 	nbytes = (count + 7) / 8;
 	r[0] = mb->sc_address;
@@ -3335,23 +3498,26 @@ miel_hvac_mb_do_read_bits(struct miel_hvac_softc *sc, uint8_t fc)
 	memset(&r[3], 0, nbytes);
 	for (i = 0; i < count; i++)
 	{
-		bool ok = true;
-		if (miel_hvac_mb_read_bit(sc, fc, start + i, &ok))
-			r[3 + (i / 8)] |= (1 << (i % 8));
-		if (!ok)
+		uint16_t addr = start + i;
+		uint8_t bits = (fc == 0x02) ? snap.di : snap.coil;
+		uint16_t limit = (fc == 0x02) ? MIEL_HVAC_MB_DI_COUNT : MIEL_HVAC_MB_COIL_COUNT;
+
+		if (addr >= limit)
 		{
 			miel_hvac_mb_exception(mb, fc, MIEL_HVAC_MB_EXC_ADDRESS);
 			return;
 		}
+		if ((bits >> addr) & 1)
+			r[3 + (i / 8)] |= (1 << (i % 8));
 	}
 
 	miel_hvac_mb_reply(mb, r, 3 + nbytes);
 }
 
 static void
-miel_hvac_mb_do_write_single_reg(struct miel_hvac_softc *sc, bool broadcast)
+miel_hvac_mb_do_write_single_reg(struct miel_hvac_softc *sc,
+    struct miel_hvac_mb_softc *mb, bool broadcast)
 {
-	struct miel_hvac_mb_softc *mb = sc->sc_mb;
 	uint16_t addr = ((uint16_t)mb->sc_buf[2] << 8) | mb->sc_buf[3];
 	uint16_t val  = ((uint16_t)mb->sc_buf[4] << 8) | mb->sc_buf[5];
 	uint8_t res;
@@ -3371,9 +3537,9 @@ miel_hvac_mb_do_write_single_reg(struct miel_hvac_softc *sc, bool broadcast)
 }
 
 static void
-miel_hvac_mb_do_write_multi_reg(struct miel_hvac_softc *sc, bool broadcast)
+miel_hvac_mb_do_write_multi_reg(struct miel_hvac_softc *sc,
+    struct miel_hvac_mb_softc *mb, bool broadcast)
 {
-	struct miel_hvac_mb_softc *mb = sc->sc_mb;
 	uint16_t start = ((uint16_t)mb->sc_buf[2] << 8) | mb->sc_buf[3];
 	uint16_t count = ((uint16_t)mb->sc_buf[4] << 8) | mb->sc_buf[5];
 	uint8_t bc = mb->sc_buf[6];
@@ -3410,9 +3576,9 @@ miel_hvac_mb_do_write_multi_reg(struct miel_hvac_softc *sc, bool broadcast)
 }
 
 static void
-miel_hvac_mb_do_write_single_coil(struct miel_hvac_softc *sc, bool broadcast)
+miel_hvac_mb_do_write_single_coil(struct miel_hvac_softc *sc,
+    struct miel_hvac_mb_softc *mb, bool broadcast)
 {
-	struct miel_hvac_mb_softc *mb = sc->sc_mb;
 	uint16_t addr = ((uint16_t)mb->sc_buf[2] << 8) | mb->sc_buf[3];
 	uint16_t val  = ((uint16_t)mb->sc_buf[4] << 8) | mb->sc_buf[5];
 	uint8_t res;
@@ -3438,9 +3604,9 @@ miel_hvac_mb_do_write_single_coil(struct miel_hvac_softc *sc, bool broadcast)
 }
 
 static void
-miel_hvac_mb_do_write_multi_coil(struct miel_hvac_softc *sc, bool broadcast)
+miel_hvac_mb_do_write_multi_coil(struct miel_hvac_softc *sc,
+    struct miel_hvac_mb_softc *mb, bool broadcast)
 {
-	struct miel_hvac_mb_softc *mb = sc->sc_mb;
 	uint16_t start = ((uint16_t)mb->sc_buf[2] << 8) | mb->sc_buf[3];
 	uint16_t count = ((uint16_t)mb->sc_buf[4] << 8) | mb->sc_buf[5];
 	uint8_t bc = mb->sc_buf[6];
@@ -3502,11 +3668,115 @@ miel_hvac_mb_framelen(const uint8_t *buf, uint16_t len)
 	}
 }
 
-/* Dispatch one CRC-validated request; sc_buf holds the PDU without the CRC. */
+/*
+ * Run one queued write on the main loop.  The same request handlers as before do
+ * the work (they call the miel_hvac_apply_* setters), on the execution context so
+ * that the RS485 task's receive buffer is left alone; the reply they build is
+ * captured and passed back to the task.
+ */
 static void
-miel_hvac_mb_handle(struct miel_hvac_softc *sc)
+miel_hvac_mb_exec_write(struct miel_hvac_softc *sc, const struct miel_hvac_mb_wreq *rq)
 {
 	struct miel_hvac_mb_softc *mb = sc->sc_mb;
+	struct miel_hvac_mb_softc *x = mb->sc_x;
+	bool broadcast = (rq->broadcast != 0);
+
+	memcpy(x->sc_buf, rq->pdu, rq->len);
+	x->sc_len = rq->len;
+	x->sc_caplen = 0;
+	x->sc_capture = true;
+
+	switch (rq->pdu[1])
+	{
+	case 0x05:
+		miel_hvac_mb_do_write_single_coil(sc, x, broadcast);
+		break;
+	case 0x06:
+		miel_hvac_mb_do_write_single_reg(sc, x, broadcast);
+		break;
+	case 0x0f:
+		miel_hvac_mb_do_write_multi_coil(sc, x, broadcast);
+		break;
+	case 0x10:
+		miel_hvac_mb_do_write_multi_reg(sc, x, broadcast);
+		break;
+	}
+
+	x->sc_capture = false;
+
+	mb->sc_wres_len = 0;
+	if (!broadcast && x->sc_caplen > 0)
+	{
+		memcpy(mb->sc_wres, x->sc_cap, x->sc_caplen);
+		mb->sc_wres_len = x->sc_caplen;
+	}
+	mb->sc_wres_seq = rq->seq;
+	xSemaphoreGive(mb->sc_wdone);
+}
+
+/*
+ * RS485 task: hand a CRC-validated write to the main loop and wait a short time
+ * for its result, so the PLC gets the real exception code when there is one.  If
+ * the main loop is stalled the write stays queued and is acknowledged, like a
+ * write made while the unit is not connected yet; it is applied when the main
+ * loop runs again.
+ */
+static void
+miel_hvac_mb_submit_write(struct miel_hvac_mb_softc *mb, bool broadcast)
+{
+	struct miel_hvac_mb_wreq rq;
+	uint8_t fc = mb->sc_buf[1];
+	uint8_t ack[8];   /* 6-byte pdu + 2-byte crc appended by miel_hvac_mb_reply */
+	TickType_t until;
+
+	if (mb->sc_len < 6 || mb->sc_len > sizeof(rq.pdu))
+		return;
+
+	rq.seq = ++mb->sc_wseq;
+	rq.len = mb->sc_len;
+	rq.broadcast = broadcast ? 1 : 0;
+	memcpy(rq.pdu, mb->sc_buf, rq.len);
+	memcpy(ack, mb->sc_buf, 6);
+
+	if (xQueueSend(mb->sc_wq, &rq, 0) != pdTRUE)
+	{
+		if (!broadcast)
+			miel_hvac_mb_exception(mb, fc, MIEL_HVAC_MB_EXC_BUSY);
+		return;
+	}
+	if (broadcast || mb->sc_no_reply)
+		return;   /* nobody is waiting for an answer */
+
+	until = xTaskGetTickCount() + pdMS_TO_TICKS(MIEL_HVAC_MB_WRITE_WAIT_MS);
+	for (;;)
+	{
+		TickType_t now = xTaskGetTickCount();
+		TickType_t left = ((int32_t)(until - now) > 0) ? (until - now) : 0;
+
+		if (xSemaphoreTake(mb->sc_wdone, left) != pdTRUE)
+			break;
+		if (mb->sc_wres_seq == rq.seq)
+		{
+			if (mb->sc_wres_len > 0)
+			{
+				uint8_t r[MIEL_HVAC_MB_BUFLEN];
+				memcpy(r, mb->sc_wres, mb->sc_wres_len);
+				if (r[1] & 0x80)
+					mb->sc_exceptions++;
+				miel_hvac_mb_reply(mb, r, mb->sc_wres_len);
+			}
+			return;
+		}
+		/* result of an earlier write that timed out: keep waiting for ours */
+	}
+
+	miel_hvac_mb_reply(mb, ack, 6);   /* accepted, applied by the main loop */
+}
+
+/* Dispatch one CRC-validated request; sc_buf holds the PDU without the CRC. */
+static void
+miel_hvac_mb_handle(struct miel_hvac_mb_softc *mb)
+{
 	uint8_t fc = mb->sc_buf[1];
 	bool broadcast = (mb->sc_buf[0] == 0);
 
@@ -3517,29 +3787,23 @@ miel_hvac_mb_handle(struct miel_hvac_softc *sc)
 	case 0x01:
 	case 0x02:
 		if (!broadcast)
-			miel_hvac_mb_do_read_bits(sc, fc);
+			miel_hvac_mb_do_read_bits(mb, fc);
 		break;
 	case 0x03:
 	case 0x04:
 		if (!broadcast)
-			miel_hvac_mb_do_read_regs(sc, fc);
+			miel_hvac_mb_do_read_regs(mb, fc);
 		break;
 	/*
-	 * Writes are accepted whether or not the unit is connected yet - the
-	 * update is queued and sent once the link is up, matching the HVACSet*
-	 * console commands.
-	 */
+     * Writes are accepted whether or not the unit is connected yet - the
+     * update is queued and sent once the link is up, matching the HVACSet*
+     * console commands.
+     */
 	case 0x05:
-		miel_hvac_mb_do_write_single_coil(sc, broadcast);
-		break;
 	case 0x06:
-		miel_hvac_mb_do_write_single_reg(sc, broadcast);
-		break;
 	case 0x0f:
-		miel_hvac_mb_do_write_multi_coil(sc, broadcast);
-		break;
 	case 0x10:
-		miel_hvac_mb_do_write_multi_reg(sc, broadcast);
+		miel_hvac_mb_submit_write(mb, broadcast);
 		break;
 	default:
 		if (!broadcast)
@@ -3556,9 +3820,8 @@ miel_hvac_mb_handle(struct miel_hvac_softc *sc)
  * shared bus where our slave also sees every other device's traffic.
  */
 static uint16_t
-miel_hvac_mb_consume(struct miel_hvac_softc *sc)
+miel_hvac_mb_consume(struct miel_hvac_mb_softc *mb)
 {
-	struct miel_hvac_mb_softc *mb = sc->sc_mb;
 	uint16_t need, crc;
 
 	if (mb->sc_len < 4)
@@ -3590,16 +3853,16 @@ miel_hvac_mb_consume(struct miel_hvac_softc *sc)
 		uint16_t total = mb->sc_len;
 
 		/*
-		 * If another request is already buffered behind this one, the master
-		 * has timed out and re-polled: apply this (stale) request but do not
-		 * put a late response on the bus - it would land on the master's next
-		 * transaction and make that one fail too.
-		 */
+         * If another request is already buffered behind this one, the master
+         * has timed out and re-polled: apply this (stale) request but do not
+         * put a late response on the bus - it would land on the master's next
+         * transaction and make that one fail too.
+         */
 		mb->sc_no_reply = (total > need
-		    && (mb->sc_buf[need] == mb->sc_address || mb->sc_buf[need] == 0));
+			&& (mb->sc_buf[need] == mb->sc_address || mb->sc_buf[need] == 0));
 
 		mb->sc_len = need - 2;       /* handlers see the PDU without the CRC */
-		miel_hvac_mb_handle(sc);
+		miel_hvac_mb_handle(mb);
 		mb->sc_len = total;
 		mb->sc_no_reply = false;
 	}
@@ -3608,10 +3871,10 @@ miel_hvac_mb_consume(struct miel_hvac_softc *sc)
 	return (need);
 }
 
+/* Read and parse whatever has arrived on the RS485 port (RS485 task). */
 static void
-miel_hvac_mb_loop(struct miel_hvac_softc *sc)
+miel_hvac_mb_rx(struct miel_hvac_mb_softc *mb)
 {
-	struct miel_hvac_mb_softc *mb = sc->sc_mb;
 	TasmotaSerial *serial = mb->sc_serial;
 	int avail;
 
@@ -3635,7 +3898,7 @@ miel_hvac_mb_loop(struct miel_hvac_softc *sc)
 
 		for (;;)
 		{
-			uint16_t used = miel_hvac_mb_consume(sc);
+			uint16_t used = miel_hvac_mb_consume(mb);
 			uint16_t rem;
 
 			if (used == 0)
@@ -3656,21 +3919,85 @@ miel_hvac_mb_loop(struct miel_hvac_softc *sc)
 	}
 }
 
+/* RS485 task body: poll the port every millisecond, independent of the main loop. */
+static void
+miel_hvac_mb_task(void *arg)
+{
+	struct miel_hvac_mb_softc *mb = (struct miel_hvac_mb_softc *)arg;
+
+	while (!mb->sc_stop)
+	{
+		miel_hvac_mb_rx(mb);
+		vTaskDelay(1);
+	}
+
+	mb->sc_task_done = true;
+	vTaskDelete(NULL);
+}
+
+/* Build the register snapshot the RS485 task answers reads from (main loop). */
+static void
+miel_hvac_mb_snapshot(struct miel_hvac_softc *sc)
+{
+	struct miel_hvac_mb_softc *mb = sc->sc_mb;
+	struct miel_hvac_mb_snap s;
+	bool ok;
+	uint16_t a;
+
+	for (a = 0; a < MIEL_HVAC_MB_INPUT_COUNT; a++)
+		s.in[a] = miel_hvac_mb_reg_input(sc, a, &ok);
+	for (a = 0; a < MIEL_HVAC_MB_HOLD_COUNT; a++)
+		s.hold[a] = miel_hvac_mb_reg_holding(sc, a, &ok);
+	s.di = 0;
+	for (a = 0; a < MIEL_HVAC_MB_DI_COUNT; a++)
+		if (miel_hvac_mb_read_bit(sc, 0x02, a, &ok))
+			s.di |= (1 << a);
+	s.coil = 0;
+	for (a = 0; a < MIEL_HVAC_MB_COIL_COUNT; a++)
+		if (miel_hvac_mb_read_bit(sc, 0x01, a, &ok))
+			s.coil |= (1 << a);
+
+	mb->sc_snap_built_ms = millis();
+	if (xSemaphoreTake(mb->sc_snap_mux, pdMS_TO_TICKS(10)) == pdTRUE)
+	{
+		memcpy(&mb->sc_snap, &s, sizeof(s));
+		mb->sc_snap_ms = mb->sc_snap_built_ms;
+		mb->sc_snap_valid = true;
+		xSemaphoreGive(mb->sc_snap_mux);
+	}
+}
+
+/* Main loop part of the Modbus slave: run queued writes, keep the snapshot fresh. */
+static void
+miel_hvac_mb_loop(struct miel_hvac_softc *sc)
+{
+	struct miel_hvac_mb_softc *mb = sc->sc_mb;
+	struct miel_hvac_mb_wreq rq;
+	bool dirty = false;
+
+	while (xQueueReceive(mb->sc_wq, &rq, 0) == pdTRUE)
+	{
+		miel_hvac_mb_exec_write(sc, &rq);
+		dirty = true;
+	}
+
+	if (dirty || !mb->sc_snap_valid
+		|| (uint32_t)(millis() - mb->sc_snap_built_ms) >= MIEL_HVAC_MB_SNAP_PERIOD_MS)
+		miel_hvac_mb_snapshot(sc);
+}
+
+static void miel_hvac_mb_init(struct miel_hvac_softc *sc);
+static void miel_hvac_mb_deinit(struct miel_hvac_softc *sc);
+
 static void
 miel_hvac_mb_apply_config(struct miel_hvac_softc *sc)
 {
-	struct miel_hvac_mb_softc *mb = sc->sc_mb;
-
-	if (mb == NULL)
+	if (sc->sc_mb == NULL)
 		return;
 
-	mb->sc_address  = Settings->miel_hvac_mb_address;
-	mb->sc_sconfig  = Settings->miel_hvac_mb_sconfig;
-	mb->sc_baudrate = (uint32_t)Settings->miel_hvac_mb_baudrate * 300;
-	mb->sc_t35_us   = miel_hvac_mb_t35_us(mb->sc_baudrate);
-	mb->sc_len      = 0;
-	mb->sc_serial->begin(mb->sc_baudrate, ConvertSerialConfig(mb->sc_sconfig));
-	mb->sc_last_us  = micros();
+	/* the serial port belongs to the RS485 task: stop it, then start afresh */
+	miel_hvac_mb_deinit(sc);
+	miel_hvac_mb_init(sc);
 }
 
 static void
@@ -3692,9 +4019,26 @@ miel_hvac_mb_settings_clamp(void)
 }
 
 static void
+miel_hvac_mb_free(struct miel_hvac_mb_softc *mb)
+{
+	if (mb->sc_x != NULL)
+		free(mb->sc_x);
+	if (mb->sc_wq != NULL)
+		vQueueDelete(mb->sc_wq);
+	if (mb->sc_wdone != NULL)
+		vSemaphoreDelete(mb->sc_wdone);
+	if (mb->sc_snap_mux != NULL)
+		vSemaphoreDelete(mb->sc_snap_mux);
+	if (mb->sc_serial != NULL)
+		delete mb->sc_serial;
+	free(mb);
+}
+
+static void
 miel_hvac_mb_init(struct miel_hvac_softc *sc)
 {
 	struct miel_hvac_mb_softc *mb;
+	struct miel_hvac_mb_softc *x;
 
 	if (sc->sc_mb != NULL)
 		return;
@@ -3704,12 +4048,16 @@ miel_hvac_mb_init(struct miel_hvac_softc *sc)
 		return;
 
 	mb = (struct miel_hvac_mb_softc *)calloc(1, sizeof(*mb));
-	if (mb == NULL)
+	x  = (struct miel_hvac_mb_softc *)calloc(1, sizeof(*x));
+	if (mb == NULL || x == NULL)
 	{
 		AddLog(LOG_LEVEL_ERROR, PSTR(MIEL_HVAC_LOGNAME
 			": modbus: unable to allocate state"));
+		free(x);
+		free(mb);
 		return;
 	}
+	mb->sc_x = x;
 
 	miel_hvac_mb_settings_clamp();
 
@@ -3718,18 +4066,28 @@ miel_hvac_mb_init(struct miel_hvac_softc *sc)
 	mb->sc_baudrate = (uint32_t)Settings->miel_hvac_mb_baudrate * 300;
 	mb->sc_t35_us   = miel_hvac_mb_t35_us(mb->sc_baudrate);
 	mb->sc_txen_pin = PinUsed(GPIO_MIEL_HVAC_MB_TXEN) ? Pin(GPIO_MIEL_HVAC_MB_TXEN) : -1;
+	x->sc_address   = mb->sc_address;
 
-	/* Large RX buffer: on a shared bus we also see every other slave's
-	 * traffic and FUNC_LOOP can be milliseconds late. */
+	mb->sc_wq       = xQueueCreate(MIEL_HVAC_MB_WRITE_QUEUE, sizeof(struct miel_hvac_mb_wreq));
+	mb->sc_wdone    = xSemaphoreCreateBinary();
+	mb->sc_snap_mux = xSemaphoreCreateMutex();
+	if (mb->sc_wq == NULL || mb->sc_wdone == NULL || mb->sc_snap_mux == NULL)
+	{
+		AddLog(LOG_LEVEL_ERROR, PSTR(MIEL_HVAC_LOGNAME
+			": modbus: unable to allocate queues"));
+		miel_hvac_mb_free(mb);
+		return;
+	}
+
+	/* Large RX buffer: on a shared bus we also see every other slave's traffic. */
 	mb->sc_serial = new TasmotaSerial(Pin(GPIO_MIEL_HVAC_MB_RX),
-	    Pin(GPIO_MIEL_HVAC_MB_TX), 2, 0, 1024);
+		Pin(GPIO_MIEL_HVAC_MB_TX), 2, 0, 1024);
 	if (!mb->sc_serial->begin(mb->sc_baudrate,
-	    ConvertSerialConfig(mb->sc_sconfig)))
+		ConvertSerialConfig(mb->sc_sconfig)))
 	{
 		AddLog(LOG_LEVEL_ERROR, PSTR(MIEL_HVAC_LOGNAME
 			": modbus: unable to begin serial (baudrate %u)"), mb->sc_baudrate);
-		delete mb->sc_serial;
-		free(mb);
+		miel_hvac_mb_free(mb);
 		return;
 	}
 
@@ -3741,20 +4099,50 @@ miel_hvac_mb_init(struct miel_hvac_softc *sc)
 	mb->sc_last_us = micros();
 	sc->sc_mb = mb;
 
+	/* the snapshot must exist before the task can answer the first read */
+	miel_hvac_mb_snapshot(sc);
+
+	if (xTaskCreatePinnedToCore(miel_hvac_mb_task, "mielmb", MIEL_HVAC_MB_TASK_STACK,
+		mb, MIEL_HVAC_MB_TASK_PRIO, &mb->sc_task, tskNO_AFFINITY) != pdPASS)
+	{
+		AddLog(LOG_LEVEL_ERROR, PSTR(MIEL_HVAC_LOGNAME
+			": modbus: unable to start the RS485 task"));
+		sc->sc_mb = nullptr;
+		miel_hvac_mb_free(mb);
+		return;
+	}
+
 	AddLog(LOG_LEVEL_INFO, PSTR(MIEL_HVAC_LOGNAME
-		": modbus RTU slave: address %u, %u baud, UART%d"),
+		": modbus RTU slave: address %u, %u baud, UART%d, own task"),
 		mb->sc_address, mb->sc_baudrate, mb->sc_serial->getUart());
 }
 
 static void
 miel_hvac_mb_deinit(struct miel_hvac_softc *sc)
 {
-	if (sc->sc_mb == NULL)
+	struct miel_hvac_mb_softc *mb = sc->sc_mb;
+	uint32_t waited = 0;
+
+	if (mb == NULL)
 		return;
 
-	delete sc->sc_mb->sc_serial;
-	free(sc->sc_mb);
+	/* stop the RS485 task first: it owns the serial port and the queues */
+	mb->sc_stop = true;
+	while (!mb->sc_task_done && waited < 1000)
+	{
+		delay(5);
+		waited += 5;
+	}
+	if (!mb->sc_task_done)
+	{
+		/* should not happen; never free memory a running task still uses */
+		AddLog(LOG_LEVEL_ERROR, PSTR(MIEL_HVAC_LOGNAME
+			": modbus: RS485 task did not stop"));
+		return;
+	}
+
 	sc->sc_mb = nullptr;
+	miel_hvac_mb_free(mb);
 }
 
 /* console commands */
@@ -3792,7 +4180,10 @@ miel_hvac_cmnd_modbus_address(void)
 		}
 		Settings->miel_hvac_mb_address = (uint8_t)v;
 		if (sc->sc_mb != NULL)
+		{
 			sc->sc_mb->sc_address = (uint8_t)v;
+			sc->sc_mb->sc_x->sc_address = (uint8_t)v;
+		}
 	}
 
 	ResponseCmndNumber(Settings->miel_hvac_mb_address);

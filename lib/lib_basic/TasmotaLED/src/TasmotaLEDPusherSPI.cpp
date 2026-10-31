@@ -24,6 +24,12 @@
 
 #if TASMOTALED_HARDWARE_SPI
 #include <rom/gpio.h>
+#include "esp_idf_version.h"
+#if ESP_IDF_VERSION_MAJOR >= 6
+// IDF 6.x: gpio_matrix_out() renamed to gpio_matrix_output() in esp_private/gpio.h
+#include <esp_private/gpio.h>
+#define gpio_matrix_out(gpio, signal, out_inv, oen_inv) gpio_matrix_output((gpio_num_t)(gpio), signal, out_inv, oen_inv)
+#endif
 
 //**************************************************************************************************************
 // enable AddLog support within a C++ library

@@ -8,11 +8,13 @@
 #include "esp_lcd_panel_ops.h"
 #include "esp_lcd_mipi_dsi.h"
 #include "esp_ldo_regulator.h"
+#include "esp_idf_version.h"
 #include "driver/gpio.h"
 #include <rom/cache.h>
 #include "esp_rom_sys.h"
 
 extern void AddLog(uint32_t loglevel, const char* formatP, ...);
+extern bool LdoEnabled(uint32_t channel);
 
 DSIPanel::DSIPanel(const DSIPanelConfig& config)
     : cfg(config), rotation(0)
@@ -22,8 +24,8 @@ DSIPanel::DSIPanel(const DSIPanelConfig& config)
 
     esp_err_t ret;
 
-    // Step 1: Initialize LDO for display power (from config)
-    if (cfg.ldo_channel >= 0 && cfg.ldo_voltage_mv > 0) {
+    // Step 1: Initialize LDO for display power if not set by command Ldo (descriptor LDO is deprecated)
+    if (cfg.ldo_channel >= 0 && cfg.ldo_voltage_mv > 0 && !LdoEnabled(cfg.ldo_channel)) {
         esp_ldo_channel_config_t ldo_config = {
             .chan_id = cfg.ldo_channel,
             .voltage_mv = cfg.ldo_voltage_mv,
@@ -33,10 +35,8 @@ DSIPanel::DSIPanel(const DSIPanelConfig& config)
             AddLog(3, "DSI: Failed to acquire LDO: %d", ret);
             return;
         }
-        AddLog(3, "DSI: LDO enabled (ch %d @ %dmV)", cfg.ldo_channel, cfg.ldo_voltage_mv);
+        AddLog(2, "DSI: Descriptor LDO is deprecated, use command 'Ldo%d %d'", cfg.ldo_channel, cfg.ldo_voltage_mv);
         delay(10);
-    } else {
-        AddLog(3, "DSI: No LDO configuration");
     }
 
     // Step 2: Create DSI bus (from config)
@@ -71,7 +71,12 @@ DSIPanel::DSIPanel(const DSIPanelConfig& config)
     dpi_config.dpi_clk_src = MIPI_DSI_DPI_CLK_SRC_DEFAULT;
     dpi_config.dpi_clock_freq_mhz = cfg.pixel_clock_hz / 1000000;
     dpi_config.virtual_channel = 0;
+#if ESP_IDF_VERSION_MAJOR >= 6
+    dpi_config.in_color_format = LCD_COLOR_FMT_RGB565;
+    dpi_config.out_color_format = LCD_COLOR_FMT_RGB565;
+#else
     dpi_config.pixel_format = LCD_COLOR_PIXEL_FORMAT_RGB565;
+#endif
     dpi_config.num_fbs = 1;
     dpi_config.video_timing.h_size = cfg.width;
     dpi_config.video_timing.v_size = cfg.height;
@@ -81,8 +86,10 @@ DSIPanel::DSIPanel(const DSIPanelConfig& config)
     dpi_config.video_timing.vsync_back_porch = cfg.timing.v_back_porch;
     dpi_config.video_timing.vsync_pulse_width = cfg.timing.v_sync_pulse;
     dpi_config.video_timing.vsync_front_porch = cfg.timing.v_front_porch;
+#if ESP_IDF_VERSION_MAJOR < 6
     dpi_config.flags.use_dma2d = 1;
-    
+#endif
+
     AddLog(3, "DSI: DPI config: clk=%dMHz res=%dx%d", dpi_config.dpi_clock_freq_mhz, cfg.width, cfg.height);
     AddLog(3, "DSI: H timing: BP=%d PW=%d FP=%d", cfg.timing.h_back_porch, cfg.timing.h_sync_pulse, cfg.timing.h_front_porch);
     AddLog(3, "DSI: V timing: BP=%d PW=%d FP=%d", cfg.timing.v_back_porch, cfg.timing.v_sync_pulse, cfg.timing.v_front_porch);
@@ -95,6 +102,12 @@ DSIPanel::DSIPanel(const DSIPanelConfig& config)
         return;
     }
     AddLog(3, "DSI: DPI panel created");
+#if ESP_IDF_VERSION_MAJOR >= 6
+    ret = esp_lcd_dpi_panel_enable_dma2d(panel_handle);
+    if (ret != ESP_OK) {
+        AddLog(3, "DSI: Failed to enable DMA2D: %d", ret);
+    }
+#endif
 
     // Step 6: Reset via GPIO (from config)
     if (cfg.reset_pin >= 0) {

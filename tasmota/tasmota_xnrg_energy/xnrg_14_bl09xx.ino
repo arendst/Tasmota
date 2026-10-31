@@ -147,7 +147,7 @@ bool Bl09XXDecode3940(void) {
 
   uint16_t tps1 = Bl09XX.rx_buffer[29] << 8 | Bl09XX.rx_buffer[28];                                      // TPS1 unsigned
   if ((Bl09XX.rx_buffer[0] != BL09XX_PACKET_HEADER) ||                                                   // Bad header
-      (Bl09XX.tps1 && ((tps1 < (Bl09XX.tps1 -40)) || (tps1 > (Bl09XX.tps1 +40))))                        // Invalid temperature change
+      ((BL0940_MODEL == Bl09XX.model) && Bl09XX.tps1 && ((tps1 < (Bl09XX.tps1 -10)) || (tps1 > (Bl09XX.tps1 +10)))) // Invalid temperature change
      ) {
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Invalid data hd=%02X, tps1:%d"), Bl09XX.rx_buffer[0], tps1);
     Bl09XX.tps1 = tps1;                                                                                  // Save in case of rapid temp change

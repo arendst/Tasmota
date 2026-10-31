@@ -837,6 +837,7 @@ bool Xdrv52(uint32_t function)
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
         callBerryString(berry.vm, be_post_autoxec_code);
         berry.autoexec_done = true;
+        HEAP_MAP(PSTR("autoexec"))
 
 #ifdef USE_WEBSERVER
         // check if `web_add_handler` was missed, for example because of Berry VM restart

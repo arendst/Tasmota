@@ -181,13 +181,28 @@ uint8_t XdspPresent(void) {
   return xdsp_present;
 }
 
+#if defined(ESP32) && defined(USE_HEAP_MAP)
+// Heap map: number of the display driver at position index if it is the active one, else 0
+uint32_t XdspHeapMapId(uint32_t index) {
+  if (index >= xdsp_present) { return 0; }
+#ifdef XDSP_18
+  // Berry display has its own number and answers FUNC_DISPLAY_MODEL by running Berry code, don't ask it
+  if (&Xdsp18 == xdsp_func_ptr[index]) { return XDSP_18; }
+#endif  // XDSP_18
+  if (xdsp_func_ptr[index](FUNC_DISPLAY_MODEL)) {
+    return Settings->display_model;
+  }
+  return 0;
+}
+#endif  // ESP32 and USE_HEAP_MAP
+
 bool XdspCall(uint32_t function) {
   bool result = false;
 
   DEBUG_TRACE_LOG(PSTR("DSP: %d"), function);
 
   for (uint32_t x = 0; x < xdsp_present; x++) {
-    result = xdsp_func_ptr[x](function);
+    result = HEAP_MAP_CALL("xdsp", (HEAP_MAP_ID_DSP | x), function, xdsp_func_ptr[x](function));
 
     if (result && (FUNC_DISPLAY_MODEL == function)) {
       break;

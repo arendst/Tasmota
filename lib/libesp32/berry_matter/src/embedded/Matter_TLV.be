@@ -375,7 +375,7 @@ class Matter_TLV
       elif self.typ == 0x0D #-TLV.UTF2-#
         if size(self.val) > 65535 raise "value_error", "string too big" end
         b.add(size(self.val), 2)
-        b..bytes().frostring(str(self.val))
+        b..bytes().fromstring(str(self.val))
       elif self.typ == 0x10 #-TLV.B1-#
         if size(self.val) > 255 raise "value_error", "bytes too big" end
         b.add(size(self.val), 1)

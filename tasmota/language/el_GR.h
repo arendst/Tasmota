@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Καταμέτρηση εκκινήσεων"
 #define D_BRIGHTLIGHT "Φωτεινό"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Κελσίου"
 #define D_CHANNEL "Κανάλι"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "Διοξείδιο του άνθρακα"
 #define D_CODE "κώδικας"                // Button code
 #define D_COLDLIGHT "Ψυχρό"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Σκοτεινό"
 #define D_DATA "Δεδομένα"
 #define D_DEBUG "Debug"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Dew point"
 #define D_DISABLED "Ανενεργό"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "Βάθος νερού"
 #define D_WEB_SERVER "Διακομιστής Web"
 #define D_WEIGHT "Βάρος"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ΠΡΟΕΙΔΟΠΟΙΗΣΗ Αυτή η έκδοση δεν αποθηκεύει τις ρυθμίσεις"

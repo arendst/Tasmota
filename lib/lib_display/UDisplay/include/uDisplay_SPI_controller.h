@@ -10,6 +10,10 @@
 #include "esp32-hal-spi.h"
 #include "driver/spi_master.h"
 #include "soc/gpio_periph.h"
+#if __has_include("soc/gpio_struct.h")
+// IDF 6.x: GPIO register struct no longer exported via gpio_periph.h
+#include "soc/gpio_struct.h"
+#endif
 #endif
 
 #ifndef ESP32

@@ -46,6 +46,7 @@
 #define BMP_REGISTER_RESET   0xE0  // Register to reset to power on defaults (used for sleep)
 
 #define BMP_CMND_RESET       0xB6  // I2C Parameter for RESET to put BMP into reset state
+#define BMP_FAIL_LIMIT       5     // Failed BMx280 reads (seconds) before values are reported as null
 
 #define BMP_MAX_SENSORS      2 * MAX_I2C  // Busses
 
@@ -57,6 +58,7 @@ typedef struct {
   char bmp_name[7];       // Sensor name - "BMPXXX"
   uint8_t bmp_type;
   uint8_t bmp_model;
+  uint8_t bmp_fail;       // Consecutive failed BMx280 reads
 #ifdef USE_BME68X
   uint8_t bme680_state;
   float bmp_gas_resistance;
@@ -298,12 +300,42 @@ bool Bmx280Calibrate(uint8_t bmp_idx) {
   return true;
 }
 
+void Bme280ReadFailed(uint8_t bmp_idx) {
+  if (bmp_sensors[bmp_idx].bmp_fail < BMP_FAIL_LIMIT) {
+    bmp_sensors[bmp_idx].bmp_fail++;
+  } else {                                                // Report null instead of stale or bogus values
+    bmp_sensors[bmp_idx].bmp_temperature = NAN;
+    bmp_sensors[bmp_idx].bmp_pressure = NAN;
+    bmp_sensors[bmp_idx].bmp_humidity = NAN;
+  }
+}
+
 void Bme280Read(uint8_t bmp_idx) {
   if (!Bme280CalibrationData) { return; }
 
   uint8_t address = bmp_sensors[bmp_idx].bmp_address;
   uint8_t bus = bmp_sensors[bmp_idx].bmp_bus;
-  int32_t adc_T = I2cRead24(address, BME280_REGISTER_TEMPDATA, bus);
+
+  uint8_t ctrl;
+  if (!I2cValidRead8(&ctrl, address, BME280_REGISTER_CONTROL, bus)) {
+    Bme280ReadFailed(bmp_idx);
+    return;
+  }
+  if ((ctrl & 0x03) != 0x03) {                            // Not in normal mode: sensor was reset (e.g. supply glitch)
+    AddLog(LOG_LEVEL_INFO, PSTR("BMP: %s lost config (ctrl %02X), re-init"), bmp_sensors[bmp_idx].bmp_name, ctrl);
+    Bmx280Calibrate(bmp_idx);
+    Bme280ReadFailed(bmp_idx);
+    return;
+  }
+  int32_t adc_T;
+  int32_t adc_P;
+  if (!I2cValidRead24(&adc_T, address, BME280_REGISTER_TEMPDATA, bus) ||
+      !I2cValidRead24(&adc_P, address, BME280_REGISTER_PRESSUREDATA, bus) ||
+      (0x800000 == adc_T) || (0x800000 == adc_P)) {       // 0x800000 = reset value / measurement skipped
+    Bme280ReadFailed(bmp_idx);
+    return;
+  }
+  bmp_sensors[bmp_idx].bmp_fail = 0;
   adc_T >>= 4;
 
   int32_t vart1 = ((((adc_T >> 3) - ((int32_t)Bme280CalibrationData[bmp_idx].dig_T1 << 1))) * ((int32_t)Bme280CalibrationData[bmp_idx].dig_T2)) >> 11;
@@ -313,7 +345,6 @@ void Bme280Read(uint8_t bmp_idx) {
   float T = (t_fine * 5 + 128) >> 8;
   bmp_sensors[bmp_idx].bmp_temperature = T / 100.0f;
 
-  int32_t adc_P = I2cRead24(address, BME280_REGISTER_PRESSUREDATA, bus);
   adc_P >>= 4;
 
   int64_t var1 = ((int64_t)t_fine) - 128000;

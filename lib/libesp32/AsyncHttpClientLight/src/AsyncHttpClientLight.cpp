@@ -168,6 +168,18 @@ int AsyncHttpClientLight::AsyncTcpAdapter::available() {
   return bytes;
 }
 
+bool AsyncHttpClientLight::AsyncTcpAdapter::connected() {
+  if (_fd < 0 || !_isConnected) return false;
+  // read() only sees the peer close when it is called, and callers only read
+  // when available() > 0: peek, so a close after the last byte is noticed.
+  // No stop() here: connected() may be called from another task than the worker.
+  uint8_t c;
+  int r = ::recv(_fd, &c, 1, MSG_PEEK | MSG_DONTWAIT);
+  if (r == 0) return false;
+  if (r < 0 && errno != EAGAIN && errno != EWOULDBLOCK) return false;
+  return true;
+}
+
 void AsyncHttpClientLight::AsyncTcpAdapter::stop() {
   if (_fd >= 0) {
 #if ASYNCHTTP_HTTP_LINGER_RST
@@ -212,7 +224,7 @@ int    AsyncHttpClientLight::BearSslAdapter::read(uint8_t* buf, size_t len)     
 int    AsyncHttpClientLight::BearSslAdapter::available()                            { return _cli->available(); }
 bool   AsyncHttpClientLight::BearSslAdapter::connected()                            { return _cli->connected(); }
 void   AsyncHttpClientLight::BearSslAdapter::stop()                                 { _cli->stop(); }
-void   AsyncHttpClientLight::BearSslAdapter::setTimeout(uint16_t ms)                { _cli->setTimeout(ms); }
+void   AsyncHttpClientLight::BearSslAdapter::setTimeout(uint32_t ms)                { _cli->setTimeout(ms); }
 #endif
 
 // ======================== AsyncHttpClientLight core =====================
@@ -224,7 +236,7 @@ AsyncHttpClientLight::AsyncHttpClientLight() {
 }
 
 AsyncHttpClientLight::~AsyncHttpClientLight() {
-  end();
+  end();    // also aborts and waits for an in-flight async job
   if (_currentHeaders) { delete[] _currentHeaders; _currentHeaders = nullptr; }
 #ifdef ESP32
   if (_asyncDone) { vSemaphoreDelete(_asyncDone); _asyncDone = nullptr; }
@@ -250,12 +262,15 @@ void AsyncHttpClientLight::setAuthorization(const char * user, const char * pass
 }
 void AsyncHttpClientLight::setAuthorization(const char * auth) { if (auth) _base64Authorization = auth; }
 
-void AsyncHttpClientLight::setTimeout(uint16_t timeout) {
+void AsyncHttpClientLight::setTimeout(uint32_t timeout) {
   _tcpTimeout = timeout;
   if (_transport) _transport->setTimeout(timeout);
 }
 
 bool AsyncHttpClientLight::begin(String url) {
+#ifdef ESP32
+  asyncWaitDone();  // beginInternal() replaces _transport
+#endif
   _port = 0; _secure = false; _headers = ""; _returnCode = 0; _size = -1; _location = "";
   _bodyPending = false; // BODY_PENDING reset
   return beginInternal(url, url.startsWith("https") ? "https" : "http");
@@ -310,6 +325,9 @@ bool AsyncHttpClientLight::beginInternal(String url, const char* expectedProto) 
 }
 
 void AsyncHttpClientLight::end() {
+#ifdef ESP32
+  asyncWaitDone();  // the worker uses _transport and the object itself
+#endif
   if (_transport) _transport->stop();
   _transport.reset();
   _headers = ""; _base64Authorization = ""; _size = -1; _returnCode = 0; _location = "";
@@ -396,6 +414,7 @@ bool AsyncHttpClientLight::writeAllWithOneReconnect(const uint8_t* data, size_t 
     const uint8_t* cur = p;
     size_t left = l;
     while (left) {
+      if (_asyncAbortReq) return false;
       if (!_transport->connected()) return false;
       size_t s = _transport->write(cur, left);
       if (s > 0) {
@@ -413,7 +432,7 @@ bool AsyncHttpClientLight::writeAllWithOneReconnect(const uint8_t* data, size_t 
   bool ok = try_send(data, len, first_sent);
   if (ok) return true;
 
-  if (allow_retry_if_zero_sent && first_sent == 0 && _reuse) {
+  if (allow_retry_if_zero_sent && first_sent == 0 && _reuse && !_asyncAbortReq) {
     _transport->stop();
     if (!connectTransport()) return false;
     size_t second_sent = 0;
@@ -431,6 +450,7 @@ bool AsyncHttpClientLight::sendHeader(const char * method) {
     _bodyPending = false;
   }
 
+  if (_asyncAbortReq) return false;   // async job aborted before it connected
   if (!ensureConnected()) return false;
 
   String header = String(method) + " " + _uri + F(" HTTP/1.");
@@ -472,6 +492,7 @@ int AsyncHttpClientLight::handleHeaderResponse() {
     uint32_t start = millis();
     char c;
     while (true) {
+      if (_asyncAbortReq) return false;
       int avail = _transport->available();
       if (avail <= 0) {
         delay(1);
@@ -549,10 +570,21 @@ int AsyncHttpClientLight::writeToStreamDataBlock(Stream * stream, int size) {
   int len = size;
   int bytesWritten = 0;
   uint8_t buf[HTTP_TCP_BUFFER_SIZE];
+  // a server gone silent without closing stays connected(): give up
+  // after _tcpTimeout without data, as handleHeaderResponse() does
+  uint32_t lastDataTime = millis();
 
   while (_transport && _transport->connected() && (len > 0 || len == -1)) {
     int avail = _transport->available();
-    if (avail <= 0) { delay(1); continue; }
+    if (avail <= 0) {
+      if ((millis() - lastDataTime) > (uint32_t)_tcpTimeout) {
+        _transport->stop();       // a stalled connection must not be reused
+        _bodyPending = false;
+        return HTTPC_ERROR_READ_TIMEOUT;
+      }
+      delay(1);
+      continue;
+    }
     int wish = avail;
     if (len > 0 && wish > len) wish = len;
     if (wish > (int)sizeof(buf)) wish = sizeof(buf);
@@ -562,6 +594,7 @@ int AsyncHttpClientLight::writeToStreamDataBlock(Stream * stream, int size) {
       if (w != r) return HTTPC_ERROR_STREAM_WRITE;
       bytesWritten += w;
       if (len > 0) len -= r;
+      lastDataTime = millis();
     }
   }
 
@@ -570,6 +603,9 @@ int AsyncHttpClientLight::writeToStreamDataBlock(Stream * stream, int size) {
 }
 
 int AsyncHttpClientLight::writeToStream(Stream * stream) {
+#ifdef ESP32
+  (void)asyncState();   // a finished async job not polled yet: use its body
+#endif
   // FAST-PATH: async DONE → from internal buffer
   if (_asyncState == ASYNC_DONE) {
     const String& s = _asyncBody;
@@ -585,6 +621,9 @@ int AsyncHttpClientLight::writeToStream(Stream * stream) {
 }
 
 String AsyncHttpClientLight::getString(void) {
+#ifdef ESP32
+  (void)asyncState();   // a finished async job not polled yet: use its body
+#endif
   // FAST-PATH: async DONE → return from internal buffer
   if (_asyncState == ASYNC_DONE) {
     return String(_asyncBody);
@@ -670,6 +709,7 @@ String AsyncHttpClientLight::errorToString(int error) {
     case HTTPC_ERROR_ENCODING:           return F("Transfer-Encoding not supported");
     case HTTPC_ERROR_STREAM_WRITE:       return F("Stream write error");
     case HTTPC_ERROR_READ_TIMEOUT:       return F("read Timeout");
+    case HTTPC_ERROR_ASYNC_BUSY:         return F("async request in progress");
     default: return String();
   }
 }
@@ -689,6 +729,37 @@ bool AsyncHttpClientLight::setURL(const String& url) {
 // ======================== RTOS worker infra ============================
 #ifdef ESP32
 
+// Workers never delete themselves. A self-deleted task is freed later by the
+// IDLE task, which then runs the TLS destructors (lwIP per-thread semaphore)
+// and the heap frees on its 1 KB stack (CONFIG_FREERTOS_IDLE_TASK_STACKSIZE).
+// On ESP32-S3 the coprocessor save area takes ~350 bytes of that stack, and an
+// interrupt plus context switch on top overflows it: "Stack canary watchpoint
+// triggered (IDLE0)", or silent corruption of the scheduler ready lists.
+// Instead the worker suspends itself and the owner deletes it: deleting a task
+// that is not running frees it at once, on the caller's stack.
+static void ahcl_reap_worker(TaskHandle_t th) {
+  if (!th) return;
+  // Completion means the worker's only remaining action is suspension. Wait
+  // until it is positively off-CPU; deleting it earlier can defer cleanup to
+  // the IDLE task and recreate the stack overflow this function prevents.
+  for (;;) {
+    if (eTaskGetState(th) == eSuspended) {
+      bool running = false;
+      for (BaseType_t core = 0; core < portNUM_PROCESSORS; core++) {
+        if (xTaskGetCurrentTaskHandleForCore(core) == th) {
+          running = true;
+          break;
+        }
+      }
+      if (!running) {
+        vTaskDelete(th);
+        return;
+      }
+    }
+    delay(1);  // yield and feed WDT
+  }
+}
+
 void AsyncHttpClientLight::WorkerTask(void* pv) {
   Job* job = reinterpret_cast<Job*>(pv);
   int res = HTTPC_ERROR_NOT_CONNECTED;
@@ -697,10 +768,18 @@ void AsyncHttpClientLight::WorkerTask(void* pv) {
     job->result = res;
     if (job->done) xSemaphoreGive(job->done);
   }
-  vTaskDelete(nullptr);
+  // do not touch job anymore, wait for ahcl_reap_worker()
+  for (;;) { vTaskSuspend(nullptr); }
 }
 
 int AsyncHttpClientLight::runJob(Job::Fn fn, void* arg) {
+  // An async job holds _busy until asyncState() reaps it, and only the caller
+  // polls asyncState(): waiting for _busy here would block forever.
+  if (asyncState() == ASYNC_RUNNING) return HTTPC_ERROR_ASYNC_BUSY;
+  // a new sync request supersedes the last async result (getString() and
+  // writeToStream() only get here when it is not ASYNC_DONE)
+  _asyncState = ASYNC_IDLE;
+
   if (_busy) xSemaphoreTake(_busy, portMAX_DELAY);
 
   Job job;
@@ -730,6 +809,7 @@ int AsyncHttpClientLight::runJob(Job::Fn fn, void* arg) {
     delay(0); // feed WDT
   }
 
+  ahcl_reap_worker(th);
   vSemaphoreDelete(job.done);
   if (_busy) xSemaphoreGive(_busy);
 
@@ -737,16 +817,24 @@ int AsyncHttpClientLight::runJob(Job::Fn fn, void* arg) {
 }
 
 // Non-blocking job – 1 queued, 0 busy, <0 error
-int AsyncHttpClientLight::startJob(Job::Fn fn, void* arg) {
+int AsyncHttpClientLight::startJob(Job::Fn fn, void* arg, AsyncOp_t op) {
   if (!_busy) return HTTPC_ERROR_NOT_CONNECTED;
 
-  if (_asyncState == ASYNC_RUNNING) return 0;
+  // Reap a completed but unpolled async job before reserving the client.
+  (void)asyncState();
+  if (xSemaphoreTake(_busy, 0) != pdTRUE) return 0;
 
-  xSemaphoreTake(_busy, portMAX_DELAY);
+  // Initialize shared state only after this start owns the client. In
+  // particular, a rejected start must not clear the running job's abort flag.
+  _asyncAbortReq = false;
+  _asyncOp = op;
+  _asyncHttpCode = HTTPC_ERROR_NOT_CONNECTED;
+  _asyncRxBytes = -1;
 
   // long live Job on heap – released in asyncState() after done
   _asyncJob = ahcl_new_obj<Job>();
   if (!_asyncJob) {
+    _asyncState = ASYNC_ERROR;
     xSemaphoreGive(_busy);
     return HTTPC_ERROR_TOO_LESS_RAM;
   }
@@ -756,12 +844,14 @@ int AsyncHttpClientLight::startJob(Job::Fn fn, void* arg) {
   _asyncDone = xSemaphoreCreateBinary();
   if (!_asyncDone) {
     ahcl_delete_obj(_asyncJob);
+    _asyncState = ASYNC_ERROR;
     xSemaphoreGive(_busy);
     return HTTPC_ERROR_TOO_LESS_RAM;
   }
   _asyncJob->done = _asyncDone;
 
   _asyncTask = nullptr;
+  _asyncState = ASYNC_RUNNING;
   BaseType_t ok = xTaskCreate(
       &WorkerTask, "AHttpWkrA",
       ASYNCHTTP_WKR_STACK / sizeof(StackType_t),
@@ -770,11 +860,12 @@ int AsyncHttpClientLight::startJob(Job::Fn fn, void* arg) {
   if (ok != pdPASS || _asyncTask == nullptr) {
     vSemaphoreDelete(_asyncDone); _asyncDone = nullptr;
     ahcl_delete_obj(_asyncJob);
+    _asyncState = ASYNC_ERROR;
     xSemaphoreGive(_busy);
     return HTTPC_ERROR_TOO_LESS_RAM;
   }
 
-  // we run async
+  // The worker owns arg after a successful task creation.
   return 1;
 }
 #endif // ESP32
@@ -1022,12 +1113,7 @@ int AsyncHttpClientLight::Job_WriteToStream(void* arg) {
       int chunk = (int) strtol(h.c_str(), nullptr, 16);
 
       if (chunk <= 0) {
-        String tmp;
-        if (!readLine(tmp)) {
-          if (a->self->_transport) a->self->_transport->stop();
-          a->self->_bodyPending = false;
-          return HTTPC_ERROR_READ_TIMEOUT;
-        }
+        // after the last chunk: trailer lines, if any, up to an empty line
         while (true) {
           String t;
           if (!readLine(t)) {
@@ -1143,12 +1229,7 @@ int AsyncHttpClientLight::Job_GetString(void* arg) {
       int chunk = (int) strtol(h.c_str(), nullptr, 16);
 
       if (chunk <= 0) {
-        String tmp;
-        if (!readLine(tmp)) {
-          if (a->self->_transport) a->self->_transport->stop();
-          a->self->_bodyPending = false;
-          return HTTPC_ERROR_READ_TIMEOUT;
-        }
+        // after the last chunk: trailer lines, if any, up to an empty line
         while (true) {
           String t;
           if (!readLine(t)) {
@@ -1246,12 +1327,21 @@ int AsyncHttpClientLight::readBodyToStreamString(StreamString& s, int size_limit
   if (_transferEncoding == HTTPC_TE_IDENTITY) {
     int remaining = _size;
     if (remaining < 0) remaining = size_limit; // max to limit if we dont know content height
+    uint32_t lastDataTime = millis();
 
     while (remaining != 0) {
       if (_asyncAbortReq) return bail(HTTPC_ERROR_CONNECTION_LOST);
 
       int avail = _transport ? _transport->available() : 0;
-      if (avail <= 0) { delay(1); continue; }
+      if (avail <= 0) {
+        if (!_transport || !_transport->connected()) {
+          if (_size > 0) return bail(HTTPC_ERROR_CONNECTION_LOST);  // body cut short
+          break;                                                     // no length: close ends the body
+        }
+        if ((millis() - lastDataTime) > (uint32_t)_tcpTimeout) return bail(HTTPC_ERROR_READ_TIMEOUT);
+        delay(1);
+        continue;
+      }
 
       if (avail > remaining && remaining > 0) avail = remaining;
       if (avail > HTTP_TCP_BUFFER_SIZE) avail = HTTP_TCP_BUFFER_SIZE;
@@ -1268,6 +1358,7 @@ int AsyncHttpClientLight::readBodyToStreamString(StreamString& s, int size_limit
         if (!push(buf, take)) return bail(HTTPC_ERROR_STREAM_WRITE);
         read_total += take;
         if (remaining > 0) remaining -= r;
+        lastDataTime = millis();
       }
     }
   }
@@ -1296,8 +1387,7 @@ int AsyncHttpClientLight::readBodyToStreamString(StreamString& s, int size_limit
       h.trim();
       int chunk = (int) strtol(h.c_str(), nullptr, 16);
       if (chunk <= 0) {
-        String tmp;
-        if (!readLine(tmp)) return bail(HTTPC_ERROR_READ_TIMEOUT);
+        // after the last chunk: trailer lines, if any, up to an empty line
         while (true) { String t; if (!readLine(t)) return bail(HTTPC_ERROR_READ_TIMEOUT); if (t.length() == 0) break; }
         break; // end
       }
@@ -1493,21 +1583,13 @@ int AsyncHttpClientLight::Job_AsyncPOST_Str(void* arg) {
 
 int AsyncHttpClientLight::asyncGETStart() {
 #ifdef ESP32
-  _asyncAbortReq = false;
-  _asyncOp = AOP_GET;
-  _asyncHttpCode = HTTPC_ERROR_NOT_CONNECTED;
-  _asyncRxBytes = -1;
-  // arg on heap – release in Job_AsyncGET
+  // Ownership transfers to the worker only when startJob() returns 1.
   auto* arg = ahcl_new_obj<AsyncGetArg>(this);
-  if (!arg) { _asyncState = ASYNC_ERROR; return HTTPC_ERROR_TOO_LESS_RAM; }
+  if (!arg) return HTTPC_ERROR_TOO_LESS_RAM;
 
-  int q = startJob(&Job_AsyncGET, arg);
-  if (q <= 0) {
-    _asyncState = (q < 0 ? ASYNC_ERROR : ASYNC_IDLE);
-    return q;
-  }
-  _asyncState = ASYNC_RUNNING;
-  return 1;
+  int q = startJob(&Job_AsyncGET, arg, AOP_GET);
+  if (q <= 0) ahcl_delete_obj(arg);
+  return q;
 #else
   return HTTPC_ERROR_NOT_CONNECTED;
 #endif
@@ -1515,20 +1597,12 @@ int AsyncHttpClientLight::asyncGETStart() {
 
 int AsyncHttpClientLight::asyncPOSTStart(uint8_t* payload, size_t size) {
 #ifdef ESP32
-  _asyncAbortReq = false;
-  _asyncOp = AOP_POST;
-  _asyncHttpCode = HTTPC_ERROR_NOT_CONNECTED;
-  _asyncRxBytes = -1;
   auto* arg = ahcl_new_obj<AsyncPostBufArg>(this, payload, size);
-  if (!arg) { _asyncState = ASYNC_ERROR; return HTTPC_ERROR_TOO_LESS_RAM; }
+  if (!arg) return HTTPC_ERROR_TOO_LESS_RAM;
 
-  int q = startJob(&Job_AsyncPOST_Buf, arg);
-  if (q <= 0) {
-    _asyncState = (q < 0 ? ASYNC_ERROR : ASYNC_IDLE);
-    return q;
-  }
-  _asyncState = ASYNC_RUNNING;
-  return 1;
+  int q = startJob(&Job_AsyncPOST_Buf, arg, AOP_POST);
+  if (q <= 0) ahcl_delete_obj(arg);
+  return q;
 #else
   return HTTPC_ERROR_NOT_CONNECTED;
 #endif
@@ -1536,20 +1610,12 @@ int AsyncHttpClientLight::asyncPOSTStart(uint8_t* payload, size_t size) {
 
 int AsyncHttpClientLight::asyncPOSTStart(const String& payload) {
 #ifdef ESP32
-  _asyncAbortReq = false;
-  _asyncOp = AOP_POST;
-  _asyncHttpCode = HTTPC_ERROR_NOT_CONNECTED;
-  _asyncRxBytes = -1;
   auto* arg = ahcl_new_obj<AsyncPostStrArg>(this, payload);
-  if (!arg) { _asyncState = ASYNC_ERROR; return HTTPC_ERROR_TOO_LESS_RAM; }
+  if (!arg) return HTTPC_ERROR_TOO_LESS_RAM;
 
-  int q = startJob(&Job_AsyncPOST_Str, arg);
-  if (q <= 0) {
-    _asyncState = (q < 0 ? ASYNC_ERROR : ASYNC_IDLE);
-    return q;
-  }
-  _asyncState = ASYNC_RUNNING;
-  return 1;
+  int q = startJob(&Job_AsyncPOST_Str, arg, AOP_POST);
+  if (q <= 0) ahcl_delete_obj(arg);
+  return q;
 #else
   return HTTPC_ERROR_NOT_CONNECTED;
 #endif
@@ -1564,19 +1630,29 @@ AsyncHttpClientLight::asyncState(int* httpCodeOut, int* bytesOut) const {
   if (self->_asyncState == ASYNC_RUNNING && self->_asyncDone) {
     // non-blocking poll
     if (xSemaphoreTake(self->_asyncDone, 0) == pdTRUE) {
-      // job done
-      vSemaphoreDelete(self->_asyncDone); self->_asyncDone = nullptr;
+      TaskHandle_t task = self->_asyncTask;
+      SemaphoreHandle_t done = self->_asyncDone;
+      Job* job = self->_asyncJob;
+      bool aborted = self->_asyncAbortReq;
 
-      // result set in v _asyncHttpCode/_asyncRxBytes a _asyncBody
-      if (self->_asyncAbortReq) self->_asyncState = ASYNC_ABORTED;
-      else self->_asyncState = (self->_asyncHttpCode >= 0 ? ASYNC_DONE : ASYNC_ERROR);
+      // The worker may still be returning from xSemaphoreGive(done). Reap it
+      // before deleting the semaphore or releasing ownership of the client.
+      ahcl_reap_worker(task);
+      vSemaphoreDelete(done);
+      ahcl_delete_obj(job);
 
-      // release mutex
-      if (self->_busy) xSemaphoreGive(self->_busy);
-
-      // release heap jobs
-      ahcl_delete_obj(self->_asyncJob);
       self->_asyncTask = nullptr;
+      self->_asyncDone = nullptr;
+      self->_asyncJob = nullptr;
+
+      // result set in _asyncHttpCode/_asyncRxBytes/_asyncBody
+      if (aborted) self->_asyncState = ASYNC_ABORTED;
+      else self->_asyncState = (self->_asyncHttpCode >= 0 ? ASYNC_DONE : ASYNC_ERROR);
+      // the shared header/send loops test the flag: keep it for this job only
+      self->_asyncAbortReq = false;
+
+      // A new operation may start only after all old resources are gone.
+      if (self->_busy) xSemaphoreGive(self->_busy);
     }
   }
 
@@ -1590,8 +1666,23 @@ AsyncHttpClientLight::asyncState(int* httpCodeOut, int* bytesOut) const {
 }
 
 void AsyncHttpClientLight::asyncAbort() {
-  _asyncAbortReq = true;
+  // only an in-flight job: a stale flag would abort the next sync request
+  if (_asyncState == ASYNC_RUNNING) _asyncAbortReq = true;
 }
+
+#ifdef ESP32
+// Abort an in-flight async job and wait for its worker to finish: the worker
+// uses _transport and the object itself, so end() and the destructor must not
+// free them under it. Every worker step is bounded: DNS and connect by their
+// timeouts, the header, send and body loops by _asyncAbortReq.
+void AsyncHttpClientLight::asyncWaitDone() {
+  if (asyncState() != ASYNC_RUNNING) return;   // also reaps a finished worker
+  _asyncAbortReq = true;
+  while (_asyncDone && (asyncState() == ASYNC_RUNNING)) {
+    delay(_waitSliceMs);                       // feed WDT
+  }
+}
+#endif
 
 // ---------- Friend wrapper (public access to private helper) -----------
 int ahcl_readBodyToStreamString(AsyncHttpClientLight* self, StreamString& s, int size_limit) {

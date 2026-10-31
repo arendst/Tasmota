@@ -141,6 +141,12 @@ const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log
 #define D_CMND_DISP_SCROLLTEXT "ScrollText"
 #define D_CMND_DISP_REINIT "reinit"
 
+// RGB panel sync guard, recovers a shifted image (see uDisplay_RGB_panel.cpp)
+#if defined(USE_UNIVERSAL_DISPLAY) && defined(SOC_LCD_RGB_SUPPORTED)
+#define USE_DISPLAY_RGB_GUARD
+bool udisp_rgb_guard_poll(char *buf, size_t len);
+#endif
+
 enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_EVERY_50_MSECOND, FUNC_DISPLAY_EVERY_SECOND,
                      FUNC_DISPLAY_MODEL, FUNC_DISPLAY_MODE, FUNC_DISPLAY_POWER,
                      FUNC_DISPLAY_CLEAR, FUNC_DISPLAY_DRAW_FRAME,
@@ -509,10 +515,18 @@ void DisplayText(void)
         // if string in buffer print it
         dp -= decode_te(linebuf);
         if ((uint32_t)dp - (uint32_t)linebuf) {
-          if (!fill) { *dp = 0; }
 #ifdef USE_DISPLAY_MODES1TO5
           if (!Settings->display_mode) {
 #endif  // USE_DISPLAY_MODES1TO5
+          if (!fill) {
+            *dp = 0;
+          } else {
+            linebuf[abs(int(fill))] = 0;
+          }
+          if (fill < 0) {
+            // right align
+            alignright(linebuf);
+          }
           if (col > 0 && lin > 0) {
             // use col and lin
             DisplayDrawStringAt(col, lin, linebuf, fg_color, 1);
@@ -626,6 +640,8 @@ void DisplayText(void)
             // pad field with spaces fxx
             var = atoiv(cp, &fill);
             cp += var;
+            if (fill >= DISPLAY_BUFFER_COLS)  { fill = DISPLAY_BUFFER_COLS - 1; }
+            if (fill <= -DISPLAY_BUFFER_COLS) { fill = -(DISPLAY_BUFFER_COLS - 1); }
             break;
 #ifdef USE_UFILESYS
           case 'P':
@@ -2367,6 +2383,15 @@ void DisplayReInitDriver(void) {
   ResponseCmndDone();
 }
 
+#ifdef USE_DISPLAY_RGB_GUARD
+void DisplayRgbGuardEverySecond(void) {
+  char buf[200];
+  if (udisp_rgb_guard_poll(buf, sizeof(buf))) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: RGB resync %s"), buf);
+  }
+}
+#endif // USE_DISPLAY_RGB_GUARD
+
 /*********************************************************************************************\
  * Optional drivers
 \*********************************************************************************************/
@@ -3095,6 +3120,9 @@ bool Xdrv13(uint32_t function) {
         DisplaySetPower();
         break;
       case FUNC_EVERY_SECOND:
+#ifdef USE_DISPLAY_RGB_GUARD
+        DisplayRgbGuardEverySecond();
+#endif  // USE_DISPLAY_RGB_GUARD
 #ifdef USE_GRAPH
         DisplayCheckGraph();
 #endif  // USE_GRAPH

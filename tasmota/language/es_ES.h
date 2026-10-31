@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Conteo Reinicios"
 #define D_BRIGHTLIGHT "Brillante"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Canal"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "CO2"
 #define D_CODE "código"                // Button code
 #define D_COLDLIGHT "Fría"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Oscuro"
 #define D_DATA "Datos"
 #define D_DEBUG "Debug"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Punto de Rocío"
 #define D_DISABLED "Deshabilitado"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "Profundidad del agua"
 #define D_WEB_SERVER "Servidor Web"
 #define D_WEIGHT "Peso"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "Cuidado, esta versión no guarda los cambios"

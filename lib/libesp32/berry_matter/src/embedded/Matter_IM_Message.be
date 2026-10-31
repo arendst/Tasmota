@@ -647,6 +647,22 @@ class Matter_IM_SubscribeResponse_Pull : Matter_IM_ReportData_Pull
   end
 
   #################################################################################
+  # Remove an incomplete subscription, but preserve an established one if only
+  # the final SubscribeResponse acknowledgement is missing.
+  def reached_timeout()
+    if self.sub.expiration == nil
+      self.sub.remove_self()
+    end
+  end
+
+  #################################################################################
+  def status_error_received(msg)
+    if self.sub.expiration == nil
+      self.sub.remove_self()
+    end
+  end
+
+  #################################################################################
   # default responder for data
   def send_im(responder)
     # log(format("MTR: Matter_IM_SubscribeResponse send sub=%i ready=%i report_data_phase=%s", self.sub.subscription_id, self.ready ? 1 : 0, self.report_data_phase), 3)

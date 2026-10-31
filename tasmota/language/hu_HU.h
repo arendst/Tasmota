@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Villogás"
 #define D_BLINKOFF "Villogás ki"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Újraindulások száma"
 #define D_BRIGHTLIGHT "Max. fényerő"
 #define D_BSSID "BSSID"
@@ -74,6 +75,7 @@
 #define D_BYTES "Byte-ok"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Csatorna"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "Szén-dioxid"
 #define D_CODE "kód"                // Button code
 #define D_COLDLIGHT "Hideg fény"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Min. fényerő"
 #define D_DATA "Adat"
 #define D_DEBUG "Debug"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Harmatpont"
 #define D_DISABLED "Letiltva"
 #define D_DISCONNECTED "Disconnected"
@@ -227,6 +230,7 @@
 #define D_WATER_DEPTH "Vízmélység"
 #define D_WEB_SERVER "Webszerver"
 #define D_WEIGHT "Tömeg"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "VIGYÁZZ! Ez a verzió nem támogat tartós beállításokat"

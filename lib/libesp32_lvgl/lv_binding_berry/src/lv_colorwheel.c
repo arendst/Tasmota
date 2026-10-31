@@ -17,7 +17,8 @@
 #include "../../lvgl/src/indev/lv_indev_private.h"
 #include "../../lvgl/src/themes/lv_theme_private.h"
 
-#include "../../lvgl/src/misc/lv_assert.h"
+#include "../../lvgl/include/lvgl/debugging/lv_assert.h"
+#include "include/lvgl/core/lv_obj.h"
 
 /*********************
  *      DEFINES
@@ -124,7 +125,7 @@ bool lv_colorwheel_set_hsv(lv_obj_t * obj, lv_color_hsv_t hsv)
     if(hsv.s > 100) hsv.s = 100;
     if(hsv.v > 100) hsv.v = 100;
 
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return false);
     lv_colorwheel_t * colorwheel = (lv_colorwheel_t *)obj;
 
     if(colorwheel->hsv.h == hsv.h && colorwheel->hsv.s == hsv.s && colorwheel->hsv.v == hsv.v) return false;
@@ -159,7 +160,7 @@ bool lv_colorwheel_set_rgb(lv_obj_t * obj, lv_color_t color)
  */
 void lv_colorwheel_set_mode(lv_obj_t * obj, lv_colorwheel_mode_t mode)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
     lv_colorwheel_t * colorwheel = (lv_colorwheel_t *)obj;
 
     colorwheel->mode = mode;
@@ -174,7 +175,7 @@ void lv_colorwheel_set_mode(lv_obj_t * obj, lv_colorwheel_mode_t mode)
  */
 void lv_colorwheel_set_mode_fixed(lv_obj_t * obj, bool fixed)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
     lv_colorwheel_t * colorwheel = (lv_colorwheel_t *)obj;
 
     colorwheel->mode_fixed = fixed;
@@ -191,7 +192,7 @@ void lv_colorwheel_set_mode_fixed(lv_obj_t * obj, bool fixed)
  */
 lv_color_hsv_t lv_colorwheel_get_hsv(lv_obj_t * obj)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return (lv_color_hsv_t){0});
     lv_colorwheel_t * colorwheel = (lv_colorwheel_t *)obj;
 
     return colorwheel->hsv;
@@ -204,7 +205,7 @@ lv_color_hsv_t lv_colorwheel_get_hsv(lv_obj_t * obj)
  */
 lv_color_t lv_colorwheel_get_rgb(lv_obj_t * obj)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return lv_color_black());
     lv_colorwheel_t * colorwheel = (lv_colorwheel_t *)obj;
 
     return lv_color_hsv_to_rgb(colorwheel->hsv.h, colorwheel->hsv.s, colorwheel->hsv.v);
@@ -217,7 +218,7 @@ lv_color_t lv_colorwheel_get_rgb(lv_obj_t * obj)
  */
 lv_colorwheel_mode_t lv_colorwheel_get_color_mode(lv_obj_t * obj)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return LV_COLORWHEEL_MODE_HUE);
     lv_colorwheel_t * colorwheel = (lv_colorwheel_t *)obj;
 
     return colorwheel->mode;
@@ -230,7 +231,7 @@ lv_colorwheel_mode_t lv_colorwheel_get_color_mode(lv_obj_t * obj)
  */
 bool lv_colorwheel_get_color_mode_fixed(lv_obj_t * obj)
 {
-    LV_ASSERT_OBJ(obj, MY_CLASS);
+    LV_CHECK_OBJ(obj, MY_CLASS, return false);
     lv_colorwheel_t * colorwheel = (lv_colorwheel_t *)obj;
 
     return colorwheel->mode_fixed;
@@ -289,8 +290,8 @@ static void lv_colorwheel_constructor(const lv_obj_class_t * class_p, lv_obj_t *
     lv_obj_set_style_pad_column(obj, PAD_DEF, LV_PART_KNOB);
 
     // rest of constructor
-    lv_obj_add_flag(obj, LV_OBJ_FLAG_ADV_HITTEST);
-    lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_set_adv_hittest(obj, true);
+    lv_obj_set_scroll_chain(obj, false);    /* clears both LV_OBJ_FLAG_SCROLL_CHAIN_HOR and _VER */
     refr_knob_pos(obj);
 }
 

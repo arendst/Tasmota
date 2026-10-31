@@ -1069,7 +1069,9 @@ class Matter_UI
 
     if !webserver.check_privileged_access() return nil end
 
-    self.device.ensure_discovery()          # lazy subscribe to tasmota/discovery/# on first visit
+    if self.matter_enabled
+      self.device.ensure_discovery()        # lazy subscribe to tasmota/discovery/# on first visit
+    end
 
     webserver.content_start("Matter")           #- title of the web page -#
     webserver.content_send_style()                  #- send standard Tasmota styles -#
@@ -1523,7 +1525,8 @@ class Matter_UI
         var matter_commissioning_requested = webserver.has_arg("comm")
         var matter_disable_bridge_mode_requested = (webserver.arg("nobridge") == 'on')
         var matter_disable_bridge_mode_current = self.device.disable_bridge_mode
-        var matter_bridge_mode_changed = matter_disable_bridge_mode_current != matter_disable_bridge_mode_requested
+        # when Matter is disabled, `device.disable_bridge_mode` is `nil` and the checkbox is not displayed
+        var matter_bridge_mode_changed = self.matter_enabled && (matter_disable_bridge_mode_current != matter_disable_bridge_mode_requested)
         if matter_bridge_mode_changed
           # Persist the next-boot topology while keeping the live topology coherent
           # until the restart below rebuilds all fixed Descriptor metadata.
@@ -1544,7 +1547,7 @@ class Matter_UI
           #- and force restart -#
           webserver.redirect("/?rst=")
         else
-          if matter_commissioning_requested != (self.device.commissioning.commissioning_open != nil)
+          if self.matter_enabled && matter_commissioning_requested != (self.device.commissioning.commissioning_open != nil)
             if matter_commissioning_requested
               self.device.commissioning.start_root_basic_commissioning()
             else

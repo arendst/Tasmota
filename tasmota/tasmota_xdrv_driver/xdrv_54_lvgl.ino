@@ -33,6 +33,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "esp_heap_caps.h"
+#include "esp_rom_sys.h"            // esp_rom_printf, used by lv_tasmota_assert_failed
 
 // callback type when a screen paint is done
 typedef void (*lv_paint_cb_t)(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint8_t *pixels);
@@ -400,6 +402,21 @@ extern "C" {
     free(ptr);
   }
 
+  // LVGL assert handler (LV_ASSERT_HANDLER, see tasmota/lvgl_berry/tasmota_lv_assert.h)
+  // Print heap state without allocating, then abort() to get a backtrace and a reboot
+  void lv_tasmota_assert_failed(void) {
+    esp_rom_printf("\nLVG: assert failed, heap internal free %u largest %u",
+                   heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT),
+                   heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
+    if (heap_caps_get_total_size(MALLOC_CAP_SPIRAM) > 0) {
+      esp_rom_printf(", psram free %u largest %u",
+                     heap_caps_get_free_size(MALLOC_CAP_SPIRAM),
+                     heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
+    }
+    esp_rom_printf("\n");
+    abort();
+  }
+
 #ifdef USE_LVGL_PNG_DECODER
   // for PNG decoder, use same allocators as LVGL
   void* lodepng_malloc(size_t size) { return lvbe_malloc(size); }
@@ -418,16 +435,24 @@ static const int lv_tick_interval_ms = 5;
 
 static void lv_tick_handler(void) { lv_tick_inc(lv_tick_interval_ms); }
 
+// RGB PANEL SYNC GUARD ----------------------------------------------------
+
+#if defined(USE_UNIVERSAL_DISPLAY) && defined(SOC_LCD_RGB_SUPPORTED)
+// LVGL rendering started/finished: the RGB sync guard delays non-urgent DMA restarts meanwhile
+void udisp_rgb_guard_busy(bool busy);
+#endif
+
 // TOUCHSCREEN STUFF -------------------------------------------------------
 
 uint32_t Touch_Status(int32_t sel);
+bool Touch_PressedLatched(void);
 
 //typedef void (*lv_indev_read_cb_t)(lv_indev_t * indev, lv_indev_data_t * data);
 void lvgl_touchscreen_read(lv_indev_t *indev_drv, lv_indev_data_t *data);
 void lvgl_touchscreen_read(lv_indev_t *indev_drv, lv_indev_data_t *data) {
   data->point.x = Touch_Status(1); // Last-pressed coordinates
   data->point.y = Touch_Status(2);
-  data->state = Touch_Status(0) ? LV_INDEV_STATE_PRESSED : LV_INDEV_STATE_RELEASED;
+  data->state = Touch_PressedLatched() ? LV_INDEV_STATE_PRESSED : LV_INDEV_STATE_RELEASED;  // don't lose a tap shorter than the read period
   data->continue_reading = false; /*No buffering now so no more data read*/
   // keep data for TS calibration
   lv_ts_calibration.state = data->state;
@@ -449,18 +474,21 @@ void lvgl_touchscreen_read(lv_indev_t *indev_drv, lv_indev_data_t *data) {
  ************************************************************/
 extern Renderer *Init_uDisplay(const char *desc);
 
-void start_lvgl(const char * uconfig);
-void start_lvgl(const char * uconfig) {
+// Returns true if LVGL is running (already or newly started), false on failure
+bool start_lvgl(const char * uconfig);
+bool start_lvgl(const char * uconfig) {
 
   if (lvgl_glue != nullptr) {
     AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_LVGL "LVGL was already initialized");
-    return;
+    return true;
   }
 
   if (!renderer || uconfig) {
     renderer  = Init_uDisplay((char*)uconfig);
-    AddLog(LOG_LEVEL_ERROR, "LVG: Could not start Universal Display");
-    if (!renderer) return;
+    if (!renderer) {
+      AddLog(LOG_LEVEL_ERROR, "LVG: Could not start Universal Display");
+      return false;
+    }
   }
 
   renderer->DisplayOnff(true);
@@ -521,7 +549,7 @@ void start_lvgl(const char * uconfig) {
     delete lvgl_glue;
     lvgl_glue = nullptr;
     AddLog(LOG_LEVEL_ERROR, "LVG: Could not allocate buffers");
-    return;
+    return false;
   }
 
   // Initialize LvGL display driver
@@ -529,6 +557,14 @@ void start_lvgl(const char * uconfig) {
   lv_display_set_dpi(lvgl_glue->lv_display, 160);          // set display to 160 DPI instead of default 130 DPI to avoid some rounding in styles
   lv_display_set_flush_cb(lvgl_glue->lv_display, lv_flush_callback);
   lv_display_set_buffers(lvgl_glue->lv_display, lvgl_glue->lv_pixel_buf, lvgl_glue->lv_pixel_buf2, lvgl_buffer_size * (LV_COLOR_DEPTH / 8), LV_DISPLAY_RENDER_MODE_PARTIAL);
+#if defined(USE_UNIVERSAL_DISPLAY) && defined(SOC_LCD_RGB_SUPPORTED)
+  {
+    // lambda, not a function: the .ino prototype generator would declare it before lvgl.h is included
+    lv_event_cb_t render_cb = [](lv_event_t * e) { udisp_rgb_guard_busy(lv_event_get_code(e) == LV_EVENT_RENDER_START); };
+    lv_display_add_event_cb(lvgl_glue->lv_display, render_cb, LV_EVENT_RENDER_START, NULL);
+    lv_display_add_event_cb(lvgl_glue->lv_display, render_cb, LV_EVENT_RENDER_READY, NULL);
+  }
+#endif
 
   // Initialize LvGL input device (touchscreen already started)
   lvgl_glue->lv_indev = lv_indev_create();
@@ -580,13 +616,6 @@ void start_lvgl(const char * uconfig) {
 
 #endif // USE_UFILESYS
 
-#ifdef USE_LVGL_FREETYPE
-  // initialize the FreeType renderer
-  lv_freetype_init(USE_LVGL_FREETYPE_MAX_FACES);
-  // lv_freetype_init(USE_LVGL_FREETYPE_MAX_FACES,
-  //                  USE_LVGL_FREETYPE_MAX_SIZES,
-  //                  UsePSRAM() ? USE_LVGL_FREETYPE_MAX_BYTES_PSRAM : USE_LVGL_FREETYPE_MAX_BYTES);
-#endif
 #ifdef USE_LVGL_PNG_DECODER
   lv_lodepng_init();
 #endif // USE_LVGL_PNG_DECODER
@@ -599,6 +628,7 @@ void start_lvgl(const char * uconfig) {
   }
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LVGL "LVGL initialized"));
+  return true;
 }
 
 /*********************************************************************************************\

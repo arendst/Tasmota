@@ -114,26 +114,26 @@ const be_ctypes_structure_t be_lv_draw_rect_dsc = {
     { "base_obj", 0, 0, 0, ctypes_ptr32, 0 },
     { "base_part", 4, 0, 0, ctypes_u32, 0 },
     { "base_user_data", 36, 0, 0, ctypes_ptr32, 0 },
-    { "bg_color", 68, 0, 0, ctypes_u24, 1 },
-    { "bg_grad_dir", 83, 0, 4, ctypes_bf, 0 },
-    { "bg_grad_end_extent_x", 108, 0, 0, ctypes_i32, 0 },
-    { "bg_grad_end_extent_y", 112, 0, 0, ctypes_i32, 0 },
-    { "bg_grad_end_x", 100, 0, 0, ctypes_i32, 0 },
-    { "bg_grad_end_y", 104, 0, 0, ctypes_i32, 0 },
-    { "bg_grad_extend", 83, 4, 3, ctypes_bf, 0 },
-    { "bg_grad_focal_extent_x", 92, 0, 0, ctypes_i32, 0 },
-    { "bg_grad_focal_extent_y", 96, 0, 0, ctypes_i32, 0 },
-    { "bg_grad_focal_x", 84, 0, 0, ctypes_i32, 0 },
-    { "bg_grad_focal_y", 88, 0, 0, ctypes_i32, 0 },
-    { "bg_grad_state", 116, 0, 0, ctypes_ptr32, 0 },
-    { "bg_grad_stops_0_color", 72, 0, 0, ctypes_u24, 1 },
-    { "bg_grad_stops_0_frac", 76, 0, 0, ctypes_u8, 0 },
-    { "bg_grad_stops_0_opa", 75, 0, 0, ctypes_u8, 0 },
-    { "bg_grad_stops_1_color", 77, 0, 0, ctypes_u24, 1 },
-    { "bg_grad_stops_1_frac", 81, 0, 0, ctypes_u8, 0 },
-    { "bg_grad_stops_1_opa", 80, 0, 0, ctypes_u8, 0 },
-    { "bg_grad_stops_count", 82, 0, 0, ctypes_u8, 0 },
-    { "bg_image_colorkey", 64, 0, 0, ctypes_ptr32, 0 },
+    { "bg_color", 62, 0, 0, ctypes_u24, 1 },
+    { "bg_grad_dir", 79, 0, 4, ctypes_bf, 0 },
+    { "bg_grad_end_extent_x", 104, 0, 0, ctypes_i32, 0 },
+    { "bg_grad_end_extent_y", 108, 0, 0, ctypes_i32, 0 },
+    { "bg_grad_end_x", 96, 0, 0, ctypes_i32, 0 },
+    { "bg_grad_end_y", 100, 0, 0, ctypes_i32, 0 },
+    { "bg_grad_extend", 79, 4, 3, ctypes_bf, 0 },
+    { "bg_grad_focal_extent_x", 88, 0, 0, ctypes_i32, 0 },
+    { "bg_grad_focal_extent_y", 92, 0, 0, ctypes_i32, 0 },
+    { "bg_grad_focal_x", 80, 0, 0, ctypes_i32, 0 },
+    { "bg_grad_focal_y", 84, 0, 0, ctypes_i32, 0 },
+    { "bg_grad_state", 112, 0, 0, ctypes_ptr32, 0 },
+    { "bg_grad_stops_0_color", 68, 0, 0, ctypes_u24, 1 },
+    { "bg_grad_stops_0_frac", 72, 0, 0, ctypes_u8, 0 },
+    { "bg_grad_stops_0_opa", 71, 0, 0, ctypes_u8, 0 },
+    { "bg_grad_stops_1_color", 73, 0, 0, ctypes_u24, 1 },
+    { "bg_grad_stops_1_frac", 77, 0, 0, ctypes_u8, 0 },
+    { "bg_grad_stops_1_opa", 76, 0, 0, ctypes_u8, 0 },
+    { "bg_grad_stops_count", 78, 0, 0, ctypes_u8, 0 },
+    { "bg_image_colorkey", 116, 0, 0, ctypes_ptr32, 0 },
     { "bg_img_opa", 55, 0, 0, ctypes_u8, 0 },
     { "bg_img_recolor", 52, 0, 0, ctypes_u24, 1 },
     { "bg_img_recolor_opa", 56, 0, 0, ctypes_u8, 0 },
@@ -287,11 +287,11 @@ const be_ctypes_structure_t be_lv_draw_image_dsc = {
 }};
 
 const be_ctypes_structure_t be_lv_draw_label_dsc = {
-  120,  /* size in bytes */
-  41,  /* number of elements */
+  124,  /* size in bytes */
+  40,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[41]) {
-    { "align", 100, 0, 0, ctypes_u8, 0 },
+  (const be_ctypes_structure_item_t[40]) {
+    { "align", 100, 0, 0, ctypes_u32, 0 },
     { "base_drop_shadow_blur_radius", 28, 0, 20, ctypes_bf, 0 },
     { "base_drop_shadow_color", 24, 0, 0, ctypes_u24, 1 },
     { "base_drop_shadow_ofs_x", 20, 0, 0, ctypes_i16, 0 },
@@ -305,22 +305,21 @@ const be_ctypes_structure_t be_lv_draw_label_dsc = {
     { "base_obj", 0, 0, 0, ctypes_ptr32, 0 },
     { "base_part", 4, 0, 0, ctypes_u32, 0 },
     { "base_user_data", 36, 0, 0, ctypes_ptr32, 0 },
-    { "bidi_dir", 101, 0, 0, ctypes_u8, 0 },
-    { "blend_mode", 106, 0, 3, ctypes_bf, 0 },
+    { "bidi_dir", 104, 0, 0, ctypes_u32, 0 },
     { "color", 56, 0, 0, ctypes_u24, 1 },
-    { "decor", 105, 0, 3, ctypes_bf, 0 },
-    { "flag", 105, 3, 5, ctypes_bf, 0 },
+    { "decor", 110, 0, 3, ctypes_bf, 0 },
+    { "flag", 110, 3, 5, ctypes_bf, 0 },
     { "font", 52, 0, 0, ctypes_ptr32, 0 },
-    { "has_bided", 106, 5, 1, ctypes_bf, 0 },
-    { "hint", 108, 0, 0, ctypes_ptr32, 0 },
+    { "has_bided", 111, 2, 1, ctypes_bf, 0 },
+    { "hint", 112, 0, 0, ctypes_ptr32, 0 },
     { "letter_space", 64, 0, 0, ctypes_i32, 0 },
     { "line_space", 60, 0, 0, ctypes_i32, 0 },
     { "ofs_x", 68, 0, 0, ctypes_i32, 0 },
     { "ofs_y", 72, 0, 0, ctypes_i32, 0 },
-    { "opa", 102, 0, 0, ctypes_u8, 0 },
-    { "outline_stroke_color", 112, 0, 0, ctypes_u24, 1 },
-    { "outline_stroke_opa", 103, 0, 0, ctypes_u8, 0 },
-    { "outline_stroke_width", 116, 0, 0, ctypes_i32, 0 },
+    { "opa", 108, 0, 0, ctypes_u8, 0 },
+    { "outline_stroke_color", 116, 0, 0, ctypes_u24, 1 },
+    { "outline_stroke_opa", 109, 0, 0, ctypes_u8, 0 },
+    { "outline_stroke_width", 120, 0, 0, ctypes_i32, 0 },
     { "rotation", 76, 0, 0, ctypes_i32, 0 },
     { "sel_bg_color", 91, 0, 0, ctypes_u24, 1 },
     { "sel_color", 88, 0, 0, ctypes_u24, 1 },
@@ -328,10 +327,10 @@ const be_ctypes_structure_t be_lv_draw_label_dsc = {
     { "sel_start", 80, 0, 0, ctypes_u32, 0 },
     { "text", 40, 0, 0, ctypes_ptr32, 0 },
     { "text_length", 96, 0, 0, ctypes_u32, 0 },
-    { "text_local", 106, 3, 1, ctypes_bf, 0 },
+    { "text_local", 111, 0, 1, ctypes_bf, 0 },
     { "text_size_x", 44, 0, 0, ctypes_i32, 0 },
     { "text_size_y", 48, 0, 0, ctypes_i32, 0 },
-    { "text_static", 106, 4, 1, ctypes_bf, 0 },
+    { "text_static", 111, 1, 1, ctypes_bf, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_chart_series = {
@@ -351,14 +350,14 @@ const be_ctypes_structure_t be_lv_chart_series = {
 }};
 
 const be_ctypes_structure_t be_lv_chart_cursor = {
-  24,  /* size in bytes */
+  28,  /* size in bytes */
   7,  /* number of elements */
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[7]) {
     { "color", 12, 0, 0, ctypes_u24, 1 },
-    { "dir", 20, 0, 0, ctypes_u8, 0 },
+    { "dir", 20, 0, 0, ctypes_u32, 0 },
     { "point_id", 8, 0, 0, ctypes_i32, 0 },
-    { "pos_set", 21, 0, 1, ctypes_bf, 0 },
+    { "pos_set", 24, 0, 1, ctypes_bf, 0 },
     { "pos_x", 0, 0, 0, ctypes_i32, 0 },
     { "pos_y", 4, 0, 0, ctypes_i32, 0 },
     { "ser", 16, 0, 0, ctypes_ptr32, 0 },
@@ -431,45 +430,49 @@ const be_ctypes_structure_t be_lv_style_transition_dsc = {
 }};
 
 const be_ctypes_structure_t be_lv_anim_timeline_dsc = {
-  28,  /* size in bytes */
-  7,  /* number of elements */
+  32,  /* size in bytes */
+  8,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[7]) {
+  (const be_ctypes_structure_item_t[8]) {
     { "act_time", 8, 0, 0, ctypes_u32, 0 },
     { "anim_dsc", 0, 0, 0, ctypes_ptr32, 0 },
     { "anim_dsc_cnt", 4, 0, 0, ctypes_u32, 0 },
-    { "delay", 12, 0, 0, ctypes_u32, 0 },
-    { "repeat_count", 16, 0, 0, ctypes_u32, 0 },
-    { "repeat_delay", 20, 0, 0, ctypes_u32, 0 },
-    { "user_data", 24, 0, 0, ctypes_ptr32, 0 },
+    { "delay", 16, 0, 0, ctypes_u32, 0 },
+    { "repeat_count", 20, 0, 0, ctypes_u32, 0 },
+    { "repeat_delay", 24, 0, 0, ctypes_u32, 0 },
+    { "reverse", 12, 0, 0, ctypes_u8, 0 },
+    { "user_data", 28, 0, 0, ctypes_ptr32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_layer = {
-  84,  /* size in bytes */
-  21,  /* number of elements */
+  88,  /* size in bytes */
+  24,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[21]) {
-    { "_clip_area_x1", 52, 0, 0, ctypes_i32, 0 },
-    { "_clip_area_x2", 60, 0, 0, ctypes_i32, 0 },
-    { "_clip_area_y1", 56, 0, 0, ctypes_i32, 0 },
-    { "_clip_area_y2", 64, 0, 0, ctypes_i32, 0 },
-    { "buf_area_x1", 20, 0, 0, ctypes_i32, 0 },
-    { "buf_area_x2", 28, 0, 0, ctypes_i32, 0 },
-    { "buf_area_y1", 24, 0, 0, ctypes_i32, 0 },
-    { "buf_area_y2", 32, 0, 0, ctypes_i32, 0 },
-    { "color_format", 76, 0, 0, ctypes_u32, 0 },
+  (const be_ctypes_structure_item_t[24]) {
+    { "_clip_area_x1", 56, 0, 0, ctypes_i32, 0 },
+    { "_clip_area_x2", 64, 0, 0, ctypes_i32, 0 },
+    { "_clip_area_y1", 60, 0, 0, ctypes_i32, 0 },
+    { "_clip_area_y2", 68, 0, 0, ctypes_i32, 0 },
+    { "all_tasks_added", 84, 0, 0, ctypes_u8, 0 },
+    { "buf_area_x1", 24, 0, 0, ctypes_i32, 0 },
+    { "buf_area_x2", 32, 0, 0, ctypes_i32, 0 },
+    { "buf_area_y1", 28, 0, 0, ctypes_i32, 0 },
+    { "buf_area_y2", 36, 0, 0, ctypes_i32, 0 },
+    { "buffer_owned", 86, 0, 0, ctypes_u8, 0 },
+    { "color_format", 80, 0, 0, ctypes_u32, 0 },
+    { "display", 8, 0, 0, ctypes_ptr32, 0 },
     { "draw_buf", 0, 0, 0, ctypes_ptr32, 0 },
     { "draw_task_head", 4, 0, 0, ctypes_ptr32, 0 },
-    { "next", 12, 0, 0, ctypes_ptr32, 0 },
-    { "opa", 80, 0, 0, ctypes_u8, 0 },
-    { "parent", 8, 0, 0, ctypes_ptr32, 0 },
-    { "partial_y_offset", 68, 0, 0, ctypes_i32, 0 },
-    { "phy_clip_area_x1", 36, 0, 0, ctypes_i32, 0 },
-    { "phy_clip_area_x2", 44, 0, 0, ctypes_i32, 0 },
-    { "phy_clip_area_y1", 40, 0, 0, ctypes_i32, 0 },
-    { "phy_clip_area_y2", 48, 0, 0, ctypes_i32, 0 },
-    { "recolor", 72, 0, 0, ctypes_u32, 0 },
-    { "user_data", 16, 0, 0, ctypes_ptr32, 0 },
+    { "next", 16, 0, 0, ctypes_ptr32, 0 },
+    { "opa", 85, 0, 0, ctypes_u8, 0 },
+    { "parent", 12, 0, 0, ctypes_ptr32, 0 },
+    { "partial_y_offset", 72, 0, 0, ctypes_i32, 0 },
+    { "phy_clip_area_x1", 40, 0, 0, ctypes_i32, 0 },
+    { "phy_clip_area_x2", 48, 0, 0, ctypes_i32, 0 },
+    { "phy_clip_area_y1", 44, 0, 0, ctypes_i32, 0 },
+    { "phy_clip_area_y2", 52, 0, 0, ctypes_i32, 0 },
+    { "recolor", 76, 0, 0, ctypes_u32, 0 },
+    { "user_data", 20, 0, 0, ctypes_ptr32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_color_filter_dsc = {
@@ -537,16 +540,17 @@ const be_ctypes_structure_t be_lv_span_coords = {
 }};
 
 const be_ctypes_structure_t be_lv_font_info = {
-  24,  /* size in bytes */
-  6,  /* number of elements */
+  28,  /* size in bytes */
+  7,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[6]) {
+  (const be_ctypes_structure_item_t[7]) {
     { "class_p", 4, 0, 0, ctypes_ptr32, 0 },
-    { "kerning", 20, 0, 0, ctypes_u32, 0 },
+    { "kerning", 24, 0, 0, ctypes_u32, 0 },
     { "name", 0, 0, 0, ctypes_ptr32, 0 },
     { "render_mode", 12, 0, 0, ctypes_u32, 0 },
     { "size", 8, 0, 0, ctypes_u32, 0 },
     { "style", 16, 0, 0, ctypes_u32, 0 },
+    { "weight", 20, 0, 0, ctypes_i32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_draw_letter_dsc = {

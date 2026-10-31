@@ -188,17 +188,6 @@ extern void arc_anim_end_angle(void * obj, int32_t v);
 
 
 /********************************************************************
-** Solidified class: lv_qrcode
-********************************************************************/
-#include "be_fixed_be_class_lv_qrcode.h"
-/* @const_object_info_begin
-class be_class_lv_qrcode (scope: global, name: lv_qrcode, super: be_class_lv_obj, strings: weak) {
-    init, func(be_ntv_lv_qrcode_init)
-    _class, comptr(&lv_qrcode_class)
-}
-@const_object_info_end */
-
-/********************************************************************
 ** Solidified class: lv_animimg
 ********************************************************************/
 #include "be_fixed_be_class_lv_animimg.h"
@@ -309,6 +298,17 @@ class be_class_lv_checkbox (scope: global, name: lv_checkbox, super: be_class_lv
 @const_object_info_end */
 
 /********************************************************************
+** Solidified class: lv_colorwheel
+********************************************************************/
+#include "be_fixed_be_class_lv_colorwheel.h"
+/* @const_object_info_begin
+class be_class_lv_colorwheel (scope: global, name: lv_colorwheel, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_colorwheel_init)
+    _class, comptr(&lv_colorwheel_class)
+}
+@const_object_info_end */
+
+/********************************************************************
 ** Solidified class: lv_dropdown
 ********************************************************************/
 #include "be_fixed_be_class_lv_dropdown.h"
@@ -408,17 +408,6 @@ class be_class_lv_menu (scope: global, name: lv_menu, super: be_class_lv_obj, st
 @const_object_info_end */
 
 /********************************************************************
-** Solidified class: lv_menu_page
-********************************************************************/
-#include "be_fixed_be_class_lv_menu_page.h"
-/* @const_object_info_begin
-class be_class_lv_menu_page (scope: global, name: lv_menu_page, super: be_class_lv_obj, strings: weak) {
-    init, func(be_ntv_lv_menu_page_init)
-    _class, comptr(&lv_menu_page_class)
-}
-@const_object_info_end */
-
-/********************************************************************
 ** Solidified class: lv_menu_cont
 ********************************************************************/
 #include "be_fixed_be_class_lv_menu_cont.h"
@@ -426,6 +415,17 @@ class be_class_lv_menu_page (scope: global, name: lv_menu_page, super: be_class_
 class be_class_lv_menu_cont (scope: global, name: lv_menu_cont, super: be_class_lv_obj, strings: weak) {
     init, func(be_ntv_lv_menu_cont_init)
     _class, comptr(&lv_menu_cont_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_menu_page
+********************************************************************/
+#include "be_fixed_be_class_lv_menu_page.h"
+/* @const_object_info_begin
+class be_class_lv_menu_page (scope: global, name: lv_menu_page, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_menu_page_init)
+    _class, comptr(&lv_menu_page_class)
 }
 @const_object_info_end */
 
@@ -459,6 +459,17 @@ class be_class_lv_menu_separator (scope: global, name: lv_menu_separator, super:
 class be_class_lv_msgbox (scope: global, name: lv_msgbox, super: be_class_lv_obj, strings: weak) {
     init, func(be_ntv_lv_msgbox_init)
     _class, comptr(&lv_msgbox_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_qrcode
+********************************************************************/
+#include "be_fixed_be_class_lv_qrcode.h"
+/* @const_object_info_begin
+class be_class_lv_qrcode (scope: global, name: lv_qrcode, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_qrcode_init)
+    _class, comptr(&lv_qrcode_class)
 }
 @const_object_info_end */
 
@@ -552,6 +563,17 @@ class be_class_lv_spinner (scope: global, name: lv_spinner, super: be_class_lv_a
 @const_object_info_end */
 
 /********************************************************************
+** Solidified class: lv_stripes
+********************************************************************/
+#include "be_fixed_be_class_lv_stripes.h"
+/* @const_object_info_begin
+class be_class_lv_stripes (scope: global, name: lv_stripes, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_stripes_init)
+    _class, comptr(&lv_stripes_class)
+}
+@const_object_info_end */
+
+/********************************************************************
 ** Solidified class: lv_switch
 ********************************************************************/
 #include "be_fixed_be_class_lv_switch.h"
@@ -603,28 +625,6 @@ class be_class_lv_textarea (scope: global, name: lv_textarea, super: be_class_lv
 class be_class_lv_tileview (scope: global, name: lv_tileview, super: be_class_lv_obj, strings: weak) {
     init, func(be_ntv_lv_tileview_init)
     _class, comptr(&lv_tileview_class)
-}
-@const_object_info_end */
-
-/********************************************************************
-** Solidified class: lv_colorwheel
-********************************************************************/
-#include "be_fixed_be_class_lv_colorwheel.h"
-/* @const_object_info_begin
-class be_class_lv_colorwheel (scope: global, name: lv_colorwheel, super: be_class_lv_obj, strings: weak) {
-    init, func(be_ntv_lv_colorwheel_init)
-    _class, comptr(&lv_colorwheel_class)
-}
-@const_object_info_end */
-
-/********************************************************************
-** Solidified class: lv_stripes
-********************************************************************/
-#include "be_fixed_be_class_lv_stripes.h"
-/* @const_object_info_begin
-class be_class_lv_stripes (scope: global, name: lv_stripes, super: be_class_lv_obj, strings: weak) {
-    init, func(be_ntv_lv_stripes_init)
-    _class, comptr(&lv_stripes_class)
 }
 @const_object_info_end */
 
