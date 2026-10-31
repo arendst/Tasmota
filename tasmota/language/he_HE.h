@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "רמת חשיפה"
 #define D_IMMEDIATE "מידי"      // Button immediate
 #define D_INDEX "אינדקס"
+#define D_AIRQUALITY "איכות אוויר"
+#define D_IAQ_CALIBRATING "(כיול קו בסיס, שמירה על אוויר נקי)"
 #define D_INFO "מידע"
 #define D_INFRARED "אינפרא"
 #define D_INITIALIZED "מאותחל"

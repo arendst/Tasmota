@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "Aydınlık"
 #define D_IMMEDIATE "derhal"      // Button immediate
 #define D_INDEX "Index"
+#define D_AIRQUALITY "Hava kalitesi"
+#define D_IAQ_CALIBRATING "(temel çizgi kalibrasyonu, havayı temiz tutun)"
 #define D_INFO "Bilgi"
 #define D_INFRARED "Kızılötesi"
 #define D_INITIALIZED "Başlatıldı"

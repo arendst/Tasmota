@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "Освітленність"
 #define D_IMMEDIATE "Негайно"       // Button immediate
 #define D_INDEX "Індекс"
+#define D_AIRQUALITY "Якість повітря"
+#define D_IAQ_CALIBRATING "(калібрування базової лінії, підтримуйте чисте повітря)"
 #define D_INFO "Інформація"
 #define D_INFRARED "Інфрачервоний"
 #define D_INITIALIZED "Ініціалізовано"
