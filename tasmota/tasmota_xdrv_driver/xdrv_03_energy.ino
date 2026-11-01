@@ -1310,12 +1310,18 @@ void EnergyShow(bool json) {
   }
 
   float energy_yesterday_ph[Energy->phase_count];
+  float energy_total_sum = 0.0f;
   float active_power_sum = 0.0f;
   int negative_phases = 0;
   for (uint32_t i = 0; i < Energy->phase_count; i++) {
     energy_yesterday_ph[i] = (float)Settings->energy_kWhyesterday_ph[i] / 100000;
-    active_power_sum += Energy->active_power[i];
-    negative_phases += (Energy->active_power[i] < 0) ? -1 : 1;
+    if (!isnan(Energy->total[i])) {
+      energy_total_sum += Energy->total[i];
+    }
+    if (!isnan(Energy->active_power[i])) {
+      active_power_sum += Energy->active_power[i];
+      negative_phases += (Energy->active_power[i] < 0) ? -1 : 1;
+    }
   }
 
   bool energy_tariff = false;
@@ -1430,7 +1436,8 @@ void EnergyShow(bool json) {
         dtostrfd(Energy->current[0], Settings->flag2.current_resolution, temp_chr);
         DomoticzSensor(DZ_CURRENT, temp_chr);  // Current
       }
-      dtostrfd(Energy->total_sum * 1000, 1, temp_chr);
+
+      dtostrfd(energy_total_sum * 1000, 1, temp_chr);
       DomoticzSensorPowerEnergy((int)active_power_sum, temp_chr);  // PowerUsage, EnergyToday
 
       char energy_usage_chr[2][FLOATSZ];
@@ -1456,7 +1463,7 @@ void EnergyShow(bool json) {
         KnxSensor(KNX_ENERGY_POWERFACTOR, power_factor[0]);
       }
       KnxSensor(KNX_ENERGY_DAILY, Energy->daily_sum);
-      KnxSensor(KNX_ENERGY_TOTAL, Energy->total_sum);
+      KnxSensor(KNX_ENERGY_TOTAL, energy_total_sum);
       KnxSensor(KNX_ENERGY_YESTERDAY, Energy->yesterday_sum);
     }
 #endif  // USE_KNX
