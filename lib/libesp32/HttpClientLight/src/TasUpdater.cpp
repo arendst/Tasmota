@@ -343,7 +343,6 @@ size_t TasUpdateClass::write(uint8_t *data, size_t len) {
 size_t TasUpdateClass::writeStream(Stream &data) {
     size_t written = 0;
     size_t toRead = 0;
-    int timeout_failures = 0;
 
     if(hasError() || !isRunning())
         return 0;
@@ -367,16 +366,16 @@ size_t TasUpdateClass::writeStream(Stream &data) {
         }
 
         /*
-        Init read&timeout counters and try to read, if read failed, increase counter,
-        wait 100ms and try to read again. If counter > 300 (30 sec), give up/abort
+        Try to read; if nothing came, wait 100ms and try again. Give up/abort once
+        nothing has come for 30 sec. Measured in time rather than attempts, because
+        readBytes() itself waits for the stream's timeout before returning nothing
         */
         toRead = 0;
-        timeout_failures = 0;
+        uint32_t readStart = millis();
         while(!toRead) {
             toRead = data.readBytes(_buffer + _bufferLen,  bytesToRead);
             if(toRead == 0) {
-                timeout_failures++;
-                if (timeout_failures >= 300) {
+                if (millis() - readStart >= 30000) {
                     _abort(UPDATE_ERROR_STREAM);
                     return written;
                 }
