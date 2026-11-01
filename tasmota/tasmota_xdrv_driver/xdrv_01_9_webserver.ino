@@ -516,6 +516,8 @@ static void WebGetArg(const char* arg, char* out, size_t max) {
 
 /*-------------------------------------------------------------------------------------------*/
 
+void ExecuteWebCommand(char* svalue, uint32_t source = SRC_WEBGUI);
+
 String AddWebCommand(const char* command, const char* arg, const char* dflt) {
 /*
   // OK but fixed max argument
@@ -556,6 +558,13 @@ String AddWebCommand(const char* command, const char* arg, const char* dflt) {
     result += FPSTR(dflt);
   }
   else if (!(StrCaseStr_P(command, PSTR("Password")) && (len < 5))) {
+    if (strpbrk(param.c_str(), ";{}")) {
+      // Backlog would end this command at a ';' or join it to the next at an unpaired '{', so run it now
+      result.remove(0, 1);                       // Skip leading ';'
+      result += param;
+      ExecuteWebCommand((char*)result.c_str());
+      return String();
+    }
     result += param;
   }
   return result;
@@ -578,7 +587,6 @@ void ShowWebSource(uint32_t source) {
 
 /*-------------------------------------------------------------------------------------------*/
 
-void ExecuteWebCommand(char* svalue, uint32_t source = SRC_WEBGUI);
 void ExecuteWebCommand(char* svalue, uint32_t source) {
   ShowWebSource(source);
   TasmotaGlobal.last_source = source;
