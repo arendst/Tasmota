@@ -99,6 +99,7 @@
  *     0x000f..0x0017 (40016..40024)  read-only mirror of selected input registers, for
  *                                    FC03-only masters
  *     0x0018..0x0019 (40025..40026)  error state mirror (same as 0x0054..0x0055)
+ *     0x001a         (40027)         total energy kWh x10 (same as 0x0026)
  *
  *   Coils (FC01 / FC05 / FC0F, 0xxxx):
  *     0 (00001) power, 1 (00002) purifier, 2 (00003) night mode, 3 (00004) econocool,
@@ -853,7 +854,7 @@ struct miel_hvac_capabilities
 #define MIEL_HVAC_MB_MAX_BAUDRATE     115200
 
 #define MIEL_HVAC_MB_INPUT_COUNT      0x100   /* input registers 0x0000..0x00ff */
-#define MIEL_HVAC_MB_HOLD_COUNT       0x1a    /* holding registers 0x0000..0x0019 */
+#define MIEL_HVAC_MB_HOLD_COUNT       0x1b    /* holding registers 0x0000..0x001a */
 #define MIEL_HVAC_MB_DI_COUNT         7       /* discrete inputs 0..6 */
 #define MIEL_HVAC_MB_COIL_COUNT       5       /* coils 0..4 */
 
@@ -3232,6 +3233,7 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
  *   0x000f..0x0017 (40016..40024)  mirror of selected read-only sensor values, so a
  *                                  master that only speaks FC03 can still reach them
  *   0x0018..0x0019 (40025..40026)  error state mirror (input regs 0x0054..0x0055)
+ *   0x001a         (40027)         total energy kWh x10 (input reg 0x0026)
  */
 #define MIEL_HVAC_MB_HOLD_MIRROR_BASE 0x000f
 static uint16_t
@@ -3253,6 +3255,7 @@ miel_hvac_mb_reg_holding(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 		0x0001,   /* 0x0017 (40024) connected to unit 0/1 */
 		0x0054,   /* 0x0018 (40025) error BCD code (8000 = no error) */
 		0x0055,   /* 0x0019 (40026) error packed two-char code */
+		0x0026,   /* 0x001a (40027) total energy kWh x10 */
 	};
 
 	*ok = true;
