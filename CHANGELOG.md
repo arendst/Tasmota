@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 web login uses own Basic auth instead Arduino (#25210)
 
 ### Fixed
-- ESP32 `UfsServe` (`UFILESYS_STATIC_SERVING`) compilation, and reject `..` in served paths
+- ESP32 `UfsServe` (`UFILESYS_STATIC_SERVING`) compilation, and reject `..` in served paths (#25211)
 
 ### Removed
 
