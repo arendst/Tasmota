@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [16.0.0.2]
 ### Added
-- `PsrMode` displaying whether PSRAM is `QIO`/`OPI`
+- ESP32 `PsrMode` displaying whether PSRAM is `QIO`/`OPI` (#25213)
 
 ### Breaking Changed
 
