@@ -1180,7 +1180,7 @@ public:
 #ifdef SERVING_DEBUG
           AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_UFS "serv of %s denied"), requestUri.c_str());
 #endif          
-          server.requestAuthentication();
+          Webserver->requestAuthentication();   // TasmotaWebServer Basic auth, avoids linking Digest auth
           return true;
         }
 
