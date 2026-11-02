@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file.
 - OTA give up on a stalled OTA after 30 s, not 300 reads (#25177)
 - BLE EQ3-TRV avoid sending of empty status (#25182)
 - GUI allow `;` or `{` in a password saved from the settings page (#25184)
-- ESP32 web login uses own Basic auth instead Arduino
+- ESP32 web login uses own Basic auth instead Arduino (#25210)
 
 ### Fixed
 
@@ -35,7 +35,7 @@ All notable changes to this project will be documented in this file.
 - BTHome un-reverse MAC address usage for command `MI32Keys` to make it consistent
 
 ### Changed
-- HttpClientLight: keep read timeouts longer than 65 s (#25180)
+- HttpClientLight keep read timeouts longer than 65 s (#25180)
 
 ### Fixed
 - Security issues caused by buffer overflows
