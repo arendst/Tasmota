@@ -3296,9 +3296,18 @@ void HandleInformation(void) {
     ESP_getHeapFragmentation());
 #endif // USE_GT911
   if (UsePSRAM()) {
+#ifdef D_TASMOTA_PSRAMMODE
+    WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%d KB (" D_TASMOTA_PSRAMMODE ")"), ESP.getPsramSize() / 1024);
+#else
     WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%d KB"), ESP.getPsramSize() / 1024);
+#endif  // D_TASMOTA_PSRAMMODE
     WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%d KB"), ESP.getFreePsram() / 1024);
   }
+#ifdef D_TASMOTA_PSRAMMODE
+  else {
+    WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2" "0 KB (" D_TASMOTA_PSRAMMODE ")"));
+  }
+#endif  // D_TASMOTA_PSRAMMODE
   WSContentSeparatorIFat();
   uint32_t cur_part = ESP_PARTITION_SUBTYPE_APP_FACTORY;   // 0
   const esp_partition_t *running_ota = esp_ota_get_running_partition();
