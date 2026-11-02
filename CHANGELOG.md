@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - OTA give up on a stalled OTA after 30 s, not 300 reads (#25177)
 - BLE EQ3-TRV avoid sending of empty status (#25182)
 - GUI allow `;` or `{` in a password saved from the settings page (#25184)
+- ESP32 web login uses own Basic auth instead Arduino
 
 ### Fixed
 
