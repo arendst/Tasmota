@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [16.0.0.2]
 ### Added
+- `PsrMode` displaying whether PSRAM is `QIO`/`OPI`
 
 ### Breaking Changed
 

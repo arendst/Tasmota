@@ -1041,6 +1041,9 @@ void CmndStatus(void)
 #else   // ESP32
     ResponseAppend_P(PSTR(",\"" D_JSON_STACKLOWMARK "\":%d,\"" D_JSON_PSRMAXMEMORY "\":%d,\"" D_JSON_PSRFREEMEMORY "\":%d"),
                           uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024);
+#ifdef D_TASMOTA_PSRAMMODE
+    ResponseAppend_P(PSTR(",\"PsrMode\":\"" D_TASMOTA_PSRAMMODE "\""));
+#endif  // D_TASMOTA_PSRAMMODE
 #endif  // ESP8266 or ESP32
 
     ResponseAppend_P(PSTR(",\"" D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d"
