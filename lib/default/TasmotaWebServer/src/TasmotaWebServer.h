@@ -36,7 +36,6 @@ public:
 
 #ifdef ESP32
 #include <WebServer.h>
-#include <new>
 #include "libb64/cencode.h"
 
 class TasmotaWebServer : public WebServer
@@ -61,11 +60,11 @@ public:
     String credentials = username;
     credentials += ':';
     credentials += password;
-    char *encoded = new (std::nothrow) char[base64_encode_expected_len(credentials.length()) + 1];
+    char *encoded = (char*)malloc(base64_encode_expected_len(credentials.length()) + 1);
     if (encoded == nullptr) { return false; }
     base64_encode_chars(credentials.c_str(), credentials.length(), encoded);
     bool ok = auth.equalsConstantTime(encoded);
-    delete[] encoded;
+    free(encoded);
     return ok;
   }
 
