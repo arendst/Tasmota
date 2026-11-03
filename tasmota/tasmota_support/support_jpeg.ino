@@ -149,6 +149,9 @@ bool jpg2rgb888(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t s
 char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *width, unsigned short *height) {
    //Check for valid JPEG image
    int i=0;   // Keeps track of the position within the file
+   *width = 0;                                    // Do not leave caller values undefined on failure
+   *height = 0;
+   if(data_size < 11) return false;               // Need at least the SOI, APP0 marker and JFIF identifier (data[0..10])
    if(data[i] == 0xFF && data[i+1] == 0xD8 && data[i+2] == 0xFF && data[i+3] == 0xE0) {
       i += 4;
       // Check for valid JPEG header (null terminated JFIF)
@@ -157,9 +160,10 @@ char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *
          unsigned short block_length = data[i] * 256 + data[i+1];
          while(i<data_size) {
             i+=block_length;               //Increase the file index to get to the next block
-            if(i >= data_size) return false;   //Check to protect against segmentation faults
+            if(i + 2 > data_size) return false;   //Check to protect against segmentation faults (marker bytes data[i], data[i+1])
             if(data[i] != 0xFF) return false;   //Check that we are truly at the start of another block
             if(data[i+1] == 0xC0) {            //0xFFC0 is the "Start of frame" marker which contains the file size
+               if(i + 9 > data_size) return false;   //Start of frame block is read up to data[i+8]
                //The structure of the 0xFFC0 block is quite simple [0xFFC0][ushort length][uchar precision][ushort x][ushort y]
                *height = data[i+5]*256 + data[i+6];
                *width = data[i+7]*256 + data[i+8];
@@ -168,6 +172,7 @@ char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *
             else
             {
                i+=2;                              //Skip the block marker
+               if(i + 2 > data_size) return false;   //Block length bytes data[i], data[i+1] must be inside the data
                block_length = data[i] * 256 + data[i+1];   //Go to the next block
             }
          }
