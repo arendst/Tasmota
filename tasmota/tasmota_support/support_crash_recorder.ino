@@ -23,7 +23,7 @@
 void CmndCrash(void)
 {
   volatile uint32_t dummy;
-  dummy = *((uint32_t*) 0x00000000);
+  dummy = *((uint32_t*) 0x00000001);
   (void)dummy;
 }
 
