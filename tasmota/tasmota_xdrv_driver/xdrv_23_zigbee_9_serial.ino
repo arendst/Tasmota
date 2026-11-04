@@ -608,7 +608,7 @@ void ZigbeeProcessInputEZSP(SBuffer &buf) {
       case EZSP_setMulticastTableEntry:   // 6400
       case EZSP_setInitialSecurityState:  // 6800
       case EZSP_getCurrentSecurityState:  // 6900
-      case EZSP_getKey:                   // 6A00
+      case EZSP_exportKey:                // 1401 - EZSP v13 replacement of getKey
         log_level = LOG_LEVEL_DEBUG;
         break;
     }

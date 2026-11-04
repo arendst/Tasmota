@@ -134,7 +134,7 @@ const char kResetting[] PROGMEM = "Resetting configuration";
 const char kResettingDevice[] PROGMEM = D_LOG_ZIGBEE "Resetting EZSP device";
 const char kReconfiguringDevice[] PROGMEM = D_LOG_ZIGBEE "Factory reset EZSP device";
 const char kZNP123[] PROGMEM = "Only ZNP 1.2 and 3.x are currently supported";
-const char kEZ8[] PROGMEM = "Only EZSP protocol v8 is currently supported";
+const char kEZ8[] PROGMEM = "Only EZSP protocol v13 is currently supported";
 const char kAbort[] PROGMEM = "Abort";
 const char kZigbeeAbort[] PROGMEM = D_LOG_ZIGBEE "Abort";
 const char kZigbeeGroup0[] PROGMEM = D_LOG_ZIGBEE "Subscribe to group 0 'ZbListen0 0'";
@@ -690,13 +690,13 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
 // wait for RSTACK, meaning the device booted
 ZBM(ZBR_RSTACK, Z_B0(EZSP_rstAck), Z_B1(EZSP_rstAck))        	  // FEFF - internal code for RSTACK
 
-// call version() and ask for EZSP v8
-ZBM(ZBS_VERSION, EZSP_version, 0x00, 0x08)        	  // 000008
-ZBM(ZBR_VERSION, EZSP_version, 0x00, 0x08, 0x02)      // 00000802 - expect v8, proto v2
+// call version() and ask for EZSP v13
+ZBM(ZBS_VERSION, EZSP_version, 0x00, 0x0D)        	  // 00000D
+ZBM(ZBR_VERSION, EZSP_version, 0x00, 0x0D, 0x02)      // 00000D02 - expect v13, proto v2
 
 // general configuration
 // inspired from bellows: https://github.com/zigpy/bellows/blob/dev/bellows/config/ezsp.py
-ZBM(ZBS_SET_ADDR_TABLE,   EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_KEY_TABLE_SIZE, 0x02, 0x00)                  // 53001E0400
+ZBM(ZBS_SET_ADDR_TABLE,   EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_KEY_TABLE_SIZE, 0x04, 0x00)                  // 53001E0400
 ZBM(ZBS_SET_MCAST_TABLE,  EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_MULTICAST_TABLE_SIZE, 0x10, 0x00)            // 5300061000
 ZBM(ZBS_SET_STK_PROF,     EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_STACK_PROFILE, 0x02, 0x00)                   // 53000C0200
 ZBM(ZBS_SET_SEC_LEVEL,    EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_SECURITY_LEVEL, 0x05, 0x00)                  // 53000D0500
@@ -705,17 +705,18 @@ ZBM(ZBS_SET_MAX_DEVICES,  EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG
 #endif
 ZBM(ZBS_SET_INDIRECT_TMO, EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 0x00, 0x1E)   // 530012001E
 ZBM(ZBS_SET_TC_CACHE,     EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 0x02, 0x00) // 5300190200
-ZBM(ZBS_SET_ROUTE_TBL,    EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_SOURCE_ROUTE_TABLE_SIZE, 0x10, 0x00)         // 53001A1000
+ZBM(ZBS_SET_ROUTE_TBL,    EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_SOURCE_ROUTE_TABLE_SIZE, 0x80, 0x00)         // 53001A1000
 ZBM(ZBS_SET_KEY_TBL,      EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_KEY_TABLE_SIZE, 0x04, 0x00)                  // 53001E0400
 ZBM(ZBS_SET_PANID_CNFLCT, EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 0x02, 0x00)// 5300220200
 ZBM(ZBS_SET_ZDO_REQ,      EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_APPLICATION_ZDO_FLAGS, EMBER_APP_RECEIVES_SUPPORTED_ZDO_REQUESTS | EMBER_APP_HANDLES_UNSUPPORTED_ZDO_REQUESTS, 0x00)           // 53002A0300
 ZBM(ZBS_SET_NETWORKS,     EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_SUPPORTED_NETWORKS, 0x01, 0x00)              // 53002D0100
-ZBM(ZBS_SET_PACKET_BUF,   EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_PACKET_BUFFER_COUNT, 0xFF, 0x00)             // 530001FF00
+// [EZSP V13 MIGRATION: removed setConfigurationValue(EZSP_CONFIG_PACKET_BUFFER_COUNT),
+//  this config value is read-only since v13 and must be set with EMBER_PACKET_BUFFER_COUNT at NCP build time]
 
-ZBM(ZBR_SET_OK,  EZSP_setConfigurationValue, 0x00 /*high*/, 0x00 /*ok*/)   // 530000
-// There is a bug in v6.7 where the response if 000000 instead of 530000
-// If we detect the version to be v6.7, the first byte is changed to 00
-ZBR(ZBR_SET_OK2, EZSP_setConfigurationValue, 0x00 /*high*/, 0x00 /*ok*/)
+// [EZSP V13 MIGRATION: setConfigurationValue is best-effort, the NCP may answer
+//  EZSP_ERROR_OUT_OF_MEMORY (0x35) because packet buffers are fixed at NCP build
+//  time. The status is checked by EZ_CheckConfigValue() and is not fatal.]
+ZBM(ZBR_SET_OK,  EZSP_setConfigurationValue, 0x00 /*high*/)   // 5300 followed by status
 
 // Read some configuration values
 // ZBM(ZBS_GET_APS_UNI,      EZSP_getConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_APS_UNICAST_MESSAGE_COUNT)                   // 520003
@@ -832,10 +833,17 @@ ZBM(ZBS_SET_MCAST_ENTRY,  EZSP_setMulticastTableEntry, 0x00 /*high*/,
 ZBM(ZBR_SET_MCAST_ENTRY,  EZSP_setMulticastTableEntry, 0x00 /*high*/, 0x00 /* status */)
 
 // check the network key
-// getCurrentSecurityState
-// TODO double check the security bitmask
-ZBM(ZBS_GET_KEY_NWK,      EZSP_getKey, 0x00 /*high*/, EMBER_CURRENT_NETWORK_KEY)   // 6A0003
-ZBM(ZBR_GET_KEY_NWK,      EZSP_getKey, 0x00 /*high*/, 0x00 /*status*/)   // 6A0000...
+// [EZSP V13 MIGRATION: replaced getKey with exportKey and a sl_zb_sec_man_context_t]
+// with a sl_zb_sec_man_context_t asking for the NETWORK key:
+//   core_key_type(uint8), key_index(uint8), derived_type(uint16), eui64(8), multi_network_index(uint8),
+//   flags(uint8), psa_key_alg_permission(uint32)
+ZBM(ZBS_GET_KEY_NWK,      Z_B0(EZSP_exportKey), Z_B1(EZSP_exportKey),
+                          SL_ZB_SEC_MAN_KEY_TYPE_NETWORK /*core_key_type*/, 0x00 /*key_index*/,
+                          0x00, 0x00 /*derived_type*/,
+                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 /*eui64*/,
+                          0x00 /*multi_network_index*/, 0x00 /*flags*/,
+                          0x00, 0x00, 0x00, 0x00 /*psa_key_alg_permission*/)   // 1401...
+ZBM(ZBR_GET_KEY_NWK,      Z_B0(EZSP_exportKey), Z_B1(EZSP_exportKey))   // 1401, followed by key (16) and sl_status_t (4)
 
 /*********************************************************************************************\
  * Update the relevant commands with Settings
@@ -932,21 +940,23 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
 
     // configure EFR32
     ZI_MQTT_STATE(ZIGBEE_STATUS_STARTING, kConfiguredCoord)
-    ZI_SEND(ZBS_SET_ADDR_TABLE)         ZI_WAIT_RECV(2500, ZBR_SET_OK)      // Address table size
-    ZI_SEND(ZBS_SET_MCAST_TABLE)        ZI_WAIT_RECV(2500, ZBR_SET_OK)
-    ZI_SEND(ZBS_SET_STK_PROF)           ZI_WAIT_RECV(2500, ZBR_SET_OK)
-    ZI_SEND(ZBS_SET_SEC_LEVEL)          ZI_WAIT_RECV(2500, ZBR_SET_OK)
+    // [EZSP V13 MIGRATION: setConfigurationValue is best-effort, a failed value
+    //  (out of memory / read-only) keeps the NCP default and must not abort]
+    ZI_SEND(ZBS_SET_ADDR_TABLE)         ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)      // Address table size
+    ZI_SEND(ZBS_SET_MCAST_TABLE)        ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
+    ZI_SEND(ZBS_SET_STK_PROF)           ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
+    ZI_SEND(ZBS_SET_SEC_LEVEL)          ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
   #ifdef USE_ZIGBEE_FORCE_NO_CHILDREN
-    ZI_SEND(ZBS_SET_MAX_DEVICES)        ZI_WAIT_RECV(2500, ZBR_SET_OK)
+    ZI_SEND(ZBS_SET_MAX_DEVICES)        ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
   #endif
-    ZI_SEND(ZBS_SET_INDIRECT_TMO)       ZI_WAIT_RECV(2500, ZBR_SET_OK)
-    ZI_SEND(ZBS_SET_TC_CACHE)           ZI_WAIT_RECV(2500, ZBR_SET_OK)
-    ZI_SEND(ZBS_SET_ROUTE_TBL)          ZI_WAIT_RECV(2500, ZBR_SET_OK)
-    ZI_SEND(ZBS_SET_KEY_TBL)            ZI_WAIT_RECV(2500, ZBR_SET_OK)
-    ZI_SEND(ZBS_SET_PANID_CNFLCT)       ZI_WAIT_RECV(2500, ZBR_SET_OK)
-    ZI_SEND(ZBS_SET_ZDO_REQ)            ZI_WAIT_RECV(2500, ZBR_SET_OK)
-    ZI_SEND(ZBS_SET_NETWORKS)           ZI_WAIT_RECV(2500, ZBR_SET_OK)
-    ZI_SEND(ZBS_SET_PACKET_BUF)         ZI_WAIT_RECV(2500, ZBR_SET_OK2)
+    ZI_SEND(ZBS_SET_INDIRECT_TMO)       ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
+    ZI_SEND(ZBS_SET_TC_CACHE)           ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
+    ZI_SEND(ZBS_SET_ROUTE_TBL)          ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
+    ZI_SEND(ZBS_SET_KEY_TBL)            ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
+    ZI_SEND(ZBS_SET_PANID_CNFLCT)       ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
+    ZI_SEND(ZBS_SET_ZDO_REQ)            ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
+    ZI_SEND(ZBS_SET_NETWORKS)           ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
+    // [EZSP V13 MIGRATION: removed ZBS_SET_PACKET_BUF step, packet buffer count is read-only]
 
     // read configuration
     // TODO - not sure it's useful
