@@ -1436,7 +1436,7 @@ void HandleUploadUFSLoop(void) {
 void HandleUploadUFSDone(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  HTTPUpload& upload = Webserver->upload();
+  Web.upload_file_type = UPL_NONE;
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
 

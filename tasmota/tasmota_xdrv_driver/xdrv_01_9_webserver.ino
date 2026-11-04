@@ -3566,6 +3566,7 @@ void HandleUploadLoop(void) {
   static uint32_t upload_size;
   static bool upload_error_signalled;
 
+  if (!WebAuthenticate()) { return; }
   if (!HttpCheckPriviledgedAccess(false)) { return; }
   if (UPL_NONE == Web.upload_file_type) { return; }  // Invalid or no file type so bail out
 
