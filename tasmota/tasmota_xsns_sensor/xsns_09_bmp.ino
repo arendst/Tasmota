@@ -916,13 +916,13 @@ void BmpShow(bool json) {
         if (bmp_sensors[bmp_idx].bmp_model >= 3) {
           WSContentSend_PD(PSTR("{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), name, gas_resistance);
           if (iaq_valid) {
-            WSContentSend_PD(PSTR("{s}%s " D_AIRQUALITY "{m}%s{e}" D_UNIT_PERCENT), name, iaq_quality);
+            WSContentSend_PD(PSTR("{s}%s " D_AIRQUALITY "{m}%s " D_UNIT_PERCENT "{e}"), name, iaq_quality);
             WSContentSend_PD(PSTR("{s}%s " D_JSON_TVOC "{m}%s " D_UNIT_PARTS_PER_BILLION "{e}"), name, tvoc);
           } else {
             int16_t iaq_prog = Bme680IaqProgress(bmp_idx);
             char iaq_prog_str[8];
             snprintf_P(iaq_prog_str, sizeof(iaq_prog_str), PSTR("%d"), iaq_prog);
-            WSContentSend_PD(PSTR("{s}%s " D_CALIBRATION "{m}%s%%{e}"), name, iaq_prog_str);
+            WSContentSend_PD(PSTR("{s}%s " D_CALIBRATION "{m}%s " D_UNIT_PERCENT "{e}"), name, iaq_prog_str);
             WSContentSend_P(PSTR("{s}" D_IAQ_CALIBRATING "{e}"));
           }
         }
