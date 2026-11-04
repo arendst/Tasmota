@@ -19,7 +19,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - ESP32 `UfsServe` (`UFILESYS_STATIC_SERVING`) compilation, and reject `..` in served paths (#25211)
-- ESP32 `Restart -1` fails to crash
+- ESP32 `Restart -1` fails to crash (#25223)
+- OTA and file upload security issue
+- MiEL HVAC Modbus mirror total energy to holding register 40027 (#25214)
+- Missing NUL terminator for stored `ModbusBridgeSend` command data (#25218)
 
 ### Removed
 
