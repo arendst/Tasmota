@@ -147,15 +147,18 @@ bool jpg2rgb888(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t s
 
 #if defined(JPEG_PICTS) || defined(USE_BERRY_IMAGE)
 // Parses JPEG dimensions and rejects progressive JPEGs.
+// *width and *height are set to 0 unless true is returned.
 char get_jpeg_size(unsigned char *buffer, unsigned int data_size,
                    unsigned short *width, unsigned short *height) {
-   if (!buffer || !width || !height || data_size < 4 ||
-       buffer[0] != 0xFF || buffer[1] != 0xD8) {
+   if (!width || !height) return false;
+   *width = 0;
+   *height = 0;
+   if (!buffer || data_size < 4 || buffer[0] != 0xFF || buffer[1] != 0xD8) {
       return false;
    }
 
-   *width = 0;
-   *height = 0;
+   unsigned short w = 0;
+   unsigned short h = 0;
    size_t offset = 2;
    bool found_scan = false;
    bool in_scan = false;
@@ -174,7 +177,11 @@ char get_jpeg_size(unsigned char *buffer, unsigned int data_size,
                 (scan_marker >= 0xD0 && scan_marker <= 0xD7)) {
                continue;
             }
-            if (scan_marker == 0xD9) return true;
+            if (scan_marker == 0xD9) {
+               *width = w;
+               *height = h;
+               return true;
+            }
             offset = marker_start;
             in_scan = false;
             break;
@@ -199,14 +206,14 @@ char get_jpeg_size(unsigned char *buffer, unsigned int data_size,
          if (segment_length < 8) return false;
          const uint8_t components = buffer[offset + 7];
          if (components == 0 || segment_length < 8 + (size_t)components * 3) return false;
-         *height = ((unsigned short)buffer[offset + 3] << 8) | buffer[offset + 4];
-         *width = ((unsigned short)buffer[offset + 5] << 8) | buffer[offset + 6];
-         if (*width == 0 || *height == 0) return false;
+         h = ((unsigned short)buffer[offset + 3] << 8) | buffer[offset + 4];
+         w = ((unsigned short)buffer[offset + 5] << 8) | buffer[offset + 6];
+         if (w == 0 || h == 0) return false;
       }
 
       const size_t segment_end = offset + segment_length;
       if (marker == 0xDA) {
-         if (*width == 0 || *height == 0) return false;
+         if (w == 0 || h == 0) return false;
          found_scan = true;
          offset = segment_end;
          in_scan = true;
