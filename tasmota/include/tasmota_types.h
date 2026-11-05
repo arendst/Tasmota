@@ -599,7 +599,7 @@ typedef struct {
 #endif  // ESP8266
 #ifdef ESP32
 #if CONFIG_IDF_TARGET_ESP32S31
-  // S31 needs the P4-sized GPIO mapping plus 14 additional bytes for its GPIOs.
+  // S31 needs the P4-sized GPIO mapping plus 14 additional bytes each for myio and mytmplt (28 bytes total) for its GPIOs.
   myio          my_gp;                     // 38C  2x62 bytes (ESP32-S31)
   uint8_t       eth_type;                  // 408
   uint8_t       eth_clk_mode;              // 409
@@ -686,7 +686,7 @@ typedef struct {
   #elif CONFIG_IDF_TARGET_ESP32C3
   uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
   #elif CONFIG_IDF_TARGET_ESP32C5
-  uint8_t       free_esp32c5_3E4[22];      // 3E4  - Due to smaller myio
+  uint8_t       free_esp32c5_3E6[22];      // 3E6  - Due to smaller myio
   #elif CONFIG_IDF_TARGET_ESP32C61
   uint8_t       free_esp32c61_3E8[20];     // 3E8  - Due to smaller myio
   #elif CONFIG_IDF_TARGET_ESP32C6
