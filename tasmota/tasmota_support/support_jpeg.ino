@@ -149,7 +149,7 @@ bool jpg2rgb888(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t s
 // Parses JPEG dimensions and rejects progressive JPEGs.
 // *width and *height are set to 0 unless true is returned.
 char get_jpeg_size(unsigned char *buffer, unsigned int data_size,
-                   unsigned short *width, unsigned short *height) {
+                   uint16_t *width, uint16_t *height) {
    if (!width || !height) return false;
    *width = 0;
    *height = 0;
@@ -157,8 +157,8 @@ char get_jpeg_size(unsigned char *buffer, unsigned int data_size,
       return false;
    }
 
-   unsigned short w = 0;
-   unsigned short h = 0;
+   uint16_t w = 0;
+   uint16_t h = 0;
    size_t offset = 2;
    bool found_scan = false;
    bool in_scan = false;
@@ -206,8 +206,8 @@ char get_jpeg_size(unsigned char *buffer, unsigned int data_size,
          if (segment_length < 8) return false;
          const uint8_t components = buffer[offset + 7];
          if (components == 0 || segment_length < 8 + (size_t)components * 3) return false;
-         h = ((unsigned short)buffer[offset + 3] << 8) | buffer[offset + 4];
-         w = ((unsigned short)buffer[offset + 5] << 8) | buffer[offset + 6];
+         h = ((uint16_t)buffer[offset + 3] << 8) | buffer[offset + 4];
+         w = ((uint16_t)buffer[offset + 5] << 8) | buffer[offset + 6];
          if (w == 0 || h == 0) return false;
       }
 
