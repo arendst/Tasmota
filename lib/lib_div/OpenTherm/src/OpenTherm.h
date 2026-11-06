@@ -33,7 +33,8 @@
 #include <Arduino.h>
 
 #ifdef OPENTHERM_USE_RMT
-#include <driver/rmt.h>
+#include <driver/rmt_tx.h>
+#include <driver/rmt_rx.h>
 #endif
 
 enum class OpenThermResponseStatus : byte
@@ -242,18 +243,33 @@ public:
     float getPressure();
     unsigned char getFault();
 
+    // Diagnostics (RMT only; always 0 / empty for the interrupt implementation).
+    // Raw pulses of the last captured frame as "H500 L1000 ..." (H/L = level on RX pin).
+    size_t dumpLastRx(char *buf, size_t len);
+    // Number of short captures (< 8 symbols) ignored as glitches since the last request.
+    uint16_t getRxGlitchCount();
+
 #ifdef OPENTHERM_USE_RMT
 private:
-    static constexpr rmt_channel_t RMT_TX_CHANNEL = RMT_CHANNEL_0;
-    static constexpr rmt_channel_t RMT_RX_CHANNEL = RMT_CHANNEL_1;
-    void setupRMT();
-    void sendRMT(uint32_t data);
-    uint32_t receiveRMT();
-//    void decodeBitRMT(bool state, uint32_t len);
-//    uint32_t decodeManchester(const rmt_item32_t* items, int count);
-    bool insideManchesterBit, lastManchesterSignal;
-    bool addManchesterHalfBit(bool signal);
-    bool addManchesterSignal(bool signal, uint32_t duration);
+    uint16_t rmtGlitches = 0;
+    size_t rmtLastCount = 0;
+    static constexpr size_t RMT_RX_SYMBOLS = 64;   // 34 Manchester bits need <= 35 symbols
+
+    rmt_channel_handle_t rmtTx = nullptr;
+    rmt_channel_handle_t rmtRx = nullptr;
+    rmt_encoder_handle_t rmtEncoder = nullptr;
+    rmt_symbol_word_t rmtRxBuf[RMT_RX_SYMBOLS];
+    volatile size_t rmtRxCount = 0;
+    volatile bool rmtRxDone = false;
+    volatile bool rmtRxArmed = false;
+
+    bool setupRMT();
+    void releaseRMT();
+    bool sendRMT(uint32_t data);
+    void startReceiveRMT();
+    void stopReceiveRMT();
+    static bool decodeRMT(const rmt_symbol_word_t *symbols, size_t count, uint32_t &frame);
+    static bool rmtRxDoneCallback(rmt_channel_handle_t channel, const rmt_rx_done_event_data_t *edata, void *ctx);
 #endif
 
 private:
