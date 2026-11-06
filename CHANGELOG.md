@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - BME680 IAQ (air quality index) to BMP sensor driver (#25175)
 
 ### Breaking Changed
+- Reduce max number of ZCDimmer PWM channels to 5 due to allocated persistent data size (#25222)
 
 ### Changed
 - ESP8266 platform update from 2026.09.00 to 2026.10.00 (#25196)
