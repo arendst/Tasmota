@@ -142,6 +142,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Fixed
 - Security issues caused by buffer overflows
 - OTA and file upload security issue
+- TuyaV1 and TuyaV2 out-of-bounds accessing `tuya_fnid_map[]` [#25222](https://github.com/arendst/Tasmota/issues/25222)
 - Boot loop when using a literal WIFI_DEFAULT_HOSTNAME [#25205](https://github.com/arendst/Tasmota/issues/25205)
 - WifiManager name the setup AP as it is turned on [#25169](https://github.com/arendst/Tasmota/issues/25169)
 - VEML7700 lux/white rounding, add new command [#25150](https://github.com/arendst/Tasmota/issues/25150)

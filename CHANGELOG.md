@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - OTA and file upload security issue
 - MiEL HVAC Modbus mirror total energy to holding register 40027 (#25214)
 - Missing NUL terminator for stored `ModbusBridgeSend` command data (#25218)
+- TuyaV1 and TuyaV2 out-of-bounds accessing `tuya_fnid_map[]` (#25222)
 
 ### Removed
 
