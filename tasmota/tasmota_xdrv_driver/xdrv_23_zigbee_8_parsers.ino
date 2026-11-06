@@ -126,11 +126,11 @@ int32_t EZ_NetworkParameters(int32_t res, SBuffer &buf) {
 }
 
 //
-// Handle response to "setConfigurationValue" (EZSP v13)
+// Handle response to "setConfigurationValue"
 // Best-effort: EZSP_ERROR_OUT_OF_MEMORY (0x35) simply means the NCP cannot grow the
-// table at runtime (packet buffers are fixed at NCP build time), and the NCP keeps
-// its default value. EZSP_ERROR_INVALID_CALL (0x38) means the value is read-only.
-// Neither must abort the initialization.
+// table at runtime (with v13 packet buffers are fixed at NCP build time), and the
+// NCP keeps its default value. EZSP_ERROR_INVALID_CALL (0x38) means the value is
+// read-only. Neither must abort the initialization.
 //
 int32_t EZ_CheckConfigValue(int32_t res, SBuffer &buf) {
   uint8_t status = buf.get8(2);
@@ -141,9 +141,27 @@ int32_t EZ_CheckConfigValue(int32_t res, SBuffer &buf) {
 }
 
 //
-// Analyze response to "exportKey" (EZSP v13) and check NWK key
-// Response: [frame id 2][key 16][sl_status_t 4]
+// Analyze the response to the network key query and check the NWK key
 //
+#ifdef EZSP_V8
+// getKey: response is [frame id 2][status][key bitmask 2][key type 1][key 16]...
+int32_t EZ_CheckKeyNWK(int32_t res, SBuffer &buf) {
+  // uint8_t  status = buf.get8(2);
+  // uint16_t bitmask = buf.get16(3);
+  uint8_t  key_type = buf.get8(5);
+  uint64_t key_low  = buf.get64(6);
+  uint64_t key_high = buf.get64(14);
+
+  if ( (key_type == EMBER_CURRENT_NETWORK_KEY) &&
+       (key_low  == ezsp_key_low) &&
+       (key_high == ezsp_key_high) ) {
+    return 0;     // proceed to next step
+  } else {
+    return -2;    // error state
+  }
+}
+#else
+// exportKey: response is [frame id 2][key 16][sl_status_t 4]
 int32_t EZ_CheckKeyNWK(int32_t res, SBuffer &buf) {
   if (buf.len() < 22) { return -2; }     // malformed response
   uint64_t key_low  = buf.get64(2);
@@ -165,6 +183,7 @@ int32_t EZ_CheckKeyNWK(int32_t res, SBuffer &buf) {
     return -2;    // error state, key does not match -> reconfigure
   }
 }
+#endif // EZSP_V8
 
 //
 // Handle a "incomingRouteErrorHandler" incoming message
@@ -514,11 +533,20 @@ int32_t EZ_ReceiveCheckVersion(int32_t res, SBuffer &buf) {
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
+#ifdef EZSP_V8
+  if (0x08 == zigbee.protocol_version) {
+    if ((zigbee.ezsp_version & 0xFF00) == 0x6700) {
+      // If v6.7 there is a bug so we need to change the response
+      ZBW(ZBR_SET_OK2, 0x00, 0x00 /*high*/, 0x00 /*ok*/)
+    }
+  	return 0;	  // protocol v8 is ok (EZSP v8 and v13 are not compatible)
+  }
+#else
   if (0x0D == zigbee.protocol_version) {
   	return 0;	  // protocol v13 is ok (EZSP v8 and v13 are not compatible)
-  } else {
-    return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
   }
+#endif // EZSP_V8
+  return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
 }
 
 bool EZ_reset_config = false;
