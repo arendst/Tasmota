@@ -790,7 +790,6 @@ bool OpenTherm::setupRMT()
     txCfg.mem_block_symbols = SOC_RMT_MEM_WORDS_PER_CHANNEL; // 64 (48 on C3/S3/C6) >= 34 symbols
     txCfg.trans_queue_depth = 2;
     txCfg.flags.init_level = OT_TX_IDLE_LEVEL;
-    txCfg.flags.invert_out = OT_RMT_TX_INVERT; // inverted at the pad, idle included
     if (rmt_new_tx_channel(&txCfg, &rmtTx) != ESP_OK)
         return false;
 
@@ -803,7 +802,6 @@ bool OpenTherm::setupRMT()
     rxCfg.clk_src = RMT_CLK_SRC_DEFAULT;
     rxCfg.resolution_hz = OT_RMT_RESOLUTION_HZ;
     rxCfg.mem_block_symbols = SOC_RMT_MEM_WORDS_PER_CHANNEL;
-    rxCfg.flags.invert_in = OT_RMT_RX_INVERT;
     if (rmt_new_rx_channel(&rxCfg, &rmtRx) != ESP_OK)
         return false;
 
@@ -915,7 +913,7 @@ bool OpenTherm::sendRMT(uint32_t data)
 }
 
 // Convert captured RMT symbols into a 32-bit OpenTherm frame.
-// On the RX pin the bus "active" level is HIGH (see OT_RMT_RX_INVERT), so the
+// On the RX pin the bus "active" level is HIGH (as in the interrupt version), so the
 // value of a Manchester bit equals the level of its first half.
 bool OpenTherm::decodeRMT(const rmt_symbol_word_t *symbols, size_t count, uint32_t &frame)
 {

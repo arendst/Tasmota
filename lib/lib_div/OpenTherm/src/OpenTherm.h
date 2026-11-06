@@ -35,20 +35,6 @@
 #ifdef OPENTHERM_USE_RMT
 #include <driver/rmt_tx.h>
 #include <driver/rmt_rx.h>
-
-// Set to 1 if the adapter delivers the bus "active" level as LOW on the RX pin
-// (default follows the interrupt implementation: start bit begins with HIGH on RX).
-#ifndef OT_RMT_RX_INVERT
-#define OT_RMT_RX_INVERT 0
-#endif
-
-// Set to 1 to invert the RMT TX output (idle level too) for adapters whose TX input
-// is inverted. Default: bus "active" level is LOW on the TX pin, as in the Ihor Melnyk
-// adapter and the interrupt implementation. With the wrong polarity the boiler decodes
-// requests bit-inverted and answers UNKNOWN-DATAID (e.g. ID 0xFC instead of 3).
-#ifndef OT_RMT_TX_INVERT
-#define OT_RMT_TX_INVERT 0
-#endif
 #endif
 
 enum class OpenThermResponseStatus : byte
