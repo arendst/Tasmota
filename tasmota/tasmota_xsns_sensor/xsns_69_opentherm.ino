@@ -189,6 +189,29 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
               PSTR("[OTH]: Processing response. Status=%s, Response=0x%lX"),
               sns_ot_master->statusToString(status), response);
 
+    // RX diagnostics: what was actually seen on the line when a request failed
+    if (status == OpenThermResponseStatus::INVALID)
+    {
+        if (response == 0)
+        {
+            // Nothing decodable (Manchester/start/stop error): dump raw pulses
+            static char raw[600];
+            sns_ot_master->dumpLastRx(raw, sizeof(raw));
+            AddLog(LOG_LEVEL_INFO, PSTR("[OTH]: undecodable frame, glitches=%u raw: %s"),
+                   sns_ot_master->getRxGlitchCount(), raw[0] ? raw : "-");
+        }
+        else
+        {
+            // Decoded but not an ACK (e.g. UNKNOWN-DATAID) or bad parity
+            AddLog(LOG_LEVEL_DEBUG, PSTR("[OTH]: INVALID frame=0x%08lX"), response);
+        }
+    }
+    else if (status == OpenThermResponseStatus::TIMEOUT && sns_ot_master->getRxGlitchCount())
+    {
+        AddLog(LOG_LEVEL_INFO, PSTR("[OTH]: TIMEOUT, %u short glitches on RX"),
+               sns_ot_master->getRxGlitchCount());
+    }
+
     if (sns_ot_connection_status == OpenThermConnectionStatus::OTC_HANDSHAKE)
     {
         return sns_ot_process_handshake(response, st);
@@ -344,8 +367,14 @@ void sns_ot_start_handshake()
 
     sns_opentherm_protocol_reset();
 
-    sns_ot_master->sendRequestAsync(
-        OpenTherm::buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0));
+    if (!sns_ot_master->sendRequestAsync(
+        OpenTherm::buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0)))
+    {
+        // Library is busy (or not initialized): stay in CONNECTING and retry next second
+        // instead of waiting forever for a callback that will never come.
+        AddLog(LOG_LEVEL_DEBUG, PSTR("[OTH]: handshake postponed, OT not ready"));
+        return;
+    }
 
     sns_ot_connection_status = OpenThermConnectionStatus::OTC_HANDSHAKE;
 }
