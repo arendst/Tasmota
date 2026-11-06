@@ -24,6 +24,7 @@ class TestTasmota
   def millis() return self.now end
   def time_reached(deadline) return self.now >= deadline end
   def rtc(mode) return 1700000000 end
+  def rtc_utc_ms(b) var v = int64(1700000000) * int64(1000) if b == nil return v end b.clear() b.add(v.low32(), 4) b.add(v.high32(), 4) return b end
   def loglevel(level) return false end
 end
 tasmota = TestTasmota()
