@@ -800,16 +800,21 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true) {
       referer.toUpperCase();
       String hostname = TasmotaGlobal.hostname;
       hostname.toUpperCase();
+      hostname += "/";   // Fix GHSA-v6w4-vfv4-g4jr
+      String localip = WiFi.localIP().toString();
+      localip += "/";    // Fix GHSA-v6w4-vfv4-g4jr
       // TODO rework if IPv6
-      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(WiFi.localIP().toString()) == 7)) {
+      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(localip) == 7)) {
         return true;
       }
-//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
 #if defined(ESP32) && defined(USE_ETHERNET)
       hostname = EthernetHostname();
       hostname.toUpperCase();
+      hostname += "/";   // Fix GHSA-v6w4-vfv4-g4jr
+      localip = EthernetLocalIP().toString();
+      localip += "/";    // Fix GHSA-v6w4-vfv4-g4jr
       // TODO rework if IPv6
-      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(EthernetLocalIP().toString()) == 7)) {
+      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(localip) == 7)) {
         return true;
       }
 #endif  // USE_ETHERNET
