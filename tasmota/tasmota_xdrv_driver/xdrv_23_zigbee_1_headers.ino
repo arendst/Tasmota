@@ -108,6 +108,7 @@ public:
 
   uint32_t permit_end_time = 0;       // timestamp when permit join ends, with ZNP 1.2, it takes only 0 (off) and -1 (on)
 #ifdef USE_ZIGBEE_EZSP
+  uint8_t protocol_version = 0;
   uint16_t ezsp_version = 0;
 #endif
 
