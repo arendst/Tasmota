@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "Φωτεινότητα"
 #define D_IMMEDIATE "άμεσο"      // Button immediate
 #define D_INDEX "Κατάλογος"
+#define D_AIRQUALITY "Ποιότητα αέρα"
+#define D_IAQ_CALIBRATING "(βαθμονόμηση βασικής γραμμής, διατηρήστε τον αέρα καθαρό)"
 #define D_INFO "Πληροφορίες"
 #define D_INFRARED "Υπέρυθρο"
 #define D_INITIALIZED "Αρχικοποιήθηκε"

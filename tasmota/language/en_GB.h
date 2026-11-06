@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "Illuminance"
 #define D_IMMEDIATE "immediate"      // Button immediate
 #define D_INDEX "Index"
+#define D_AIRQUALITY "Air Quality"
+#define D_IAQ_CALIBRATING "(baseline calibration, keep the air clean)"
 #define D_INFO "Info"
 #define D_INFRARED "Infrared"
 #define D_INITIALIZED "Initialized"

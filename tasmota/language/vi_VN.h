@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "Độ sáng"
 #define D_IMMEDIATE "ngay lập tức"      // Button immediate
 #define D_INDEX "Chỉ mục"
+#define D_AIRQUALITY "Chất lượng không khí"
+#define D_IAQ_CALIBRATING "(hiệu chuẩn đường cơ sở, giữ không khí trong sạch)"
 #define D_INFO "Thông tin"
 #define D_INFRARED "Hồng ngoại"
 #define D_INITIALIZED "Khởi tạo"

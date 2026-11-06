@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "照度"
 #define D_IMMEDIATE "立即"      // Button immediate
 #define D_INDEX "索引："
+#define D_AIRQUALITY "空氣品質"
+#define D_IAQ_CALIBRATING "(基線校準，保持空氣清澈)"
 #define D_INFO "資訊"
 #define D_INFRARED "紅外線"
 #define D_INITIALIZED "已初始化"

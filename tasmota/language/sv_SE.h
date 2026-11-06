@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "Belysnings"
 #define D_IMMEDIATE "Omedelbar"      // Button immediate
 #define D_INDEX "Index"
+#define D_AIRQUALITY "Luftkvalitet"
+#define D_IAQ_CALIBRATING "(kalibrering av baslinje, håll luften ren)"
 #define D_INFO "Info"
 #define D_INFRARED "Infraröd"
 #define D_INITIALIZED "Initialiserad"

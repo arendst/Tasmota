@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "Megvilágítás"
 #define D_IMMEDIATE "azonnali"      // Button immediate
 #define D_INDEX "Index"
+#define D_AIRQUALITY "Levegőminőség"
+#define D_IAQ_CALIBRATING "(alapvonal kalibrálás, tartsa tisztán a levegőt)"
 #define D_INFO "Info"
 #define D_INFRARED "Infravörös"
 #define D_INITIALIZED "Inicializálva"

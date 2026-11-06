@@ -50,7 +50,31 @@
 
 #define BMP_MAX_SENSORS      2 * MAX_I2C  // Busses
 
+#define BME680_IAQ_BURNIN        2880
+#define BME680_IAQ_HILL_K        3.0f
+#define BME680_IAQ_TVOC_MAX      600.0f
+#define BME680_IAQ_TVOC_HALF     0.5f
+#define BME680_IAQ_RISE_ALPHA    0.005f
+#define BME680_IAQ_AGING_ALPHA   0.00001f
+#define BME680_IAQ_R_MIN         1.0f
+#define BME680_IAQ_R_MAX         5000.0f
+#define BME680_IAQ_BASE_MAX      20000.0f
+#define BME680_IAQ_PH_SLOPE      0.03f
+
+typedef struct {
+  float    baseline;
+  float    sum;
+  uint16_t count;
+  float    iaq;
+  float    tvoc;
+} bme68x_iaq_t;
+
 const char kBmpTypes[] PROGMEM = "BMP180|BMP280|BME280|BME680";
+
+#define D_PRFX_BMP_IAQ       "BmpIaq"
+const char kBmpIaqNames[] PROGMEM = D_PRFX_BMP_IAQ;
+const char kBmpCommands[] PROGMEM = D_PRFX_BMP_IAQ "|";
+void (* const BmpCommand[])(void) PROGMEM = { &Bme680IaqCommand };
 
 typedef struct {
   uint8_t bmp_address;    // I2C address
@@ -62,6 +86,7 @@ typedef struct {
 #ifdef USE_BME68X
   uint8_t bme680_state;
   float bmp_gas_resistance;
+  bme68x_iaq_t bme680_iaq;
 #endif  // USE_BME68X
   float bmp_temperature;
   float bmp_pressure;
@@ -409,6 +434,199 @@ int8_t Bme68x_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len,
   return I2cWriteBuffer(dev_addr, reg_addr, (uint8_t *)reg_data, (uint16_t)len, bmp68x_bus);
 }
 
+static float Bme680AbsHumidity(float temp_c, float hum_pct) {
+  float rho_max = (6.112f * 100.0f * expf((17.62f * temp_c) / (243.12f + temp_c))) / (461.52f * (temp_c + 273.15f));
+  return hum_pct * 10.0f * rho_max;
+}
+
+static float Bme680IaqCompFactor(float temp_c, float hum_pct) {
+  return expf(BME680_IAQ_PH_SLOPE * Bme680AbsHumidity(temp_c, hum_pct));
+}
+
+void Bme680IaqStore(void);
+
+static void Bme680IaqReset(uint8_t bmp_idx) {
+  bme68x_iaq_t *s = &bmp_sensors[bmp_idx].bme680_iaq;
+  s->baseline = 0.0f;
+  s->sum = 0.0f;
+  s->count = 0;
+  s->iaq = 0.0f;
+  s->tvoc = 0.0f;
+}
+
+static void Bme680IaqUpdate(uint8_t bmp_idx, float gas_kohm, float temp_c, float hum_pct) {
+  bme68x_iaq_t *s = &bmp_sensors[bmp_idx].bme680_iaq;
+
+  if (!(gas_kohm >= BME680_IAQ_R_MIN) || !(gas_kohm <= BME680_IAQ_R_MAX)) { return; }
+
+  float comp_gas = gas_kohm * Bme680IaqCompFactor(temp_c, hum_pct);
+
+  if (s->baseline <= 0.0f) {
+    s->sum += comp_gas;
+    s->count++;
+    if (s->count >= BME680_IAQ_BURNIN) {
+      s->baseline = s->sum / s->count;
+      s->sum = 0.0f;
+      s->count = 0;
+      Bme680IaqStore();
+      SettingsSave(0);
+    }
+    return;
+  }
+
+  float x = (s->baseline / comp_gas) - 1.0f;
+  if (x < 0.0f) { x = 0.0f; }
+
+  float u = BME680_IAQ_HILL_K * x;
+  u = u * u;
+  s->iaq = 500.0f * u / (1.0f + u);
+  if (s->iaq < 0.0f) { s->iaq = 0.0f; }
+  if (s->iaq > 500.0f) { s->iaq = 500.0f; }
+
+  if (x > 0.0f) {
+    s->tvoc = BME680_IAQ_TVOC_MAX * x / (x + BME680_IAQ_TVOC_HALF);
+  } else {
+    s->tvoc = 0.0f;
+  }
+
+  if (comp_gas > s->baseline) {
+    s->baseline += BME680_IAQ_RISE_ALPHA * (comp_gas - s->baseline);
+  } else {
+    s->baseline += BME680_IAQ_AGING_ALPHA * (comp_gas - s->baseline);
+  }
+}
+
+static int16_t Bme680IaqProgress(uint8_t bmp_idx) {
+  bme68x_iaq_t *s = &bmp_sensors[bmp_idx].bme680_iaq;
+  if (s->baseline > 0.0f) { return -1; }
+  return (int16_t)((uint32_t)s->count * 100 / BME680_IAQ_BURNIN);
+}
+
+void Bme680IaqRestore(void) {
+  if (!Settings || bmp_count < 1) { return; }
+  for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
+    if (BME680_CHIPID == bmp_sensors[bmp_idx].bmp_type) {
+      float stored = (float)Settings->bme680_iaq_baseline[bmp_idx];
+      if (stored >= BME680_IAQ_R_MIN && stored < BME680_IAQ_BASE_MAX) {
+        bmp_sensors[bmp_idx].bme680_iaq.baseline = stored;
+      }
+    }
+  }
+}
+
+void Bme680IaqStore(void) {
+  if (!Settings || bmp_count < 1) { return; }
+  for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
+    if (BME680_CHIPID == bmp_sensors[bmp_idx].bmp_type) {
+      Settings->bme680_iaq_baseline[bmp_idx] = (uint16_t)roundf(bmp_sensors[bmp_idx].bme680_iaq.baseline);
+    } else {
+      Settings->bme680_iaq_baseline[bmp_idx] = 0;
+    }
+  }
+}
+
+// Return the bmp_sensors index of the n-th BME680 sensor (0-based), or -1 when not found
+static int8_t Bme680SensorByOrdinal(uint8_t ordinal) {
+  uint8_t seen = 0;
+  for (uint32_t i = 0; i < bmp_count; i++) {
+    if (BME680_CHIPID == bmp_sensors[i].bmp_type) {
+      if (seen == ordinal) { return (int8_t)i; }
+      seen++;
+    }
+  }
+  return -1;
+}
+
+void Bme680IaqCommand(void) {
+  char arg1[XdrvMailbox.data_len];
+  char arg2[XdrvMailbox.data_len];
+  char str[FLOATSZ];
+
+  uint32_t argc = ArgC();
+  if (argc >= 1) { ArgV(arg1, 1); TrimSpace(arg1); }
+  if (argc >= 2) { ArgV(arg2, 2); TrimSpace(arg2); }
+
+  // BmpIaq                     report the baseline of every BME680 sensor
+  if (0 == argc) {
+    bool found = false;
+    Response_P(PSTR("{\"%s\":{"), kBmpIaqNames);
+    for (uint32_t i = 0; i < bmp_count; i++) {
+      if (BME680_CHIPID == bmp_sensors[i].bmp_type) {
+        float factor = Bme680IaqCompFactor(bmp_sensors[i].bmp_temperature, bmp_sensors[i].bmp_humidity);
+        dtostrfd(bmp_sensors[i].bme680_iaq.baseline / factor, 0, str);
+        if (found) { ResponseAppend_P(PSTR(",")); }
+        ResponseAppend_P(PSTR("\"%s%c%02X\":{\"Baseline\":\"%s kOhm\"}"),
+          bmp_sensors[i].bmp_name, IndexSeparator(), bmp_sensors[i].bmp_address, str);
+        found = true;
+      }
+    }
+    if (!found) {
+      Response_P(PSTR("{\"%s\":{\"Error\":\"No BME680 detected\"}}"), kBmpIaqNames);
+    } else {
+      ResponseAppend_P(PSTR("}}"));
+    }
+    return;
+  }
+
+  bool reset = false;
+  bool do_set = false;
+  int8_t ordinal = -1;   // -1 => all sensors
+  int8_t bmp_idx = -1;
+  float set_value = 0.0f;
+
+  if (1 == argc && !strcasecmp(arg1, "RESET")) {
+    ordinal = -1;
+    reset = true;
+  } else {
+    ordinal = (int8_t)strtoul(arg1, nullptr, 10);
+    bmp_idx = Bme680SensorByOrdinal((uint8_t)ordinal);
+
+    if (argc > 1)
+      reset = !strcasecmp(arg2, "RESET");
+
+    if (!reset) {
+      set_value = strtof(arg2, nullptr);
+      do_set = true;
+    }
+  }
+
+  if (-1 != ordinal && bmp_idx < 0) {
+    Response_P(PSTR("{\"%s\":{\"Error\":\"BME680 sensor %d not found\"}}"), kBmpIaqNames, (int)ordinal);
+    return;
+  }
+
+  if (reset) {
+    if (-1 == ordinal) {
+      for (uint32_t i = 0; i < bmp_count; i++) {
+        if (BME680_CHIPID == bmp_sensors[i].bmp_type) { Bme680IaqReset(i); }
+      }
+      Response_P(PSTR("{\"%s\":{\"Reset\":\"Burn-in restarts for all sensors\"}}"), kBmpIaqNames);
+    } else {
+      Bme680IaqReset(bmp_idx);
+      Response_P(PSTR("{\"%s\":{\"Reset\":\"Burn-in restarts\"}}"), kBmpIaqNames);
+    }
+    return;
+  }
+
+  if (do_set) {
+    if (set_value >= BME680_IAQ_R_MIN && set_value <= BME680_IAQ_R_MAX) {
+      float factor = Bme680IaqCompFactor(bmp_sensors[bmp_idx].bmp_temperature, bmp_sensors[bmp_idx].bmp_humidity);
+      bmp_sensors[bmp_idx].bme680_iaq.baseline = set_value * factor;
+      SettingsSaveAll();
+      dtostrfd(set_value, 0, str);
+      Response_P(PSTR("{\"%s\":{\"Baseline\":\"%s kOhm stored\"}}"), kBmpIaqNames, str);
+    } else {
+      Response_P(PSTR("{\"%s\":{\"Error\":\"Value out of range 1..%d kOhm\"}}"), kBmpIaqNames, (int)BME680_IAQ_R_MAX);
+    }
+    return;
+  }
+
+  // Report a single sensor
+  float factor = Bme680IaqCompFactor(bmp_sensors[bmp_idx].bmp_temperature, bmp_sensors[bmp_idx].bmp_humidity);
+  dtostrfd(bmp_sensors[bmp_idx].bme680_iaq.baseline / factor, 0, str);
+  Response_P(PSTR("{\"%s\":{\"Baseline\":\"%s kOhm\"}}"), kBmpIaqNames, str);
+}
+
 bool Bme680Init(uint8_t bmp_idx) {
   bmp68x_bus = bmp_sensors[bmp_idx].bmp_bus;
 
@@ -452,6 +670,7 @@ bool Bme680Init(uint8_t bmp_idx) {
   if (rslt != BME68X_OK) { return false; }
 
   bmp_sensors[bmp_idx].bme680_state = 0;
+  Bme680IaqReset(bmp_idx);
 
   return true;
 }
@@ -475,7 +694,7 @@ void Bme680Read(uint8_t bmp_idx) {
 
       bmp_sensors[bmp_idx].bme680_state = 1;
     } else {
-      bmp_sensors[bmp_idx].bme680_state = 0;
+bmp_sensors[bmp_idx].bme680_state = 0;
 
       struct bme68x_data data;
       uint8_t n_fields;
@@ -493,6 +712,7 @@ void Bme680Read(uint8_t bmp_idx) {
       // Avoid using measurements from an unstable heating setup
       if (data.status & BME68X_GASM_VALID_MSK) {
         bmp_sensors[bmp_idx].bmp_gas_resistance = data.gas_resistance / 1000.0f;  // Gas resistance in Ohms (converted to kOhm)
+        Bme680IaqUpdate(bmp_idx, bmp_sensors[bmp_idx].bmp_gas_resistance, bmp_sensors[bmp_idx].bmp_temperature, bmp_sensors[bmp_idx].bmp_humidity);
       } else {
         bmp_sensors[bmp_idx].bmp_gas_resistance = 0;
       }
@@ -512,9 +732,9 @@ void BmpDetect(void) {
   if (!bmp_sensors) { return; }
 
   for (uint32_t i = 0; i < BMP_MAX_SENSORS; i++) {
-    uint8_t bus = i >>1;
-    if (!I2cSetDevice(bmp_addresses[i &1], bus)) { continue; }
-    uint8_t bmp_type = I2cRead8(bmp_addresses[i &1], BMP_REGISTER_CHIPID, bus);
+    uint8_t bus = i >> 1;
+    if (!I2cSetDevice(bmp_addresses[i & 1], bus)) { continue; }
+    uint8_t bmp_type = I2cRead8(bmp_addresses[i & 1], BMP_REGISTER_CHIPID, bus);
     if (bmp_type) {
       bmp_sensors[bmp_count].bmp_address = bmp_addresses[i &1];
       bmp_sensors[bmp_count].bmp_bus = bus;
@@ -546,6 +766,9 @@ void BmpDetect(void) {
       }
     }
   }
+#ifdef USE_BME68X
+  Bme680IaqRestore();
+#endif  // USE_BME68X
 }
 
 void BmpRead(void) {
@@ -617,6 +840,15 @@ void BmpShow(bool json) {
 #ifdef USE_BME68X
       char gas_resistance[33];
       dtostrfd(bmp_sensors[bmp_idx].bmp_gas_resistance, 2, gas_resistance);
+      bool iaq_valid = (bmp_sensors[bmp_idx].bme680_iaq.baseline > 0.0f);
+      char iaq[33];
+      char tvoc[33];
+      char iaq_quality[8];
+      if (iaq_valid) {
+        dtostrfd(bmp_sensors[bmp_idx].bme680_iaq.iaq, 1, iaq);
+        dtostrfd(bmp_sensors[bmp_idx].bme680_iaq.tvoc, 0, tvoc);
+        dtostrfd(100.0f * (1.0f - bmp_sensors[bmp_idx].bme680_iaq.iaq / 500.0f), 0, iaq_quality);
+      }
 #endif  // USE_BME68X
 
       if (json) {
@@ -629,8 +861,14 @@ void BmpShow(bool json) {
         char json_sealevel[40];
         snprintf_P(json_sealevel, sizeof(json_sealevel), PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
 #ifdef USE_BME68X
-        char json_gas[40];
-        snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_JSON_GAS "\":%s"), gas_resistance);
+        char json_gas[72];
+        if (iaq_valid) {
+          snprintf_P(json_gas, sizeof(json_gas),
+            PSTR(",\"" D_JSON_GAS "\":%s,\"" D_JSON_AIRQUALITY "\":%s,\"" D_JSON_TVOC "\":%s"),
+            gas_resistance, iaq, tvoc);
+        } else {
+          snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_JSON_GAS "\":%s"), gas_resistance);
+        }
 
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
           name,
@@ -677,6 +915,16 @@ void BmpShow(bool json) {
 #ifdef USE_BME68X
         if (bmp_sensors[bmp_idx].bmp_model >= 3) {
           WSContentSend_PD(PSTR("{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), name, gas_resistance);
+          if (iaq_valid) {
+            WSContentSend_PD(PSTR("{s}%s " D_AIRQUALITY "{m}%s " D_UNIT_PERCENT "{e}"), name, iaq_quality);
+            WSContentSend_PD(PSTR("{s}%s " D_JSON_TVOC "{m}%s " D_UNIT_PARTS_PER_BILLION "{e}"), name, tvoc);
+          } else {
+            int16_t iaq_prog = Bme680IaqProgress(bmp_idx);
+            char iaq_prog_str[8];
+            snprintf_P(iaq_prog_str, sizeof(iaq_prog_str), PSTR("%d"), iaq_prog);
+            WSContentSend_PD(PSTR("{s}%s " D_CALIBRATION "{m}%s " D_UNIT_PERCENT "{e}"), name, iaq_prog_str);
+            WSContentSend_P(PSTR("{s}" D_IAQ_CALIBRATING "{e}"));
+          }
         }
 #endif  // USE_BME68X
 
@@ -731,12 +979,20 @@ bool Xsns09(uint32_t function) {
         BmpShow(0);
         break;
 #endif  // USE_WEBSERVER
-#ifdef USE_DEEPSLEEP
       case FUNC_SAVE_BEFORE_RESTART:
+#ifdef USE_BME68X
+        Bme680IaqStore();
+#endif
+#ifdef USE_DEEPSLEEP
         BMP_EnterSleep();
         bmp_deepsleep = 1;
+#endif
         break;
-#endif // USE_DEEPSLEEP
+#ifdef USE_BME68X
+      case FUNC_COMMAND:
+        result = DecodeCommand(kBmpCommands, BmpCommand);
+        break;
+#endif  // USE_BME68X
     }
   }
   return result;
