@@ -46,14 +46,7 @@ void OpenTherm::begin(void (*handleInterruptCallback)(void))
         releaseRMT();
         return; // stays NOT_INITIALIZED
     }
-    activateBoiler();
-    status = OpenThermStatus::READY;
-    if (isSlave)
-    {
-        startReceiveRMT();
-    }
-    return;
-#endif
+#else
     pinMode(inPin, INPUT);
     pinMode(outPin, OUTPUT);
     if (handleInterruptCallback != NULL)
@@ -71,9 +64,16 @@ void OpenTherm::begin(void (*handleInterruptCallback)(void))
         );
 #endif
     }
+#endif
 
     activateBoiler();
     status = OpenThermStatus::READY;
+#ifdef OPENTHERM_USE_RMT
+    if (isSlave)
+    {
+        startReceiveRMT();
+    }
+#endif
 }
 
 void OpenTherm::begin(void (*handleInterruptCallback)(void), void (*processResponseCallback)(unsigned long, int))
