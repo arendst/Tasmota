@@ -42,12 +42,12 @@
 #define OT_RMT_RX_INVERT 0
 #endif
 
-// Invert the RMT TX output (applies to idle level too). With 1 the bus "active"
-// level is LOW on the TX pin, as in the original Ihor Melnyk adapter. Needed on
-// the ESP32 board: without it the boiler decoded the request bit-inverted and
-// answered UNKNOWN-DATAID for ID 0xFC (= ~3).
+// Set to 1 to invert the RMT TX output (idle level too) for adapters whose TX input
+// is inverted. Default: bus "active" level is LOW on the TX pin, as in the Ihor Melnyk
+// adapter and the interrupt implementation. With the wrong polarity the boiler decodes
+// requests bit-inverted and answers UNKNOWN-DATAID (e.g. ID 0xFC instead of 3).
 #ifndef OT_RMT_TX_INVERT
-#define OT_RMT_TX_INVERT 1
+#define OT_RMT_TX_INVERT 0
 #endif
 #endif
 

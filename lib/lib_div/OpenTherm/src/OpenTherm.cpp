@@ -105,25 +105,10 @@ int IRAM_ATTR OpenTherm::readState()
     return digitalRead(inPin);
 }
 
-#define OT_LOCAL
-#ifdef OT_LOCAL
-#define OT_TX_ACTIVE_LEVEL 1
-#else
+// Bus "active" level on the TX pin is LOW (Ihor Melnyk adapter), idle is HIGH
 #define OT_TX_ACTIVE_LEVEL 0
-#endif
 #define OT_TX_IDLE_LEVEL (!OT_TX_ACTIVE_LEVEL)
 
-#ifdef OT_LOCAL
-void OpenTherm::setActiveState()
-{
-    digitalWrite(outPin, HIGH);
-}
-
-void OpenTherm::setIdleState()
-{
-    digitalWrite(outPin, LOW);
-}
-#else
 void OpenTherm::setActiveState()
 {
     digitalWrite(outPin, LOW);
@@ -133,7 +118,6 @@ void OpenTherm::setIdleState()
 {
     digitalWrite(outPin, HIGH);
 }
-#endif
 
 void OpenTherm::activateBoiler()
 {
