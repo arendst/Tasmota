@@ -234,7 +234,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
 
   // Initialize the log buffer.
   char * log_buffer = (char *)malloc(512);
-  log_length = sprintf(log_buffer, PSTR("DGR: %s %s message %s %s: seq=%u, flags=%u"), (received ? PSTR("Received") : PSTR("Sending")), device_group->group_name, (received ? PSTR("from") : PSTR("to")), (device_group_member ? IPAddressToString(device_group_member->ip_address) : received ? PSTR("local") : PSTR("network")), message_sequence, flags);
+  log_length = snprintf_P(log_buffer, 512, PSTR("DGR: %s %s message %s %s: seq=%u, flags=%u"), (received ? PSTR("Received") : PSTR("Sending")), device_group->group_name, (received ? PSTR("from") : PSTR("to")), (device_group_member ? IPAddressToString(device_group_member->ip_address) : received ? PSTR("local") : PSTR("network")), message_sequence, flags);
   log_ptr = log_buffer + log_length;
   log_remaining = 512 - log_length;
 
@@ -262,7 +262,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
 
     // If we're sending this message directly to a member, it's a resend.
     else {
-      log_length = snprintf(log_ptr, log_remaining, PSTR(", last ack=%u"), device_group_member->acked_sequence);
+      log_length = snprintf_P(log_ptr, log_remaining, PSTR(", last ack=%u"), device_group_member->acked_sequence);
       log_ptr += log_length;
       log_remaining -= log_length;
       goto write_log;
@@ -279,7 +279,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
     if (device_group_member) {
       if (message_sequence <= device_group_member->received_sequence) {
         if (message_sequence == device_group_member->received_sequence || device_group_member->received_sequence - message_sequence > 64536) {
-          log_length = snprintf(log_ptr, log_remaining, PSTR(" (old)"));
+          log_length = snprintf_P(log_ptr, log_remaining, PSTR(" (old)"));
           log_ptr += log_length;
           log_remaining -= log_length;
           goto write_log;
@@ -342,7 +342,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
     }
 #endif  // DEVICE_GROUPS_DEBUG
 
-    log_length = snprintf(log_ptr, log_remaining, PSTR(", %u="), item);
+    log_length = snprintf_P(log_ptr, log_remaining, PSTR(", %u="), item);
     log_ptr += log_length;
     log_remaining -= log_length;
     log_length = 0;
@@ -368,19 +368,19 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
         if (item < DGR_ITEM_LAST_8BIT) device_group->values_8bit[item] = value;
       }
 #endif  // USE_DEVICE_GROUPS_SEND
-      log_length = snprintf(log_ptr, log_remaining, PSTR("%u"), value);
+      log_length = snprintf_P(log_ptr, log_remaining, PSTR("%u"), value);
     }
     else {
       value = *message_ptr++;
       if (received) XdrvMailbox.data = (char *)message_ptr;
       if (message_ptr + value >= message_end_ptr) goto badmsg;  // Malformed message
       if (item <= DGR_ITEM_MAX_STRING) {
-        log_length = snprintf(log_ptr, log_remaining, PSTR("'%s'"), message_ptr);
+        log_length = snprintf_P(log_ptr, log_remaining, PSTR("'%s'"), message_ptr);
       }
       else {
         switch (item) {
           case DGR_ITEM_LIGHT_CHANNELS:
-            log_length = snprintf(log_ptr, log_remaining, PSTR("%u,%u,%u,%u,%u,%u"), *message_ptr, *(message_ptr + 1), *(message_ptr + 2), *(message_ptr + 3), *(message_ptr + 4), *(message_ptr + 5));
+            log_length = snprintf-p(log_ptr, log_remaining, PSTR("%u,%u,%u,%u,%u,%u"), *message_ptr, *(message_ptr + 1), *(message_ptr + 2), *(message_ptr + 3), *(message_ptr + 4), *(message_ptr + 5));
             break;
         }
       }
@@ -406,8 +406,10 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
         XdrvMailbox.command_code = item;
         XdrvMailbox.payload = value;
         XdrvMailbox.data_len = value;
-        *log_ptr++ = '*';
-        log_remaining--;
+        if (log_remaining > 1) {  // Fix GHSA-g56h-hfr6-x2v9
+          *log_ptr++ = '*';
+          log_remaining--;
+        }
         switch (item) {
           case DGR_ITEM_POWER:
             if (Settings->flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
@@ -451,7 +453,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
   }
 
 write_log:
-  *log_ptr++ = 0;
+  *log_ptr = 0;
   AddLogData(LOG_LEVEL_DEBUG_MORE, log_buffer);
 
   // If this is a received status request message, then if the requestor didn't just ack our
