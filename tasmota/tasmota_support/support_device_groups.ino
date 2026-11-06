@@ -380,7 +380,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
       else {
         switch (item) {
           case DGR_ITEM_LIGHT_CHANNELS:
-            log_length = snprintf-p(log_ptr, log_remaining, PSTR("%u,%u,%u,%u,%u,%u"), *message_ptr, *(message_ptr + 1), *(message_ptr + 2), *(message_ptr + 3), *(message_ptr + 4), *(message_ptr + 5));
+            log_length = snprintf_P(log_ptr, log_remaining, PSTR("%u,%u,%u,%u,%u,%u"), *message_ptr, *(message_ptr + 1), *(message_ptr + 2), *(message_ptr + 3), *(message_ptr + 4), *(message_ptr + 5));
             break;
         }
       }

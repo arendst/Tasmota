@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - BME680 IAQ (air quality index) to BMP sensor driver (#25175)
 
 ### Breaking Changed
+- Reduce max number of ZCDimmer PWM channels to 5 due to allocated persistent data size (#25222)
 
 ### Changed
 - ESP8266 platform update from 2026.09.00 to 2026.10.00 (#25196)
@@ -26,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - MiEL HVAC Modbus mirror total energy to holding register 40027 (#25214)
 - Missing NUL terminator for stored `ModbusBridgeSend` command data (#25218)
 - Matter event EpochTimestamp sent as seconds instead of milliseconds, using new Berry `tasmota.rtc_utc_ms()`
+- TuyaV1 and TuyaV2 out-of-bounds accessing `tuya_fnid_map[]` (#25222)
 
 ### Removed
 
