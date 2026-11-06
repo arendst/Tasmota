@@ -117,6 +117,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v16.0.0.2
 ### Added
 - Heap Map optional feature fur detailed memory usage at boot [#25186](https://github.com/arendst/Tasmota/issues/25186)
+- BME680 IAQ (air quality index) to BMP sensor driver [#25175](https://github.com/arendst/Tasmota/issues/25175)
 - TuyaMCU pace outgoing frames so the MCU is never written to back-to-back [#25151](https://github.com/arendst/Tasmota/issues/25151)
 - uDisplay support for SPI QSPI displays [#25156](https://github.com/arendst/Tasmota/issues/25156)
 - BLE timeout and eQ3 TRV enhancements [#25173](https://github.com/arendst/Tasmota/issues/25173)
@@ -133,6 +134,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - OTA give up on a stalled OTA after 30s, not 300 reads [#25177](https://github.com/arendst/Tasmota/issues/25177)
 - HttpClientLight keep read timeouts longer than 65s [#25180](https://github.com/arendst/Tasmota/issues/25180)
 - GUI allow `;` or `{` in a password saved from the settings page [#25184](https://github.com/arendst/Tasmota/issues/25184)
+- Refactor JPEG size retrieval function [#25226](https://github.com/arendst/Tasmota/issues/25226)
 - ESP32 web login uses own Basic auth instead Arduino [#25210](https://github.com/arendst/Tasmota/issues/25210)
 - BLE EQ3-TRV avoid sending of empty status [#25182](https://github.com/arendst/Tasmota/issues/25182)
 

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [16.0.0.2]
 ### Added
 - ESP32 `PsrMode` displaying whether PSRAM is `QIO`/`OPI` (#25213)
+- BME680 IAQ (air quality index) to BMP sensor driver (#25175)
 
 ### Breaking Changed
 
@@ -16,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - BLE EQ3-TRV avoid sending of empty status (#25182)
 - GUI allow `;` or `{` in a password saved from the settings page (#25184)
 - ESP32 web login uses own Basic auth instead Arduino (#25210)
+- Refactor JPEG size retrieval function (#25226)
 
 ### Fixed
 - ESP32 `UfsServe` (`UFILESYS_STATIC_SERVING`) compilation, and reject `..` in served paths (#25211)
