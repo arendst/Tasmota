@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "Verligting"
 #define D_IMMEDIATE "onmiddellik"      // Button immediate
 #define D_INDEX "Indeks"
+#define D_AIRQUALITY "Lugkwaliteit"
+#define D_IAQ_CALIBRATING "(basislyn kalibrasie, hou die lug skoon)"
 #define D_INFO "Inligting"
 #define D_INFRARED "Infrarooi"
 #define D_INITIALIZED "Geïnisialiseer"

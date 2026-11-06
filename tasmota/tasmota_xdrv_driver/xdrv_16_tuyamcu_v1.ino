@@ -285,16 +285,24 @@ void CmndTuyaMcu(void) {
     if (TuyaFuncIdValid(parm[0])) {
       bool DualDim;
       if (TUYA_MCU_FUNC_DIMMER2 == parm[0] && parm[1] != 0) {
-        if (TuyaGetDpId(TUYA_MCU_FUNC_DIMMER) != 0) { DualDim = true; }
+        if (TuyaGetDpId(TUYA_MCU_FUNC_DIMMER) != 0) { 
+          DualDim = true;
+        }
       } else if (TUYA_MCU_FUNC_DIMMER == parm[0] && parm[1] != 0) {
-        if (TuyaGetDpId(TUYA_MCU_FUNC_DIMMER2) != 0) { DualDim = true; }
-      } else if ((TUYA_MCU_FUNC_DIMMER == parm[0] && parm[1] == 0) || (TUYA_MCU_FUNC_DIMMER2 == parm[0] && parm[1] == 0)) { DualDim = false; };
+        if (TuyaGetDpId(TUYA_MCU_FUNC_DIMMER2) != 0) { 
+          DualDim = true;
+        }
+      } else if ((TUYA_MCU_FUNC_DIMMER == parm[0] && parm[1] == 0) || (TUYA_MCU_FUNC_DIMMER2 == parm[0] && parm[1] == 0)) { 
+        DualDim = false;
+      };
       if (DualDim) { // If the second dimmer is enabled CT, RGB or WHITE function must be removed
         if (TuyaGetDpId(TUYA_MCU_FUNC_CT) != 0) { TuyaAddMcuFunc(TUYA_MCU_FUNC_CT, 0); }
         if (TuyaGetDpId(TUYA_MCU_FUNC_RGB) != 0) { TuyaAddMcuFunc(TUYA_MCU_FUNC_RGB, 0); }
         if (TuyaGetDpId(TUYA_MCU_FUNC_WHITE) != 0) { TuyaAddMcuFunc(TUYA_MCU_FUNC_WHITE, 0); }
         Settings->flag3.pwm_multi_channels = 1;
-      } else { Settings->flag3.pwm_multi_channels = 0; }
+      } else { 
+        Settings->flag3.pwm_multi_channels = 0;
+      }
       TuyaAddMcuFunc(parm[0], parm[1]);
       TasmotaGlobal.restart_flag = 2;
     } else {
@@ -324,13 +332,19 @@ void CmndTuyaRgb(void) { // Command to control the RGB format
     if (payload < 0 || payload > 3 || TuyaGetDpId(TUYA_MCU_FUNC_RGB) == 0) {
       return;
     } else {
+/*
       if (payload != Settings->tuya_fnid_map[230].dpid) { // fnid 230 is reserved for RGB
         Settings->tuya_fnid_map[230].fnid = 230;
         Settings->tuya_fnid_map[230].dpid = payload;
       }
+*/
+      if (payload != TuyaGetDpId(230)) { // fnid 230 is reserved for RGB
+        TuyaAddMcuFunc(230, payload);
+      }
     }
   }
-  ResponseCmndNumber(Settings->tuya_fnid_map[230].dpid);
+//  ResponseCmndNumber(Settings->tuya_fnid_map[230].dpid);
+  ResponseCmndNumber(TuyaGetDpId(230));
 }
 
 void CmndTuyaTempSetRes(void)
@@ -350,7 +364,8 @@ void CmndTuyaEnum(void) { // Command to control up to four type 4 Enum
   }
 
   if (XdrvMailbox.data_len > 0) {
-    if (payload < 0 || payload > Settings->tuya_fnid_map[EnumIdx + 230].dpid ) {
+//    if (payload < 0 || payload > Settings->tuya_fnid_map[EnumIdx + 230].dpid ) {
+    if (payload < 0 || payload > TuyaGetDpId(EnumIdx + 230)) {
       return;
     } else {
       if (payload != Tuya.EnumState[EnumIdx-1]) {
@@ -387,11 +402,14 @@ void CmndTuyaEnumList(void) { // Command to declare the number of items in list 
     }
     if ((parm[0] >= 1 && parm[0] <= 4) && (parm[1] >= 1 && parm[1] <= 31)) {
       uint16_t idx = parm[0] + 230; // fnid 231, 232, 233 and 234 are reserved for enum
+/*
       Settings->tuya_fnid_map[idx].fnid = idx;
       Settings->tuya_fnid_map[idx].dpid = parm[1];
+*/
+      TuyaAddMcuFunc(idx, parm[1]);
     }
   }
-  if ((TuyaGetDpId(TUYA_MCU_FUNC_ENUM1) != 0) || (TuyaGetDpId(TUYA_MCU_FUNC_ENUM3) != 0) ||
+  if ((TuyaGetDpId(TUYA_MCU_FUNC_ENUM1) != 0) || (TuyaGetDpId(TUYA_MCU_FUNC_ENUM2) != 0) ||
       (TuyaGetDpId(TUYA_MCU_FUNC_ENUM3) != 0) || (TuyaGetDpId(TUYA_MCU_FUNC_ENUM4) != 0)) {
     Response_P(PSTR("{\"%s\":{"), XdrvMailbox.command);  // Builds TuyaEnumList
     bool added = false;
@@ -399,9 +417,13 @@ void CmndTuyaEnumList(void) { // Command to declare the number of items in list 
       if (TuyaGetDpId(TUYA_MCU_FUNC_ENUM1 + i) != 0) {
         if (added) {
           ResponseAppend_P(PSTR(","));
-          if ( Settings->tuya_fnid_map[i + 231].dpid > 31 ) { Settings->tuya_fnid_map[i + 231].dpid = 0; } // default to 0 it the value exceed the range
+//          if ( Settings->tuya_fnid_map[i + 231].dpid > 31 ) { Settings->tuya_fnid_map[i + 231].dpid = 0; } // default to 0 it the value exceed the range
+          if ( TuyaGetDpId(i + 231) > 31 ) { 
+            TuyaAddMcuFunc(i + 231, 0);  // default to 0 it the value exceed the range
+          }
         }
-        ResponseAppend_P(PSTR("\"Enum%d\":%d"), i + 1, Settings->tuya_fnid_map[i + 231].dpid); // fnid 231, 232, 233 and 234 are reserved for Enum
+//        ResponseAppend_P(PSTR("\"Enum%d\":%d"), i + 1, Settings->tuya_fnid_map[i + 231].dpid); // fnid 231, 232, 233 and 234 are reserved for Enum
+        ResponseAppend_P(PSTR("\"Enum%d\":%d"), i + 1, TuyaGetDpId(i + 231)); // fnid 231, 232, 233 and 234 are reserved for Enum
         added = true;
       }
     }
@@ -889,7 +911,8 @@ bool TuyaSetChannels(void)
       // 2  Type 2 Uppercase - 00FF00FFFF6464
       // 3  Type 2 Lowercase - 00e420ffff6464
 
-      uint8_t RGBType = Settings->tuya_fnid_map[230].dpid; // Select the type of RGB payload
+//      uint8_t RGBType = Settings->tuya_fnid_map[230].dpid; // Select the type of RGB payload
+      uint8_t RGBType = TuyaGetDpId(230); // Select the type of RGB payload
       char scolor[7];
       LightGetColor(scolor, 1); // Always get the color in hex format
       light_state.getHSB(&hue, &sat, &bri);
@@ -1195,7 +1218,8 @@ void TuyaProcessStatePacket(void) {
         const unsigned char *dpData = (unsigned char*)&Tuya.buffer[dpidStart + 4];
         if ((TuyaGetDpId(TUYA_MCU_FUNC_RGB) != 0)) {
 
-          uint8_t RGBType = Settings->tuya_fnid_map[230].dpid; // Select the type of hex configured
+//          uint8_t RGBType = Settings->tuya_fnid_map[230].dpid; // Select the type of hex configured
+          uint8_t RGBType = TuyaGetDpId(230); // Select the type of hex configured
           char RgbData[15];
           char RGB[7];
           char HSB1[5], HSB2[5], HSB3[5];

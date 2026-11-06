@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 11.10.2026
+ * Updated until v9.4.0.1 - Last update 06.11.2026
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display 'Module Generic' (ie Spanish), Disable to display 'Generic Module' (ie English)
@@ -114,7 +114,7 @@
 #define D_FILE                 "File"
 #define D_FILE_SYSTEM_SIZE     "Dimensione file system"
 #define D_FLOW_RATE            "Flusso dati"
-#define D_FRAGMENTATION        "framm."      // Lower case abbreviated version of fragmentation used in 'memory fragmentation'
+#define D_FRAGMENTATION        "framm."                  // Lower case abbreviated version of fragmentation used in 'memory fragmentation'
 #define D_FRAME_RATE           "Frequenza fotogrammi"
 #define D_FREE_MEMORY          "Memoria libera"
 #define D_FREQUENCY            "Frequenza"
@@ -129,15 +129,17 @@
 #define D_HOSTNAME             "Nome host"
 #define D_HUMIDITY             "Umidità"
 #define D_ILLUMINANCE          "Illuminazione"
-#define D_IMMEDIATE            "immediato"             // Button immediate
+#define D_IMMEDIATE            "immediato"               // Button immediate
 #define D_INDEX                "Indice"
+#define D_AIRQUALITY           "Qualità dell'aria"
+#define D_IAQ_CALIBRATING      "(calibrazione base, mantiene l'aria pulita)"
 #define D_INFO                 "Info"
 #define D_INFRARED             "Infrarosso"
 #define D_INITIALIZED          "Inizializzato"
 #define D_IP_ADDRESS           "Indirizzo IP"
 #define D_LIGHT                "Luce"
 #define D_LOW                  "Basso"
-#define D_LQI                  "LQI"                  // Zigbee Link Quality Index
+#define D_LQI                  "LQI"                     // Zigbee Link Quality Index
 #define D_LWT                  "LWT"
 #define D_MANUAL               "Manuale"
 #define D_MODULE               "Modulo"

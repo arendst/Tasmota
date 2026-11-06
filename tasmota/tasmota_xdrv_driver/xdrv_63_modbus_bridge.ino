@@ -864,7 +864,7 @@ void CmndModbusBridgeSend(void)
     if (modbusBridge.command_data == nullptr)
     {
       // Let's store the command data
-      modbusBridge.command_data = (char *)malloc(XdrvMailbox.data_len);
+      modbusBridge.command_data = (char *)malloc(XdrvMailbox.data_len + 1);
 
       if (modbusBridge.command_data == nullptr)
       {
@@ -875,6 +875,7 @@ void CmndModbusBridgeSend(void)
       }
 
       memcpy(modbusBridge.command_data, XdrvMailbox.data, XdrvMailbox.data_len);
+      modbusBridge.command_data[XdrvMailbox.data_len] = 0;  // data_len excludes the terminator; JsonParser needs a NUL terminated string
     }
     else
     {

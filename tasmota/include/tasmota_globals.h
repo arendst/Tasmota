@@ -95,6 +95,15 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 #error "Please add missing flashmode definition in the lines above!" // could be upcoming octal modes
 #endif // value check of CONFIG_TASMOTA_FLASHMODE
 
+// ESP32-S3 PSRAM mode is selected at compile time (variants 'qio_qspi' and 'qio_opi')
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+#if defined(CONFIG_SPIRAM_MODE_OCT)
+  #define D_TASMOTA_PSRAMMODE "OPI"
+#elif defined(CONFIG_SPIRAM_MODE_QUAD)
+  #define D_TASMOTA_PSRAMMODE "QSPI"
+#endif
+#endif // CONFIG_IDF_TARGET_ESP32S3
+
 /*********************************************************************************************\
  * ESP8266 specific parameters
 \*********************************************************************************************/

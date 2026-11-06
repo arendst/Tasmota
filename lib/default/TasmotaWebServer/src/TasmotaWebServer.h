@@ -36,6 +36,7 @@ public:
 
 #ifdef ESP32
 #include <WebServer.h>
+#include "libb64/cencode.h"
 
 class TasmotaWebServer : public WebServer
 {
@@ -45,6 +46,32 @@ public:
 	}
 
   bool isChunked(void) const { return _chunked; }
+
+  // Basic authentication only. These hide WebServer::authenticate() and
+  // WebServer::requestAuthentication(), which also implement Digest auth.
+  // Since Arduino 3.3.12-1 Digest auth links HMAC-SHA256 and SHA-512 code (~7 KB flash)
+  // even when only Basic auth is used.
+  bool authenticate(const char *username, const char *password) {
+    String auth = header(F("Authorization"));
+    if (!auth.startsWith(F("Basic "))) { return false; }
+    auth.remove(0, 6);
+    auth.trim();
+
+    String credentials = username;
+    credentials += ':';
+    credentials += password;
+    char *encoded = (char*)malloc(base64_encode_expected_len(credentials.length()) + 1);
+    if (encoded == nullptr) { return false; }
+    base64_encode_chars(credentials.c_str(), credentials.length(), encoded);
+    bool ok = auth.equalsConstantTime(encoded);
+    free(encoded);
+    return ok;
+  }
+
+  void requestAuthentication(void) {
+    sendHeader(F("WWW-Authenticate"), F("Basic realm=\"Login Required\""));
+    send(401, "text/html", "");
+  }
 };
 #endif // ESP32
 

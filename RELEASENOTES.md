@@ -117,6 +117,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v16.0.0.2
 ### Added
 - Heap Map optional feature fur detailed memory usage at boot [#25186](https://github.com/arendst/Tasmota/issues/25186)
+- BME680 IAQ (air quality index) to BMP sensor driver [#25175](https://github.com/arendst/Tasmota/issues/25175)
 - TuyaMCU pace outgoing frames so the MCU is never written to back-to-back [#25151](https://github.com/arendst/Tasmota/issues/25151)
 - uDisplay support for SPI QSPI displays [#25156](https://github.com/arendst/Tasmota/issues/25156)
 - BLE timeout and eQ3 TRV enhancements [#25173](https://github.com/arendst/Tasmota/issues/25173)
@@ -126,23 +127,36 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Breaking Changed
 - BTHome un-reverse MAC address usage for command `MI32Keys` to make it consistent
+- Reduce max number of ZCDimmer PWM channels to 5 due to allocated persistent data size [#25222](https://github.com/arendst/Tasmota/issues/25222)
 
 ### Changed
 - ESP8266 platform update from 2026.09.00 to 2026.10.00 [#25196](https://github.com/arendst/Tasmota/issues/25196)
 - ESP32 Platform from 2026.09.50 to 2026.10.50, Framework (Arduino Core) from v3.3.12 to v3.3.12-1 and IDF v5.5.5 [#25196](https://github.com/arendst/Tasmota/issues/25196)
-- HttpClientLight: keep read timeouts longer than 65 s [#25180](https://github.com/arendst/Tasmota/issues/25180)
+- OTA give up on a stalled OTA after 30s, not 300 reads [#25177](https://github.com/arendst/Tasmota/issues/25177)
+- HttpClientLight keep read timeouts longer than 65s [#25180](https://github.com/arendst/Tasmota/issues/25180)
+- GUI allow `;` or `{` in a password saved from the settings page [#25184](https://github.com/arendst/Tasmota/issues/25184)
+- Refactor JPEG size retrieval function [#25226](https://github.com/arendst/Tasmota/issues/25226)
+- ESP32 web login uses own Basic auth instead Arduino [#25210](https://github.com/arendst/Tasmota/issues/25210)
+- BLE EQ3-TRV avoid sending of empty status [#25182](https://github.com/arendst/Tasmota/issues/25182)
 
 ### Fixed
 - Security issues caused by buffer overflows
+- OTA and file upload security issue
+- TuyaV1 and TuyaV2 out-of-bounds accessing `tuya_fnid_map[]` [#25222](https://github.com/arendst/Tasmota/issues/25222)
 - Boot loop when using a literal WIFI_DEFAULT_HOSTNAME [#25205](https://github.com/arendst/Tasmota/issues/25205)
 - WifiManager name the setup AP as it is turned on [#25169](https://github.com/arendst/Tasmota/issues/25169)
 - VEML7700 lux/white rounding, add new command [#25150](https://github.com/arendst/Tasmota/issues/25150)
 - MPR121 sizeof [#25203](https://github.com/arendst/Tasmota/issues/25203)
 - SML ESP8266 serial mode [#25201](https://github.com/arendst/Tasmota/issues/25201)
 - DisplayText [pN] command now works when followed by another [pN] [#25188](https://github.com/arendst/Tasmota/issues/25188)
+- Missing NUL terminator for stored `ModbusBridgeSend` command data [#25218](https://github.com/arendst/Tasmota/issues/25218)
+- ESP32 `Restart -1` fails to crash [#25223](https://github.com/arendst/Tasmota/issues/25223)
+- ESP32 `PsrMode` displaying whether PSRAM is `QIO`/`OPI` [#25213](https://github.com/arendst/Tasmota/issues/25213)
 - ESP32 `PWMFrequency` < 8 result in WDT exception after restart [#25155](https://github.com/arendst/Tasmota/issues/25155)
 - ESP32 steady 38 kHz IR carrier (fixes [#25168](https://github.com/arendst/Tasmota/issues/25168)) [#25176](https://github.com/arendst/Tasmota/issues/25176)
+- ESP32 `UfsServe` (`UFILESYS_STATIC_SERVING`) compilation, and reject `..` in served paths [#25211](https://github.com/arendst/Tasmota/issues/25211)
 - MiEL HVAC Modbus no response timeouts now serves the RS485 slave from its own task [#25157](https://github.com/arendst/Tasmota/issues/25157)
+- MiEL HVAC Modbus mirror total energy to holding register 40027 [#25214](https://github.com/arendst/Tasmota/issues/25214)
 - ESP32-S3 RGB display permanent image shift after flash writes, DMA sync guard [#25194](https://github.com/arendst/Tasmota/issues/25194)
 - Wireguard reconnect when a dynamic DNS `Endpoint` changes IP [#25204](https://github.com/arendst/Tasmota/issues/25204)
 - WebAsync rare crash and race conditions [#25209](https://github.com/arendst/Tasmota/issues/25209)

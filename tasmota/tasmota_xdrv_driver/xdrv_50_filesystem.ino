@@ -25,9 +25,12 @@
 
 // Enables serving of static files on /fs/
 // costs 1844 bytes of flash and 40 bytes of RAM
-// probably not useful on esp8266, but useful on esp32
+// ESP32 only (uses the ESP32 WebServer RequestHandler API)
 // You could serve a whole webapp from Tas itself.
 //#define UFILESYS_STATIC_SERVING
+#if defined(ESP8266) && defined(UFILESYS_STATIC_SERVING)
+  #undef UFILESYS_STATIC_SERVING
+#endif
 
 /*********************************************************************************************\
 This driver adds universal file system support for
@@ -1116,29 +1119,80 @@ void UFSList(void) {
 * by default, it also enables cors on the webserver - this allows you to have 
 * a website external to TAS which can access the files, else the browser refuses.
 */
-#include "detail/RequestHandlersImpl.h"
+#include "detail/mimetable.h"
 
 //#define SERVING_DEBUG
 
-// class to allow us to request auth when required.
-// StaticRequestHandler is in the above header
-class StaticRequestHandlerAuth : public StaticRequestHandler {
+// Static file handler that requests auth when required.
+// Derives from RequestHandler: including "detail/RequestHandlersImpl.h" (for StaticRequestHandler)
+// a second time gives multiple definitions of RequestHandler::addMiddleware() and others at link time.
+class StaticRequestHandlerAuth : public RequestHandler {
 public:
-    StaticRequestHandlerAuth(FS& fs, const char* path, const char* uri, const char* cache_header, bool requireAuth):
-      StaticRequestHandler(fs, path, uri, cache_header)
+    StaticRequestHandlerAuth(FS& fs, const char* path, const char* uri, bool requireAuth):
+      _fs(fs), _uri(uri), _path(path), _requireAuth(requireAuth)
     {
-      _requireAuth = requireAuth;
+      File f = fs.open(path);
+      _isFile = (f && (!f.isDirectory()));
+      _baseUriLength = _uri.length();
     }
 
+    bool canHandle(HTTPMethod requestMethod, const String& requestUri) override {
+      if (requestMethod != HTTP_GET) { return false; }
+      if ((_isFile && requestUri != _uri) || !requestUri.startsWith(_uri)) { return false; }
+      return true;
+    }
+
+    bool canHandle(WebServer& server, HTTPMethod requestMethod, const String& requestUri) override {
+      (void)server;
+      return canHandle(requestMethod, requestUri);
+    }
+
+    // True if path contains a "." or ".." segment (slash-delimited)
+    static bool containsDotSegment(const String& path) {
+      int start = 0;
+      int len = path.length();
+      while (start <= len) {
+        int slash = path.indexOf('/', start);
+        int end = (slash < 0) ? len : slash;
+        int seg = end - start;
+        if ((1 == seg || 2 == seg) && ('.' == path[start]) && ((1 == seg) || ('.' == path[start + 1]))) { return true; }
+        if (slash < 0) { break; }
+        start = slash + 1;
+      }
+      return false;
+    }
+
+    static String getContentType(const String& path) {
+      char buff[sizeof(mime::mimeTable[0].mimeType)];
+      // Check all entries but last one for match, return if found
+      for (size_t i = 0; i < mime::maxType - 1; i++) {
+        strcpy_P(buff, mime::mimeTable[i].endsWith);
+        if (path.endsWith(buff)) {
+          strcpy_P(buff, mime::mimeTable[i].mimeType);
+          return String(buff);
+        }
+      }
+      // Fall-through and just return default type
+      strcpy_P(buff, mime::mimeTable[mime::maxType - 1].mimeType);
+      return String(buff);
+    }
+
+    FS& _fs;
+    String _uri;
+    String _path;
+    size_t _baseUriLength;
+    bool _isFile;
     bool _requireAuth;
+
 
     // we replace the handle method, 
     // and look for authentication only if we would serve the file.
     // if we check earlier, then we will reject as unauth even though a later
     // handler may be public, and so fail to serve public files.
-    bool handle(WebServer& server, HTTPMethod requestMethod, String requestUri) override {
-        if (!canHandle(requestMethod, requestUri))
+    bool handle(WebServer& server, HTTPMethod requestMethod, const String& uri) override {
+        if (!canHandle(server, requestMethod, uri))
             return false;
+        String requestUri(uri);
 
         //log_v("StaticRequestHandler::handle: request=%s _uri=%s\r\n", requestUri.c_str(), _uri.c_str());
 #ifdef SERVING_DEBUG
@@ -1153,7 +1207,13 @@ public:
               requestUri += "index.htm";
 
             // Append whatever follows this URI in request to get the file path.
-            path += requestUri.substring(_baseUriLength);
+            // Reject "." and ".." segments (also percent-encoded) so the request can't escape the served folder
+            String relative = requestUri.substring(_baseUriLength);
+            if (containsDotSegment(relative) || containsDotSegment(WebServer::urlDecode(relative))) {
+              AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "reject path %s"), requestUri.c_str());
+              return false;
+            }
+            path += relative;
         }
 #ifdef SERVING_DEBUG
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UFS "::handle: path=%s, isFile=%d"), path.c_str(), _isFile);
@@ -1162,10 +1222,10 @@ public:
 
         // look for gz file, only if the original specified path is not a gz.  So part only works to send gzip via content encoding when a non compressed is asked for
         // if you point the the path to gzip you will serve the gzip as content type "application/x-gzip", not text or javascript etc...
-        if (!path.endsWith(FPSTR(mimeTable[gz].endsWith)) && !_fs.exists(path))  {
-            String pathWithGz = path + FPSTR(mimeTable[gz].endsWith);
+        if (!path.endsWith(FPSTR(mime::mimeTable[mime::gz].endsWith)) && !_fs.exists(path))  {
+            String pathWithGz = path + FPSTR(mime::mimeTable[mime::gz].endsWith);
             if(_fs.exists(pathWithGz))
-                path += FPSTR(mimeTable[gz].endsWith);
+                path += FPSTR(mime::mimeTable[mime::gz].endsWith);
         }
 
         File f = _fs.open(path, "r");
@@ -1180,12 +1240,9 @@ public:
 #ifdef SERVING_DEBUG
           AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_UFS "serv of %s denied"), requestUri.c_str());
 #endif          
-          server.requestAuthentication();
+          Webserver->requestAuthentication();   // TasmotaWebServer Basic auth, avoids linking Digest auth
           return true;
         }
-
-        if (_cache_header.length() != 0)
-            server.sendHeader("Cache-Control", _cache_header);
 
 #ifdef SERVING_DEBUG
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UFS "::handler sending"));
@@ -1240,9 +1297,9 @@ void UFSServe(void) {
       if (Webserver) { // fail if no Webserver yet.
         StaticRequestHandlerAuth *staticHandler;
         if (noauth && *noauth == '1'){
-          staticHandler = new StaticRequestHandlerAuth(*ffsp, fpath, url, (char *)nullptr, false);
+          staticHandler = new StaticRequestHandlerAuth(*ffsp, fpath, url, false);
         } else {
-          staticHandler = new StaticRequestHandlerAuth(*ffsp, fpath, url, (char *)nullptr, true);
+          staticHandler = new StaticRequestHandlerAuth(*ffsp, fpath, url, true);
         }
         if (staticHandler) {
           //Webserver->serveStatic(url, *ffsp, fpath);
@@ -1379,7 +1436,7 @@ void HandleUploadUFSLoop(void) {
 void HandleUploadUFSDone(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  HTTPUpload& upload = Webserver->upload();
+  Web.upload_file_type = UPL_NONE;
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
 

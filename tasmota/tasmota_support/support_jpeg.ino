@@ -142,43 +142,90 @@ bool jpg2rgb888(const uint8_t *src, size_t src_len, uint8_t * out, jpg_scale_t s
     return true;
 }
 #endif //USE_NEW_JPG
+#endif // JPEG_PICTS
 
 
-// https://web.archive.org/web/20131016210645/http://www.64lines.com/jpeg-width-height
-//Gets the JPEG size from the array of data passed to the function, file reference: http://www.obrador.com/essentialjpeg/headerinfo.htm
-char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *width, unsigned short *height) {
-   //Check for valid JPEG image
-   int i=0;   // Keeps track of the position within the file
-   if(data[i] == 0xFF && data[i+1] == 0xD8 && data[i+2] == 0xFF && data[i+3] == 0xE0) {
-      i += 4;
-      // Check for valid JPEG header (null terminated JFIF)
-      if(data[i+2] == 'J' && data[i+3] == 'F' && data[i+4] == 'I' && data[i+5] == 'F' && data[i+6] == 0x00) {
-         //Retrieve the block length of the first block since the first block will not contain the size of file
-         unsigned short block_length = data[i] * 256 + data[i+1];
-         while(i<data_size) {
-            i+=block_length;               //Increase the file index to get to the next block
-            if(i >= data_size) return false;   //Check to protect against segmentation faults
-            if(data[i] != 0xFF) return false;   //Check that we are truly at the start of another block
-            if(data[i+1] == 0xC0) {            //0xFFC0 is the "Start of frame" marker which contains the file size
-               //The structure of the 0xFFC0 block is quite simple [0xFFC0][ushort length][uchar precision][ushort x][ushort y]
-               *height = data[i+5]*256 + data[i+6];
-               *width = data[i+7]*256 + data[i+8];
+#if defined(JPEG_PICTS) || defined(USE_BERRY_IMAGE)
+// Parses JPEG dimensions and rejects progressive JPEGs.
+// *width and *height are set to 0 unless true is returned.
+char get_jpeg_size(unsigned char *buffer, unsigned int data_size,
+                   uint16_t *width, uint16_t *height) {
+   if (!width || !height) return false;
+   *width = 0;
+   *height = 0;
+   if (!buffer || data_size < 4 || buffer[0] != 0xFF || buffer[1] != 0xD8) {
+      return false;
+   }
+
+   uint16_t w = 0;
+   uint16_t h = 0;
+   size_t offset = 2;
+   bool found_scan = false;
+   bool in_scan = false;
+   while (offset < data_size) {
+      if (in_scan) {
+         while (offset < data_size) {
+            if (buffer[offset] != 0xFF) {
+               offset++;
+               continue;
+            }
+            const size_t marker_start = offset;
+            while (offset < data_size && buffer[offset] == 0xFF) offset++;
+            if (offset >= data_size) return false;
+            const uint8_t scan_marker = buffer[offset++];
+            if (scan_marker == 0x00 || scan_marker == 0x01 ||
+                (scan_marker >= 0xD0 && scan_marker <= 0xD7)) {
+               continue;
+            }
+            if (scan_marker == 0xD9) {
+               *width = w;
+               *height = h;
                return true;
             }
-            else
-            {
-               i+=2;                              //Skip the block marker
-               block_length = data[i] * 256 + data[i+1];   //Go to the next block
-            }
+            offset = marker_start;
+            in_scan = false;
+            break;
          }
-         return false;                     //If this point is reached then no size was found
-      }else{ return false; }                  //Not a valid JFIF string
+         if (in_scan || offset >= data_size) return false;
+      }
 
-   }else{ return false; }                     //Not a valid SOI header
+      if (buffer[offset] != 0xFF) return false;
+      while (offset < data_size && buffer[offset] == 0xFF) offset++;
+      if (offset >= data_size) return false;
+      const uint8_t marker = buffer[offset++];
+      if (marker == 0xD9 || marker == 0xD8 || marker == 0x00) return false;
+      if (marker == 0x01 || (marker >= 0xD0 && marker <= 0xD7)) continue;
+      if (data_size - offset < 2) return false;
+
+      const size_t segment_length = ((size_t)buffer[offset] << 8) | buffer[offset + 1];
+      if (segment_length < 2 || segment_length > data_size - offset) return false;
+      if (marker == 0xC2) {
+         return false;
+      }
+      if (marker == 0xC0) {
+         if (segment_length < 8) return false;
+         const uint8_t components = buffer[offset + 7];
+         if (components == 0 || segment_length < 8 + (size_t)components * 3) return false;
+         h = ((uint16_t)buffer[offset + 3] << 8) | buffer[offset + 4];
+         w = ((uint16_t)buffer[offset + 5] << 8) | buffer[offset + 6];
+         if (w == 0 || h == 0) return false;
+      }
+
+      const size_t segment_end = offset + segment_length;
+      if (marker == 0xDA) {
+         if (w == 0 || h == 0) return false;
+         found_scan = true;
+         offset = segment_end;
+         in_scan = true;
+      } else {
+         offset = segment_end;
+         in_scan = found_scan;
+      }
+   }
+   return false;
 }
+#endif // JPEG_PICTS || USE_BERRY_IMAGE
 
-
-#endif // JPEG_PICTS
 #endif //ESP32
 
 #ifdef USE_DISPLAY_DUMP
