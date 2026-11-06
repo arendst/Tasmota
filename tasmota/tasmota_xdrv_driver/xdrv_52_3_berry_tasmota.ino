@@ -205,6 +205,50 @@ extern "C" {
     be_return(vm);
   }
 
+  // Berry: tasmota.rtc_utc_ms([b:bytes]) -> int64 or bytes or nil
+  //
+  // UTC time in milliseconds since 1970-01-01, monotonic, see RtcUtcMillis()
+  // - without argument: returns a new int64 instance, or nil if int64 is not compiled
+  // - with a bytes() argument: resizes it to 8 bytes, fills it with the value as
+  //   little endian uint64 and returns it. Read it with `b.get(0,4)` and `b.get(4,4)`.
+  //   No allocation if the buffer has already room for 8 bytes, e.g. a reused `bytes(8)`.
+  // int64 instances are immutable by convention, so they are never filled in place.
+  int32_t l_rtc_utc_ms(struct bvm *vm);
+  int32_t l_rtc_utc_ms(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    uint64_t utc_ms = RtcUtcMillis();
+    if (top >= 1 && !be_isnil(vm, 1)) {
+      if (!be_isbytes(vm, 1)) {
+        be_raise(vm, kTypeError, "bytes expected");
+      }
+      // b.resize(8), allocates only if the buffer is too small
+      be_getmember(vm, 1, "resize");
+      be_pushvalue(vm, 1);
+      be_pushint(vm, 8);
+      be_call(vm, 2);
+      be_pop(vm, 3);
+      size_t len = 0;
+      uint8_t * buf = (uint8_t*) be_tobytes(vm, 1, &len);
+      if (buf == nullptr || len < 8) {
+        be_raise(vm, "internal_error", "cannot resize buffer");
+      }
+      for (uint32_t i = 0; i < 8; i++) {
+        buf[i] = (uint8_t)(utc_ms >> (8 * i));
+      }
+      be_pushvalue(vm, 1);
+      be_return(vm);
+    }
+    if (be_getglobal(vm, "int64")) {
+      be_getmember(vm, -1, "fromu32");
+      be_pushint(vm, (int32_t)(uint32_t)utc_ms);
+      be_pushint(vm, (int32_t)(uint32_t)(utc_ms >> 32));
+      be_call(vm, 2);         // int64.fromu32(low, high)
+      be_pop(vm, 2);
+      be_return(vm);
+    }
+    be_return_nil(vm);
+  }
+
   // Berry: tasmota.memory() -> map
   //
   int32_t l_memory(struct bvm *vm);
