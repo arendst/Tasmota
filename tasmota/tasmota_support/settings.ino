@@ -608,25 +608,12 @@ bool SettingsConfigRestore(void) {
  * Config Settings->text char array support
 \*********************************************************************************************/
 
-// The text pool spans several adjacent TSettings members. Get a pointer into
-// the complete object representation so pointer arithmetic stays within the
-// TSettings object instead of overrunning the text_pool[138] subobject.
-static char* SettingsTextPool(void) {
-  return reinterpret_cast<char*>(Settings) + offsetof(TSettings, text_pool);
-}
-
 uint32_t GetSettingsTextLen(void) {
-  char* text_pool = SettingsTextPool();
-  char* position = text_pool;
-  char* pool_end = text_pool + settings_text_size;
+  char* position = Settings->text_pool;
   for (uint32_t size = 0; size < SET_MAX; size++) {
-    char* terminator = (char*)memchr(position, '\0', pool_end - position);
-    if (!terminator) {
-      return settings_text_size;  // Malformed pool; report it as full
-    }
-    position = terminator + 1;
+    while (*position++ != '\0') { }
   }
-  return position - text_pool;
+  return position - Settings->text_pool;
 }
 
 bool settings_text_mutex = false;
@@ -655,33 +642,26 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
 
   uint32_t start_pos = 0;
   uint32_t end_pos = 0;
-  char* text_pool = SettingsTextPool();
-  char* position = text_pool;
-  char* pool_end = text_pool + settings_text_size;
+  char* position = Settings->text_pool;
   for (uint32_t size = 0; size < SET_MAX; size++) {
-    char* terminator = (char*)memchr(position, '\0', pool_end - position);
-    if (!terminator) {
-      return false;  // Do not update a malformed pool
-    }
-    position = terminator + 1;
+    while (*position++ != '\0') { }
     if (1 == index) {
-      start_pos = position - text_pool;
+      start_pos = position - Settings->text_pool;
     }
     else if (0 == index) {
-      end_pos = position - text_pool -1;
+      end_pos = position - Settings->text_pool -1;
     }
     index--;
   }
-  uint32_t char_len = position - text_pool;
+  uint32_t char_len = position - Settings->text_pool;
 
-  int current_len = end_pos - start_pos;
-  int diff = (int)replace_len - current_len;
-  int new_char_len = (int)char_len + diff;
+  uint32_t current_len = end_pos - start_pos;
+  int diff = replace_len - current_len;
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("TST: start %d, end %d, len %d, current %d, replace %d, diff %d"),
 //    start_pos, end_pos, char_len, current_len, replace_len, diff);
 
-  int too_long = new_char_len - (int)settings_text_size;
+  int too_long = (char_len + diff) - settings_text_size;
   if (too_long > 0) {
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Text overflow by %d char(s)"), too_long);
     return false;  // Replace text too long
@@ -694,12 +674,12 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
 
     if (diff != 0) {
       // Shift Settings->text up or down
-      memmove(text_pool + start_pos + replace_len, text_pool + end_pos, char_len - end_pos);
+      memmove(Settings->text_pool + start_pos + replace_len, Settings->text_pool + end_pos, char_len - end_pos);
     }
     // Replace text
-    memmove(text_pool + start_pos, replace, replace_len);
+    memmove(Settings->text_pool + start_pos, replace, replace_len);
     // Fill for future use
-    memset(text_pool + new_char_len, 0x00, settings_text_size - new_char_len);
+    memset(Settings->text_pool + char_len + diff, 0x00, settings_text_size - char_len - diff);
 
     settings_text_mutex = false;
   }
@@ -714,10 +694,7 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
 }
 
 char* SettingsText(uint32_t index) {
-  static char empty[1] = {0};
-  char* text_pool = SettingsTextPool();
-  char* position = text_pool;
-  char* pool_end = text_pool + settings_text_size;
+  char* position = Settings->text_pool;
 
   if (index >= SET_MAX) { // Index above SET_MAX are not stored in Settings
 #ifdef USE_WEBSERVER
@@ -726,21 +703,11 @@ char* SettingsText(uint32_t index) {
       return (char*)GetWebButton(index-SET_BUTTON17+16);
 #endif  // not FIRMWARE_MINIMAL
 #endif  // USE_WEBSERVER
-    position = pool_end -1;  // Setting not supported - internal error - return empty string
-    if (*position != '\0') {
-      return empty;
-    }
+    position += settings_text_size -1;  // Setting not supported - internal error - return empty string
   } else {
     SettingsUpdateFinished();
     for (;index > 0; index--) {
-      char* terminator = (char*)memchr(position, '\0', pool_end - position);
-      if (!terminator) {
-        return empty;
-      }
-      position = terminator + 1;
-    }
-    if (!memchr(position, '\0', pool_end - position)) {
-      return empty;
+      while (*position++ != '\0') { }
     }
   }
   return position;
