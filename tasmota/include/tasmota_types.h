@@ -478,7 +478,6 @@ typedef union {
   };
 } DisplayOptions;
 
-const uint32_t settings_text_size = 699;   // Settings->text_pool[size] = Settings->display_model (2D2) - Settings->text_pool (017)
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 const uint8_t PARAM8_SIZE = 18;            // Number of param bytes (SetOption)
 
@@ -492,22 +491,23 @@ typedef struct {
   SOBitfield    flag;                      // 010
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
-
-  // Start of char array storing all parameter strings ********
-
-  char          text_pool[138];            // 017  Size is settings_text_size
-  char          ex_sta_ssid[2][33];        // 0A1
-  char          ex_sta_pwd[2][65];         // 0E3
-  uint8_t       text_pool_165[132];        // 165
-  char          ex_mqtt_host[33];          // 1E9
-  uint8_t       text_pool_20A[35];         // 20A
-  char          ex_mqtt_user[33];          // 22D
-  char          ex_mqtt_pwd[33];           // 24E
-  char          ex_mqtt_topic[33];         // 26F
-  uint8_t       text_pool_290[66];         // 290
-
-  // End of single char array of 698 chars max ****************
-
+  union {
+    struct {
+      char      text_pool[699];            // 017
+    };
+    struct {
+      char      text_pool_017[138];        // 017
+      char      ex_sta_ssid[2][33];        // 0A1
+      char      ex_sta_pwd[2][65];         // 0E3
+      uint8_t   text_pool_165[132];        // 165
+      char      ex_mqtt_host[33];          // 1E9
+      uint8_t   text_pool_20A[35];         // 20A
+      char      ex_mqtt_user[33];          // 22D
+      char      ex_mqtt_pwd[33];           // 24E
+      char      ex_mqtt_topic[33];         // 26F
+      uint8_t   text_pool_290[66];         // 290
+    };
+  };
   uint8_t       display_model;             // 2D2
   uint8_t       display_mode;              // 2D3
   uint8_t       display_refresh;           // 2D4

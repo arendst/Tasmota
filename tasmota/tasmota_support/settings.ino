@@ -661,7 +661,7 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("TST: start %d, end %d, len %d, current %d, replace %d, diff %d"),
 //    start_pos, end_pos, char_len, current_len, replace_len, diff);
 
-  int too_long = (char_len + diff) - settings_text_size;
+  int too_long = (char_len + diff) - sizeof(Settings->text_pool);
   if (too_long > 0) {
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Text overflow by %d char(s)"), too_long);
     return false;  // Replace text too long
@@ -679,15 +679,15 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
     // Replace text
     memmove(Settings->text_pool + start_pos, replace, replace_len);
     // Fill for future use
-    memset(Settings->text_pool + char_len + diff, 0x00, settings_text_size - char_len - diff);
+    memset(Settings->text_pool + char_len + diff, 0x00, sizeof(Settings->text_pool) - char_len - diff);
 
     settings_text_mutex = false;
   }
 
 #ifdef DEBUG_FUNC_SETTINGSUPDATETEXT
-  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d, Id%02d '%s'"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count, index_save, replace);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d, Id%02d '%s'"), GetSettingsTextLen(), sizeof(Settings->text_pool), settings_text_busy_count, index_save, replace);
 #else
-  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d"), GetSettingsTextLen(), sizeof(Settings->text_pool), settings_text_busy_count);
 #endif
 
   return true;
@@ -703,7 +703,7 @@ char* SettingsText(uint32_t index) {
       return (char*)GetWebButton(index-SET_BUTTON17+16);
 #endif  // not FIRMWARE_MINIMAL
 #endif  // USE_WEBSERVER
-    position += settings_text_size -1;  // Setting not supported - internal error - return empty string
+    position += sizeof(Settings->text_pool) -1;  // Setting not supported - internal error - return empty string
   } else {
     SettingsUpdateFinished();
     for (;index > 0; index--) {
