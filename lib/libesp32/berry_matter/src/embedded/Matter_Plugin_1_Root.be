@@ -1451,7 +1451,10 @@ class Matter_Plugin_Root : Matter_Plugin
         var att_elts = TLV.Matter_TLV_struct()
         att_elts.add_TLV(1, 0x11 #-TLV.B2-#, matter.Certs.CD_FFF1_8000)    # certification_declaration
         att_elts.add_TLV(2, 0x10 #-TLV.B1-#, AttestationNonce)         # attestation_nonce
-        att_elts.add_TLV(3, 0x06 #-TLV.U4-#, tasmota.rtc_utc())     # timestamp in epoch-s
+        # timestamp is epoch-s: seconds since 2000-01-01 (Matter epoch), 0 if RTC is not valid
+        var att_timestamp = tasmota.rtc_utc() - 946684800 #-self.MATTER_EPOCH_OFFSET-#
+        if att_timestamp < 0    att_timestamp = 0   end
+        att_elts.add_TLV(3, 0x06 #-TLV.U4-#, att_timestamp)     # timestamp in epoch-s
         var attestation_message = att_elts.tlv2raw()
 
         var ac = session.get_ac()
