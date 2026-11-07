@@ -41,7 +41,10 @@ void yield(void) {
 // patching delay(uint32_t ms)
 extern "C" void __real_delay(uint32_t ms);  // original function from Arduino Core
 
-extern "C" void __wrap_delay(uint32_t ms) {
+// Keep the linker-wrapped delay entry independent of neighboring LTO code.
+// With Xtensa GCC 15.3, LTO can otherwise place this symbol inside the tail
+// of SettingsText(), so calls to delay() enter the wrong instruction stream.
+extern "C" __attribute__((noipa, used, aligned(16))) void __wrap_delay(uint32_t ms) {
 #ifdef USE_ESP32_WDT
   if (ms) { feedLoopWDT(); }
   __real_delay(ms);
