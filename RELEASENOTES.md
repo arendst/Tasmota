@@ -161,6 +161,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Wireguard reconnect when a dynamic DNS `Endpoint` changes IP [#25204](https://github.com/arendst/Tasmota/issues/25204)
 - WebAsync rare crash and race conditions [#25209](https://github.com/arendst/Tasmota/issues/25209)
 - Berry `lv.start()` raises an error instead of crashing when the display can't start [#25193](https://github.com/arendst/Tasmota/issues/25193)
+- Matter event EpochTimestamp sent as seconds instead of milliseconds, using new Berry `tasmota.rtc_utc_ms()` [#25234](https://github.com/arendst/Tasmota/issues/25234)
 - LVGL Panel extension crash [#25165](https://github.com/arendst/Tasmota/issues/25165)
 - LVGL Panel improved click handling [#25171](https://github.com/arendst/Tasmota/issues/25171)
 - LVGL touch more responsive [#25172](https://github.com/arendst/Tasmota/issues/25172)
