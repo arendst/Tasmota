@@ -266,7 +266,7 @@ bool HxCommand(void) {
   }
   bool any_value = (ArgC() > 1);
   long value;
-  char argument[32];
+  char argument[XdrvMailbox.data_len];
   if (any_value) { 
     value = strtol(ArgV(argument, 2), nullptr, 10);
   }

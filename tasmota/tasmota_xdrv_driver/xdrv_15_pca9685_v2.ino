@@ -333,7 +333,7 @@ bool PCA9685_Command(void) {
   }
   UpperCase(XdrvMailbox.data, XdrvMailbox.data);
 
-  char command[CMDSZ] = {0};
+  char command[XdrvMailbox.data_len] = {0};
   uint8_t dev;
   PCA9685_getCmdSuffix(ArgV(command, 1), &dev);
   char name[16];
