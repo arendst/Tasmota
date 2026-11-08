@@ -517,19 +517,21 @@ uint32_t WcSetup(bool reset_config) {
 
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: ===== SETUP START (Double-Buffered) ====="));
 
-  // 1. Initialize MIPI PHY LDO
-  esp_ldo_channel_config_t ldo_mipi_phy_config = {
-    .chan_id = 3,        // LDO_VO3 for MIPI PHY
-    .voltage_mv = 2500,  // 2.5V for MIPI PHY
-  };
-  
-  esp_err_t ret = esp_ldo_acquire_channel(&ldo_mipi_phy_config, &Wc.core.ldo_mipi_phy);
-  if (ret != ESP_OK) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to acquire MIPI LDO (0x%x)"), ret);
-    WcSetFailed(CAM_FAIL_LDO, ret);
-    return 0;
+  // 1. Initialize MIPI PHY LDO if not set by command Ldo3
+  if (!LdoEnabled(3)) {
+    esp_ldo_channel_config_t ldo_mipi_phy_config = {
+      .chan_id = 3,        // LDO_VO3 for MIPI PHY
+      .voltage_mv = 2500,  // 2.5V for MIPI PHY
+    };
+
+    esp_err_t ret = esp_ldo_acquire_channel(&ldo_mipi_phy_config, &Wc.core.ldo_mipi_phy);
+    if (ret != ESP_OK) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("CAM: Failed to acquire MIPI LDO (0x%x)"), ret);
+      WcSetFailed(CAM_FAIL_LDO, ret);
+      return 0;
+    }
+    AddLog(LOG_LEVEL_INFO, PSTR("CAM: MIPI PHY LDO enabled, use command 'Ldo3 2500' as default will be removed"));
   }
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: MIPI PHY LDO enabled"));
 
   // PRE-FILL CONFIG WITH DEFAULTS (only on first boot, not on resolution change)
   if (reset_config) {

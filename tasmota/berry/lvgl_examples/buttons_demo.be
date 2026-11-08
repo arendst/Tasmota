@@ -44,7 +44,7 @@ var btns = []         # relay buttons are added to this list to match with Tasmo
 def btn_clicked_cb(obj, event)
   var btn_idx = btns.find(obj)
   if btn_idx != nil
-    var checked = (obj.get_state() & lv.STATE_CHECKED) != 0
+    var checked = obj.is_checked()
     tasmota.set_power(btn_idx, checked)                            # toggle the value
   end
 end
@@ -57,7 +57,7 @@ def create_btn_relay(label)
   btn.set_pos(30, 30)
   btn.set_size(hres - 60, 60)
   btn.add_style(btn_style, lv.PART_MAIN | lv.STATE_DEFAULT)   # style of button
-  btn.add_flag(lv.OBJ_FLAG_CHECKABLE)                           # enable toggle mode   
+  btn.set_checkable(true)                                       # enable toggle mode
   btn_label = lv.label(btn)
   btn_label.center()
   btn_label.set_text(label)
@@ -78,12 +78,12 @@ btn3.set_y(170)
 def btns_update()
   var power_list = tasmota.get_power()                                            # get a list of booleans with status of each relay
   for b:btns
-    var checked = (b.get_state() & lv.STATE_CHECKED) != 0
+    var checked = b.is_checked()
     var power_state = (size(power_list) > 0) ? power_list.pop(0) : false          # avoid exception if less relays than buttons
     if power_state && !checked
-      b.add_state(lv.STATE_CHECKED)
+      b.set_checked(true)
     elif !power_state && checked
-      b.clear_state(lv.STATE_CHECKED)
+      b.set_checked(false)
     end
   end
 end
@@ -97,5 +97,5 @@ btns_update_loop()  # start
 
 # If you change the style after creating the button, you need to update objects:
 def btns_refresh_style()
-  for b:btns b.refresh_style(lv.OBJ_PART_MAIN, lv.STYLE_PROP_ALL) end
+  for b:btns b.refresh_style(lv.PART_MAIN, lv.STYLE_PROP_ANY) end
 end

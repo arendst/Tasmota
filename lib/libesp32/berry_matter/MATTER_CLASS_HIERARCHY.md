@@ -28,6 +28,7 @@ Matter_Plugin (Base Class)
     │   ├── Matter_Plugin_Light1
     │   │   ├── Matter_Plugin_Light2
     │   │   └── Matter_Plugin_Light3
+    │   │       └── Matter_Plugin_Light5
     │   ├── Matter_Plugin_OnOff
     │   ├── Matter_Plugin_Bridge_Light0
     │   │   └── Matter_Plugin_Bridge_OnOff
@@ -38,6 +39,7 @@ Matter_Plugin (Base Class)
     │   ├── Matter_Plugin_Virt_Light1
     │   ├── Matter_Plugin_Virt_Light2
     │   ├── Matter_Plugin_Virt_Light3
+    │   ├── Matter_Plugin_Virt_Light5
     │   ├── Matter_Plugin_Virt_OnOff
     │   ├── Matter_Plugin_Zigbee_Light0
     │   ├── Matter_Plugin_Zigbee_Light1
@@ -84,6 +86,7 @@ Matter_Plugin (Base Class)
     │   ├── Matter_Plugin_Bridge_Sensor_Air_Quality
     │   └── Matter_Plugin_Virt_Sensor_Air_Quality
     └── Matter_Plugin_Sensor_GenericSwitch_Btn
+        └── Matter_Plugin_Virt_Sensor_GenericSwitch_Btn
 ```
 
 ## Base Classes
@@ -168,24 +171,35 @@ static var CLUSTERS = { 0x001D: [0,1,2,3] }  # Descriptor cluster
 - **Matter Device Type**: `0x0101` (Dimmable Light) - **Rev 3** (Matter 1.4.1)
 - **Purpose**: Dimmable lighting control
 - **Additional Clusters**: `0x0008` (Level Control), `0x0062` (Scenes Management)
+- **Color Control**: Light1 hosts the shared Color Control server, gated by `CC_FEAT` (0 for Light1, so the dimmer exposes no Color Control and its behaviour is unchanged)
+- **Timing**: Color Control has no transition engine. MoveTo\* and Step\* commands are applied instantly (TransitionTime ignored), Move\* and StopMoveStep commands are accepted without effect
 
 ### Matter_Plugin_Light2
 **File**: `Matter_Plugin_4_Light2.be`
 - **Type**: `"light2"`
 - **Display Name**: `"Light 2 Color Temp"`
-- **Matter Device Type**: `0x010C` (Color Temperature Light) - **Rev 4** (Matter 1.4.1)
+- **Matter Device Type**: `0x010C` (Color Temperature Light) - **Rev 4**
 - **Purpose**: Color temperature control
-- **Additional Clusters**: `0x0300` (Color Control with RemainingTime), `0x0062` (Scenes Management)
-- **Features**: ColorTemperature mode, RemainingTime attribute
+- **Additional Clusters**: `0x0300` (Color Control, CT), `0x0062` (Scenes Management)
+- **Features**: ColorTemperature (FeatureMap 0x10), writable Options (ExecuteIfOff) and StartUpColorTemperatureMireds (persisted as `ct_startup`), RemainingTime always 0
 
 ### Matter_Plugin_Light3
 **File**: `Matter_Plugin_4_Light3.be`
 - **Type**: `"light3"`
 - **Display Name**: `"Light 3 RGB"`
-- **Matter Device Type**: `0x010D` (Extended Color Light) - **Rev 4** (Matter 1.4.1)
-- **Purpose**: Full RGB+CT color control
-- **Additional Clusters**: `0x0300` (Color Control - HS + CT modes), `0x0062` (Scenes Management)
-- **Features**: HueSaturation AND ColorTemperature modes (both required in 1.4.1), RemainingTime attribute
+- **Matter Device Type**: `0x010D` (Extended Color Light) - **Rev 4**
+- **Purpose**: RGB color control
+- **Additional Clusters**: `0x0300` (Color Control - HS + XY), `0x0062` (Scenes Management)
+- **Features**: HueSaturation + XY (FeatureMap 0x09), XY derived from HS, writable Options (ExecuteIfOff), RemainingTime always 0. CT is not available on RGB-only hardware (use `light5` for RGB+CT)
+
+### Matter_Plugin_Light5
+**File**: `Matter_Plugin_4_Light5.be`
+- **Type**: `"light5"`
+- **Display Name**: `"Light 5 RGB+CT"`
+- **Matter Device Type**: `0x010D` (Extended Color Light) - **Rev 4**
+- **Purpose**: Full RGB+CT color control (subclass of `Matter_Plugin_Light3`, adds Color Temperature)
+- **Additional Clusters**: `0x0300` (Color Control - HS + XY + CT)
+- **Features**: HueSaturation + XY + ColorTemperature (FeatureMap 0x19), ColorTemperatureMireds, StartUpColorTemperatureMireds (persisted as `ct_startup`)
 
 ## Sensor Classes (Level 2+)
 
@@ -289,6 +303,18 @@ static var CLUSTERS = { 0x001D: [0,1,2,3] }  # Descriptor cluster
 - **Display Name**: `"Generic Switch/Button"`
 - **Matter Device Type**: `0x000F` (Generic Switch)
 - **Clusters**: `0x003B` (Switch)
+- **Features**: MomentarySwitch, MomentarySwitchRelease, MomentarySwitchMultiPress (`FeatureMap = 0x16`); supports up to five presses
+- **Behavior**: Maps one configured Tasmota button number to the endpoint and starts with released `CurrentPosition = 0`
+
+### Matter_Plugin_Virt_Sensor_GenericSwitch_Btn
+- **File**: `Matter_Plugin_9_Virt_Sensor_GenericSwitch_Btn.be`
+- **Type**: `"v_gensw"`
+- **Display Name**: `"v.Generic Switch/Button"`
+- **Parent**: `Matter_Plugin_Sensor_GenericSwitch_Btn`
+- **Matter Device Type**: `0x000F` (Generic Switch)
+- **Clusters**: `0x003B` (Switch)
+- **Purpose**: Virtual button endpoint for completed remote gestures
+- **Behavior**: Ignores physical GPIO callbacks; `MtrUpdate` accepts integer `Presses` values from 1 through 5, emits the corresponding Generic Switch events, and returns to released `CurrentPosition = 0`. Omitting `Presses` queries state; invalid values return an error without publishing events.
 
 ## Plugin Selection Logic
 
@@ -325,6 +351,22 @@ The Matter implementation uses a hierarchical approach for plugin selection:
 }
 ```
 
+### Virtual Generic Switch/Button
+```json
+{
+  "type": "v_gensw",
+  "name": "Wall button 1"
+}
+```
+
+After configuring the endpoint, send a completed gesture with `MtrUpdate`, for example:
+
+```text
+MtrUpdate {"Name":"Wall button 1","Presses":1}
+```
+
+`Presses` accepts integers from 1 through 5. Repeated commands represent separate gestures; omitting `Presses` queries the endpoint state.
+
 ### Zigbee Device
 ```json
 {
@@ -342,7 +384,8 @@ The Matter implementation uses a hierarchical approach for plugin selection:
 | light0 | OnOff Light | 0x0100 | 3 | Basic on/off light |
 | light1 | Dimmable Light | 0x0101 | 3 | Dimmable light |
 | light2 | Color Temperature Light | 0x010C | 4 | CT adjustable light |
-| light3 | Extended Color Light | 0x010D | 4 | Full RGB+CT light |
+| light3 | Extended Color Light | 0x010D | 4 | RGB light (HS + XY) |
+| light5 | Extended Color Light | 0x010D | 4 | RGB+CT light (HS + XY + CT) |
 | relay | On/Off Plug-in Unit | 0x010A | 3 | Generic relay/switch |
 | fan | Fan | 0x002B | 3 | Fan control |
 | shutter | Window Covering | 0x0202 | 3 | Window covering |
@@ -355,6 +398,7 @@ The Matter implementation uses a hierarchical approach for plugin selection:
 | flow | Flow Sensor | 0x0306 | 2 | Flow measurement |
 | airquality | Air Quality Sensor | 0x002C | 1 | Air quality measurement |
 | gensw_btn | Generic Switch | 0x000F | 3 | Button/switch |
+| v_gensw | Generic Switch | 0x000F | 3 | Virtual remote button |
 
 ## Cluster Support Matrix
 

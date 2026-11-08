@@ -88,20 +88,26 @@ void CmndCan(void) {
 }
 
 void CmndCanSend(void) {
+  // CanSend {"ID":12345,"LEN":8,"DATA":[11,22,33,44,55,66,77,88]}
+  if (XdrvMailbox.data_len > 64) { return; }     // Any data too long
+
   JsonParser parser(XdrvMailbox.data);
   JsonParserObject root = parser.getRootObject();
 
-  uint16_t id = root.getUInt(PSTR("ID"), 0);   // case insensitive
-  uint16_t len = root.getUInt(PSTR("LEN"), 0);   // case insensitive
+  uint16_t len = root.getUInt(PSTR("LEN"), 0);  // case insensitive
+  if (len > CAN_MAX_DLEN) { return; }           // Too long
+
+  uint16_t id = root.getUInt(PSTR("ID"), 0);    // case insensitive
+
   JsonParserArray data = root[PSTR("DATA")];
 
   struct can_frame canMsg;
 
-  AddLog(LOG_LEVEL_INFO, PSTR("CAN: CanSend (%d)->%d"), id,len);
-  canMsg.can_id =id;
-  canMsg.can_dlc=len;
-  for (uint8_t i=0;i<len;i++) {
-    canMsg.data[i]=data[i].getUInt();
+  AddLog(LOG_LEVEL_INFO, PSTR("CAN: CanSend (%d)->%d"), id, len);
+  canMsg.can_id = id;
+  canMsg.can_dlc= len;
+  for (uint32_t i = 0; i < len; i++) {
+    canMsg.data[i] = data[i].getUInt();
     AddLog(LOG_LEVEL_INFO, PSTR("CAN: CanSend data[%d]=%d"),i,data[i].getUInt());
   }
   mcp2515->sendMessage(&canMsg);

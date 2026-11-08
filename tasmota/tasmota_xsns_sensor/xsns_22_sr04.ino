@@ -88,7 +88,9 @@ uint16_t Sr04TMode2Distance(uint32_t i) {
     uint8_t crc = buffer[0];
     crc += buffer[1];
     crc += buffer[2];
-    if (crc == buffer[3]) {           // Check crc sum
+    uint8_t crc_aj = buffer[1] + buffer[2];  // AJ-SR04M excludes the 0xFF header from its sum
+    if ((crc == buffer[3]) ||         // Check crc sum
+        ((0xFF == buffer[0]) && (crc_aj == buffer[3]))) {
       distance = (buffer[1] << 8) + buffer[2];
     } else {
       AddLog(LOG_LEVEL_ERROR, PSTR("SR4-%d: CRC error"), i+1);

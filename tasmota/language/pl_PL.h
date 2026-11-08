@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Ładowanie"   // Battery charge in %
 #define D_BLINK "Miganie"
 #define D_BLINKOFF "Miganie - Wył."
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Licznik restartów"
 #define D_BRIGHTLIGHT "Jasny"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Bajtów"
 #define D_CELSIUS "Celsiusz"
 #define D_CHANNEL "Kanał"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "Dwutlenek węgla"
 #define D_CODE "Kod"                 // Button code
 #define D_COLDLIGHT "Zimny"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Ciemny"
 #define D_DATA "Dane"
 #define D_DEBUG "Debug"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Punkt rosy"
 #define D_DISABLED "Wyłączony"
 #define D_DISCONNECTED "Rozłączony"
@@ -128,6 +131,8 @@
 #define D_ILLUMINANCE "Podświetlanie"
 #define D_IMMEDIATE "Natychmiastowy"      // Button immediate
 #define D_INDEX "Indeks"
+#define D_AIRQUALITY "Jakość powietrza"
+#define D_IAQ_CALIBRATING "(kalibracja linii bazowej, utrzymuj czyste powietrze)"
 #define D_INFO "Informacja"
 #define D_INFRARED "Podczerwień"
 #define D_INITIALIZED "Zainicjowany"
@@ -227,6 +232,7 @@
 #define D_WATER_DEPTH "Głębokość wody"
 #define D_WEB_SERVER "Serwer Web"
 #define D_WEIGHT "Waga"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "UWAGA Ta wersja nie obsługuje zapisu ustawień"

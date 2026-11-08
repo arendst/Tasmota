@@ -30,6 +30,7 @@ class lvgl_panel
 
     if tasmota.is_network_up()
       self.init_network()
+      self.web_add_handler()    # if init is called after the network is up, `web_add_handler` event is not fired
     else
       tasmota.when_network_up(/ -> self.init_network())
     end
@@ -42,7 +43,10 @@ class lvgl_panel
   end
 
   def unload()
+    import webserver
+    webserver.remove_route('/lvgl_touch')
     if (self.stream_cb != nil)
+      import cb
       import introspect
       lv.set_stream_cb(introspect.toptr(0))
       cb.free_cb(self.stream_cb)

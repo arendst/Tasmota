@@ -1104,7 +1104,7 @@ bool XsnsCallNextJsonAppend(void) {
       return false;
     }
   } while (!XsnsEnabled(0, xsns_index));
-  xsns_func_ptr[xsns_index](FUNC_JSON_APPEND);
+  HEAP_MAP_CALL("xsns", pgm_read_byte(kXsnsList + xsns_index), FUNC_JSON_APPEND, xsns_func_ptr[xsns_index](FUNC_JSON_APPEND));
   return true;
 }
 
@@ -1145,7 +1145,7 @@ bool XsnsCall(uint32_t function) {
       }
 #endif  // DEBUG_COMMAND_HANG
 
-      result = xsns_func_ptr[x](function);
+      result = HEAP_MAP_CALL("xsns", pgm_read_byte(kXsnsList + x), function, xsns_func_ptr[x](function));
 
 #ifdef USE_WEBSERVER
       if (FUNC_WEB_SENSOR == function) { WSContentSeparator(1); }  // Show separator if needed

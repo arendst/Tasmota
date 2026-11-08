@@ -5,7 +5,7 @@
 /*********************
  *      INCLUDES
  *********************/
-#include "../../lvgl/src/stdlib/lv_mem.h"
+#include "../../lvgl/include/lvgl/stdlib/lv_mem.h"
 #if LV_USE_STDLIB_MALLOC == LV_STDLIB_CUSTOM
 #include <tasmota_lv_stdlib.h>
 // #if LV_USE_STDLIB_MALLOC == LV_STDLIB_CUSTOM

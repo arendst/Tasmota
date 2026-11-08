@@ -31,11 +31,11 @@
 #ifdef USE_BLE_ESP32
 
 #ifdef ESP32                       // ESP32 family only. Use define USE_HM10 for ESP8266 support
-#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32S31
 
 #ifdef USE_MI_ESP32
 
-#define MI32_VERSION "v26.9.27"
+#define MI32_VERSION "v26.10.19"
 
 /*********************************************************************************************\
   BLE Xiaomi/Mijia (MI) sensor decoding
@@ -45,73 +45,81 @@
   if (#define ESP32 && no #define USE_BLE_ESP32) then xsns_62_esp32_mi.ino is used - the older driver
 
   --------------------------------------------------------------------------------------------
-  Version yyyymmdd  Action    Description
+  Version yyyymmdd  Action     Description
   --------------------------------------------------------------------------------------------
-  26.9.27           changed - Add age of battery reading to battery icon
-  26.9.11           changed - Make battery requests independent from M32Period to extend battery life (LYWSD02MMC)
-                              Fix "M32Period 0" and "M32Period 1"
+  26.10.19          changed  - BTHome clarify binary state GUI display
+  --------
+  26.10.17          breaking - BTHome un-reverse MAC address usage for command MI32Keys to make it consistent
+                    added    - Support MAC OUI wildcard for command MI32Keys in case multiple devices use same bindkey (IoTorero)
+  --------
+  26.10.15          added    - BTHome binary events to GUI
+  --------
+  26.9.27           changed  - Add age of battery reading to battery icon
   -------
-  26.9.4            changed - BTHome reset button if datagram received (#25002)
+  26.9.11           changed  - Make battery requests independent from M32Period to extend battery life (LYWSD02MMC)
+                               Fix "M32Period 0" and "M32Period 1"
   -------
-  26.8.31           changed - display icons instead of data lines. disable by removing #define USE_SENSOR_ICON
+  26.9.4            changed  - BTHome reset button if datagram received (#25002)
   -------
-  0.9.3.4 20260823  changed - redesign BTHome events and buffer JSON message for easier rule/script/berry support
+  26.8.31           changed  - display icons instead of data lines. disable by removing #define USE_SENSOR_ICON
   -------
-  0.9.3.3 20260819  changed - fix BTHome decryption of multiple sensors
+  0.9.3.4 20260823  changed  - redesign BTHome events and buffer JSON message for easier rule/script/berry support
   -------
-  0.9.3.2 20260816  changed - BTHome decoding additions
+  0.9.3.3 20260819  changed  - fix BTHome decryption of multiple sensors
   -------
-  0.9.3.1 20260804  changed - BTHome v2 device id table refresh based on https://github.com/Bluetooth-Devices/bthome-ble/blob/V2/src/bthome_ble/const.py
-                              Add BTHome button decoding
-                              Add BTHome binary catch all decoding
+  0.9.3.2 20260816  changed  - BTHome decoding additions
   -------
-  0.9.3.0 20260803  changed - added BTHome v2 decryption
+  0.9.3.1 20260804  changed  - BTHome v2 device id table refresh based on https://github.com/Bluetooth-Devices/bthome-ble/blob/V2/src/bthome_ble/const.py
+                               Add BTHome button decoding
+                               Add BTHome binary catch all decoding
   -------
-  0.9.2.8 20260323  changed - added BTHome v2 protocol support (UUID 0xFCD2)
+  0.9.3.0 20260803  changed  - added BTHome v2 decryption
   -------
-  0.9.2.7 20251204  changed - display RSSI in general format "xx% (-yy dBm)"
-                              view on UI only when BLE enabled
+  0.9.2.8 20260323  changed  - added BTHome v2 protocol support (UUID 0xFCD2)
   -------
-  0.9.2.6 20250503  changed - display alias instead of type, when present
+  0.9.2.7 20251204  changed  - display RSSI in general format "xx% (-yy dBm)"
+                               view on UI only when BLE enabled
   -------
-  0.9.2.5 20250319  changed - added support for MI LYWSD02MMC with different device ID
+  0.9.2.6 20250503  changed  - display alias instead of type, when present
   -------
-  0.9.2.4 20240111  changed - Enhancement of debug log output                              
+  0.9.2.5 20250319  changed  - added support for MI LYWSD02MMC with different device ID
   -------
-  0.9.2.3 20240101  changed - added initial support for MI LYWSD02MMC                              
+  0.9.2.4 20240111  changed  - Enhancement of debug log output                              
   -------
-  0.9.2.2 20231123  changed - added support for Avago Tech Bluetooth buttons                              
+  0.9.2.3 20240101  changed  - added initial support for MI LYWSD02MMC                              
   -------
-  0.9.2.1 20210217  changed - make features alos depend on received data - i.e. 'unknown' devices will show what they send.
-                              Add MI32Option6 1 to switch to tele/tasmota_ble/<somename> style MQTT independent of HASS discovery.
+  0.9.2.2 20231123  changed  - added support for Avago Tech Bluetooth buttons                              
   -------
-  0.9.2.0 20210127  changed - Officially includes as the mi driver when using USE_BLE_ESP32.
+  0.9.2.1 20210217  changed  - make features alos depend on received data - i.e. 'unknown' devices will show what they send.
+                               Add MI32Option6 1 to switch to tele/tasmota_ble/<somename> style MQTT independent of HASS discovery.
   -------
-  0.9.1.9 20201226  changed - All change now.
+  0.9.2.0 20210127  changed  - Officially includes as the mi driver when using USE_BLE_ESP32.
   -------
-  0.9.1.7 20201116  changed - small bugfixes, add BLOCK and OPTION command, send BLE scan via MQTT
+  0.9.1.9 20201226  changed  - All change now.
   -------
-  0.9.1.6 20201022  changed - Beacon support, RSSI at TELEPERIOD, refactoring
+  0.9.1.7 20201116  changed  - small bugfixes, add BLOCK and OPTION command, send BLE scan via MQTT
   -------
-  0.9.1.5 20201021  changed - HASS related ('null', hold back discovery), number of found sensors for RULES
+  0.9.1.6 20201022  changed  - Beacon support, RSSI at TELEPERIOD, refactoring
   -------
-  0.9.1.4 20201020  changed - use BearSSL for decryption, revert to old TELEPERIOD-cycle as default
+  0.9.1.5 20201021  changed  - HASS related ('null', hold back discovery), number of found sensors for RULES
   -------
-  0.9.1.3 20200926  changed - Improve HA discovery, make key+MAC case insensitive
+  0.9.1.4 20201020  changed  - use BearSSL for decryption, revert to old TELEPERIOD-cycle as default
   -------
-  0.9.1.3 20200916  changed - add ATC (custom FW for LYWSD03MMC), API adaption for NimBLE-Arduino 1.0.2
+  0.9.1.3 20200926  changed  - Improve HA discovery, make key+MAC case insensitive
   -------
-  0.9.1.2 20200802  changed - add MHO-C303
+  0.9.1.3 20200916  changed  - add ATC (custom FW for LYWSD03MMC), API adaption for NimBLE-Arduino 1.0.2
   -------
-  0.9.1.1 20200715  changed - add MHO-C401, refactoring
+  0.9.1.2 20200802  changed  - add MHO-C303
   -------
-  0.9.1.0 20200712  changed - add lights and yeerc, add pure passive mode with decryption,
-                              lots of refactoring
+  0.9.1.1 20200715  changed  - add MHO-C401, refactoring
   -------
-  0.9.0.1 20200706  changed - adapt to new NimBLE-API, tweak scan process
+  0.9.1.0 20200712  changed  - add lights and yeerc, add pure passive mode with decryption,
+                               lots of refactoring
   -------
-  0.9.0.0 20200413  started - initial development by Christian Baars
-                    forked  - from arendst/tasmota            - https://github.com/arendst/Tasmota
+  0.9.0.1 20200706  changed  - adapt to new NimBLE-API, tweak scan process
+  -------
+  0.9.0.0 20200413  started  - initial development by Christian Baars
+                    forked   - from arendst/tasmota            - https://github.com/arendst/Tasmota
 \*********************************************************************************************/
 
 #define XSNS_62                62
@@ -500,7 +508,7 @@ struct mi_sensor_t{
     uint8_t button[8]; // BTHome button support
     struct {
       uint8_t first_buttons_overlay[4];
-      uint8_t bthome_event[4]; // BTHome event support
+      uint8_t bthome_binary[4]; // BTHome binary state support
     };
   };
   uint8_t unparsed[4]; // BTHome unparsed object id
@@ -1330,21 +1338,42 @@ int MI32AddKey(char* payload, char* key = nullptr){
 }
 
 int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, uint8_t *data, int len){
+  uint16_t devicetype = *(uint16_t*)(nonce +6);
   uint8_t payload[len +2];
   uint8_t mac[6];
   memcpy(mac, macin, 6);
-  MI32_ReverseMAC(mac);
+  if (0xFCD2 != devicetype) {  // BTHome
+    MI32_ReverseMAC(mac);
+  }
   uint8_t _bindkey[32] = {0x0};
   const unsigned char authData[16] = {0x11};
   bool foundNoKey = true;
   AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: Searching key"), MIaddrStr(mac));
   for(uint32_t i = 0; i < MIBLEbindKeys.size(); i++){
-    if(!memcmp(mac, MIBLEbindKeys[i].MAC, 6)){
+    // Check for MI32Key with wildcard (3 or more 0xFF)
+    uint8_t mac_tst[6];
+    uint8_t wildcard_count = 0;
+    for (uint32_t j = 0; j < 6; j++) {
+      mac_tst[j] = mac[j];
+      if (MIBLEbindKeys[i].MAC[j] == 0xFF) {
+        wildcard_count++;
+      }
+    }
+    if (wildcard_count >=3 ) {  // As some 0xFF is valid test for at least three 0xFF (OUI) for wildcard
+      for (uint32_t j = 0; j < 6; j++) {
+        if (MIBLEbindKeys[i].MAC[j] == 0xFF) {
+          mac_tst[j] = 0xFF;
+        }
+      }
+    }
+
+    if(!memcmp(mac_tst, MIBLEbindKeys[i].MAC, 6)){
       memcpy(_bindkey, MIBLEbindKeys[i].key, 16);
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG], PSTR("M32: %s: Decryption key found"), MIaddrStr(mac));
       foundNoKey = false;
       break;
     }
+
   }
   if(foundNoKey){
     AddLog(LOG_LEVEL_DEBUG, PSTR("M32: %s: No key found"), MIaddrStr(mac));
@@ -1356,7 +1385,6 @@ int MIDecryptPayload(const uint8_t *macin, const uint8_t *nonce, uint32_t tag, u
 
   br_ccm_context ctx;
   br_ccm_init(&ctx, &keyCtx.vtable);
-  uint16_t devicetype = *(uint16_t*)(nonce +6);
   if (0xFCD2 == devicetype) {  // BTHome
     br_ccm_reset(&ctx, nonce, 13, 0, len, 4);
   } else {  
@@ -2065,106 +2093,107 @@ struct bthome_obj_def_t {
 // and https://github.com/Bluetooth-Devices/bthome-ble/blob/V2/src/bthome_ble/const.py
 static const bthome_obj_def_t BTHOME_OBJECTS[] = {
   // Sensors
-  {0x00, 0, 0, 0},  // Packet ID uint8
-  {0x01, 0, 0, 0},  // Battery (%) uint8
-  {0x02, 1, 1, 2},  // Temperature (0.01 °C) int16
-  {0x03, 1, 0, 2},  // Humidity (0.01 %) uint16
-  {0x04, 2, 0, 2},  // Pressure (0.01 hPa) uint24
-  {0x05, 2, 0, 2},  // Illuminance (0.01 lx) uint24
-  {0x06, 1, 0, 2},  // Mass kg (0.01 kg) uint16
-  {0x07, 1, 0, 2},  // Mass lbs (0.01 lbs) uint16
-  {0x08, 1, 1, 2},  // Dewpoint (0.01 °C) int16
-  {0x09, 0, 0, 0},  // Count (1) uint8
-  {0x0A, 2, 0, 3},  // Energy (0.001 kWh) uint24
-  {0x0B, 2, 0, 2},  // Power (0.01 W) uint24
-  {0x0C, 1, 0, 3},  // Voltage (0.001 V) uint16
-  {0x0D, 1, 0, 0},  // PM2.5 (ug/m3) uint16
-  {0x0E, 1, 0, 0},  // PM10 (ug/m3) uint16
+  {0x00, 0, 0, 0},  //  0 Packet ID uint8
+  {0x01, 0, 0, 0},  //  1 Battery (%) uint8
+  {0x02, 1, 1, 2},  //  2 Temperature (0.01 °C) int16
+  {0x03, 1, 0, 2},  //  3 Humidity (0.01 %) uint16
+  {0x04, 2, 0, 2},  //  4 Pressure (0.01 hPa) uint24
+  {0x05, 2, 0, 2},  //  5 Illuminance (0.01 lx) uint24
+  {0x06, 1, 0, 2},  //  6 Mass kg (0.01 kg) uint16
+  {0x07, 1, 0, 2},  //  7 Mass lbs (0.01 lbs) uint16
+  {0x08, 1, 1, 2},  //  8 Dewpoint (0.01 °C) int16
+  {0x09, 0, 0, 0},  //  9 Count (1) uint8
+  {0x0A, 2, 0, 3},  // 10 Energy (0.001 kWh) uint24
+  {0x0B, 2, 0, 2},  // 11 Power (0.01 W) uint24
+  {0x0C, 1, 0, 3},  // 12 Voltage (0.001 V) uint16
+  {0x0D, 1, 0, 0},  // 13 PM2.5 (ug/m3) uint16
+  {0x0E, 1, 0, 0},  // 14 PM10 (ug/m3) uint16
   // Binary sensors uint8
-  {0x0F, 0, 0, 0},  // Generic boolean (0 = Off, 1 = On)
-  {0x10, 0, 0, 0},  // Power (0 = Off, 1 = On)
-  {0x11, 0, 0, 0},  // Opening (0 = Closed, 1 = Open)
+  {0x0F, 0, 0, 0},  // 15 Generic boolean (0 = Off, 1 = On)
+  {0x10, 0, 0, 0},  // 16 Power (0 = Off, 1 = On)
+  {0x11, 0, 0, 0},  // 17 Opening (0 = Closed, 1 = Open)
   // Sensors
-  {0x12, 1, 0, 0},  // CO2 (ppm) uint16
-  {0x13, 1, 0, 0},  // TVOC (ug/m3) uint16
-  {0x14, 1, 0, 2},  // Moisture (0.01 %) uint16
+  {0x12, 1, 0, 0},  // 18 CO2 (ppm) uint16
+  {0x13, 1, 0, 0},  // 19 TVOC (ug/m3) uint16
+  {0x14, 1, 0, 2},  // 20 Moisture (0.01 %) uint16
   // Binary sensors uint8
-  {0x15, 0, 0, 0},  // Battery (0 = Normal, 1 = Low)
-  {0x16, 0, 0, 0},  // Battery charging (0 = Not charging, 1 = Charging)
-  {0x17, 0, 0, 0},  // CO (0 = Not detected, 1 = Detected)
-  {0x18, 0, 0, 0},  // Cold (0 = Normal, 1 = Cold)
-  {0x19, 0, 0, 0},  // Connectivity (0 = Disconnected, 1 = Connected)
-  {0x1A, 0, 0, 0},  // Door (0 = Closed, 1 = Open)
-  {0x1B, 0, 0, 0},  // Garage door (0 = Closed, 1 = Open)
-  {0x1C, 0, 0, 0},  // Gas (0 = Clear, 1 = Detected)
-  {0x1D, 0, 0, 0},  // Heat (0 = Normal, 1 = Hot)
-  {0x1E, 0, 0, 0},  // Light (0 = No light, 1 = Light detected)
-  {0x1F, 0, 0, 0},  // Lock (0 = Locked, 1 = Unlocked)
-  {0x20, 0, 0, 0},  // Moisture (0 = Dry, 1 = Wet)
-  {0x21, 0, 0, 0},  // Motion (0 = Clear, 1 = Detected)
-  {0x22, 0, 0, 0},  // Moving (0 = Not moving, 1 = Moving)
-  {0x23, 0, 0, 0},  // Occupancy (0 = Clear, 1 = Detected)
-  {0x24, 0, 0, 0},  // Plug (0 = Unplugged, 1 = Plugged)
-  {0x25, 0, 0, 0},  // Presence (0 = Away, 1 = Home)
-  {0x26, 0, 0, 0},  // Problem (0 = OK, 1 = Problem)
-  {0x27, 0, 0, 0},  // Running (0 = Not running, 1 = Running)
-  {0x28, 0, 0, 0},  // Safety (0 = Unsafe, 1 = Safe)
-  {0x29, 0, 0, 0},  // Smoke (0 = Clear, 1 = Detected)
-  {0x2A, 0, 0, 0},  // Sound (0 = Clear, 1 = Detected)
-  {0x2B, 0, 0, 0},  // Tamper (0 = Off, 1 = On)
-  {0x2C, 0, 0, 0},  // Vibration (0 = Clear, 1 = Detected)
-  {0x2D, 0, 0, 0},  // Window (0 = Closed, 1 = Open)
+  {0x15, 0, 0, 0},  // 21 Battery (0 = Normal, 1 = Low)
+  {0x16, 0, 0, 0},  // 22 Battery charging (0 = Not charging, 1 = Charging)
+  {0x17, 0, 0, 0},  // 23 CO (0 = Not detected, 1 = Detected)
+  {0x18, 0, 0, 0},  // 24 Cold (0 = Normal, 1 = Cold)
+  {0x19, 0, 0, 0},  // 25 Connectivity (0 = Disconnected, 1 = Connected)
+  {0x1A, 0, 0, 0},  // 26 Door (0 = Closed, 1 = Open)
+  {0x1B, 0, 0, 0},  // 27 Garage door (0 = Closed, 1 = Open)
+  {0x1C, 0, 0, 0},  // 28 Gas (0 = Clear, 1 = Detected)
+  {0x1D, 0, 0, 0},  // 29 Heat (0 = Normal, 1 = Hot)
+  {0x1E, 0, 0, 0},  // 30 Light (0 = No light, 1 = Light detected)
+  {0x1F, 0, 0, 0},  // 31 Lock (0 = Locked, 1 = Unlocked)
+  {0x20, 0, 0, 0},  // 32 Moisture (0 = Dry, 1 = Wet)
+  {0x21, 0, 0, 0},  // 33 Motion (0 = Clear, 1 = Detected)
+  {0x22, 0, 0, 0},  // 34 Moving (0 = Not moving, 1 = Moving)
+  {0x23, 0, 0, 0},  // 35 Occupancy (0 = Clear, 1 = Detected)
+  {0x24, 0, 0, 0},  // 36 Plug (0 = Unplugged, 1 = Plugged)
+  {0x25, 0, 0, 0},  // 37 Presence (0 = Away, 1 = Home)
+  {0x26, 0, 0, 0},  // 38 Problem (0 = OK, 1 = Problem)
+  {0x27, 0, 0, 0},  // 39 Running (0 = Not running, 1 = Running)
+  {0x28, 0, 0, 0},  // 40 Safety (0 = Unsafe, 1 = Safe)
+  {0x29, 0, 0, 0},  // 41 Smoke (0 = Clear, 1 = Detected)
+  {0x2A, 0, 0, 0},  // 42 Sound (0 = Clear, 1 = Detected)
+  {0x2B, 0, 0, 0},  // 43 Tamper (0 = Off, 1 = On)
+  {0x2C, 0, 0, 0},  // 44 Vibration (0 = Clear, 1 = Detected)
+  {0x2D, 0, 0, 0},  // 45 Window (0 = Closed, 1 = Open)
   // Sensors
-  {0x2E, 0, 0, 0},  // Humidity (1 deg) uint8
-  {0x2F, 0, 0, 0},  // Moisture (1 %) uint8
-  {0x3A, 0, 0, 0},  // Event button uint8
-  {0x3B, 1, 2, 0},  // Event command 0..2 uint16, 3..4 uint24
-  {0x3C, 1, 0, 0},  // Event dimmer uint16
-  {0x3D, 1, 0, 0},  // Count (1) uint16
-  {0x3E, 3, 0, 0},  // Count (1) uint32
-  {0x3F, 1, 1, 1},  // Rotation (0.1 deg) int16
-  {0x40, 1, 0, 0},  // Distance (1 mm) uint16
-  {0x41, 1, 0, 1},  // Distance (0.1 m) uint16
-  {0x42, 2, 0, 3},  // Duration (0.001 s) uint24
-  {0x43, 1, 1, 3},  // Current (0.001 A) int16
-  {0x44, 1, 0, 2},  // Speed (0.01 m/s) uint16
-  {0x45, 1, 1, 1},  // Temperature (0.1 °C) int16
-  {0x46, 0, 0, 1},  // UV index (0.1) uint8
-  {0x47, 1, 0, 1},  // Volume (0.1 L) uint16
-  {0x48, 1, 0, 0},  // Volume (mL) uint16
-  {0x49, 1, 0, 3},  // Volume flow rate (0.001 m3/hr) uint16
-  {0x4A, 1, 0, 1},  // Voltage (0.1 V) uint16
-  {0x4B, 2, 0, 3},  // Gas (0.001 m3) uint24
-  {0x4C, 3, 0, 3},  // Gas (0.001 m3) uint32
-  {0x4D, 3, 0, 3},  // Energy (0.001 kWh) uint32
-  {0x4E, 3, 0, 3},  // Volume (0.001 L) uint32
-  {0x4F, 3, 0, 3},  // Volume water (0.001 L) uint32
-  {0x50, 3, 0, 0},  // Timestamp uint32
-  {0x51, 1, 0, 3},  // Acceleration (0.001 m/s2) uint16
-  {0x52, 1, 0, 3},  // Gyroscope (0.001 deg/s) uint16
-  {0x53, 0, 2, 0},  // Text
-  {0x54, 0, 2, 0},  // Raw
-  {0x55, 3, 0, 3},  // Volume storage (0.001 L) uint32
-  {0x56, 1, 0, 0},  // Conductivity (1 uS/cm) uint16
-  {0x57, 0, 1, 0},  // Temperature (1 °C) int8
-  {0x58, 0, 1, 7},  // Temperature (0.35 °C) int8
-  {0x59, 0, 1, 0},  // Count (1) int8
-  {0x5A, 1, 1, 0},  // Count (1) int16
-  {0x5B, 3, 1, 0},  // Count (1) int32
-  {0x5C, 3, 1, 2},  // Power (0.01 W) int32
-  {0x5D, 1, 1, 3},  // Current (0.001 A) int16
-  {0x5E, 1, 0, 3},  // Direction (0.001 deg) uint16
-  {0x5F, 1, 0, 1},  // Precipitation (0.1 mm) uint16
-  {0x60, 0, 0, 0},  // Channel uint8
-  {0x61, 1, 0, 0},  // Rotational speed (1 rpm) uint16
-  {0x62, 3, 1, 6},  // Speed (0.000001 m/s) int32
-  {0x63, 3, 1, 6},  // Acceleration (0.000001 m/s2) int32
-  {0x64, 0, 0, 0},  // Light level (0 = Dark, 1 = Twilight, 2 = Bright) uint8
-  {0x65, 0, 0, 0},  // Settings revision uint8
-  {0xF0, 1, 0, 0},  // Device type id uint16
-  {0xF1, 3, 0, 0},  // Firmware version (F100010204 = 4.2.1.0} uint32
-  {0xF2, 2, 0, 0},  // Firmware version (F2000106 = 6.1.0} uint24
-  {0xFF, 0, 0, 0}   // sentinel
+  {0x2E, 0, 0, 0},  // 46 Humidity (1 deg) uint8
+  {0x2F, 0, 0, 0},  // 47 Moisture (1 %) uint8
+
+  {0x3A, 0, 0, 0},  // 58 Event button uint8
+  {0x3B, 1, 2, 0},  // 59 Event command 0..2 uint16, 3..4 uint24
+  {0x3C, 1, 0, 0},  // 60 Event dimmer uint16
+  {0x3D, 1, 0, 0},  // 61 Count (1) uint16
+  {0x3E, 3, 0, 0},  // 62 Count (1) uint32
+  {0x3F, 1, 1, 1},  // 63 Rotation (0.1 deg) int16
+  {0x40, 1, 0, 0},  // 64 Distance (1 mm) uint16
+  {0x41, 1, 0, 1},  // 65 Distance (0.1 m) uint16
+  {0x42, 2, 0, 3},  // 66 Duration (0.001 s) uint24
+  {0x43, 1, 1, 3},  // 67 Current (0.001 A) int16
+  {0x44, 1, 0, 2},  // 68 Speed (0.01 m/s) uint16
+  {0x45, 1, 1, 1},  // 69 Temperature (0.1 °C) int16
+  {0x46, 0, 0, 1},  // 70 UV index (0.1) uint8
+  {0x47, 1, 0, 1},  // 71 Volume (0.1 L) uint16
+  {0x48, 1, 0, 0},  // 72 Volume (mL) uint16
+  {0x49, 1, 0, 3},  // 73 Volume flow rate (0.001 m3/hr) uint16
+  {0x4A, 1, 0, 1},  // 74 Voltage (0.1 V) uint16
+  {0x4B, 2, 0, 3},  // 75 Gas (0.001 m3) uint24
+  {0x4C, 3, 0, 3},  // 76 Gas (0.001 m3) uint32
+  {0x4D, 3, 0, 3},  // 77 Energy (0.001 kWh) uint32
+  {0x4E, 3, 0, 3},  // 78 Volume (0.001 L) uint32
+  {0x4F, 3, 0, 3},  // 79 Volume water (0.001 L) uint32
+  {0x50, 3, 0, 0},  // 80 Timestamp uint32
+  {0x51, 1, 0, 3},  // 81 Acceleration (0.001 m/s2) uint16
+  {0x52, 1, 0, 3},  // 82 Gyroscope (0.001 deg/s) uint16
+  {0x53, 0, 2, 0},  // 83 Text
+  {0x54, 0, 2, 0},  // 84 Raw
+  {0x55, 3, 0, 3},  // 85 Volume storage (0.001 L) uint32
+  {0x56, 1, 0, 0},  // 86 Conductivity (1 uS/cm) uint16
+  {0x57, 0, 1, 0},  // 87 Temperature (1 °C) int8
+  {0x58, 0, 1, 7},  // 88 Temperature (0.35 °C) int8
+  {0x59, 0, 1, 0},  // 89 Count (1) int8
+  {0x5A, 1, 1, 0},  // 90 Count (1) int16
+  {0x5B, 3, 1, 0},  // 91 Count (1) int32
+  {0x5C, 3, 1, 2},  // 92 Power (0.01 W) int32
+  {0x5D, 1, 1, 3},  // 93 Current (0.001 A) int16
+  {0x5E, 1, 0, 3},  // 94 Direction (0.001 deg) uint16
+  {0x5F, 1, 0, 1},  // 95 Precipitation (0.1 mm) uint16
+  {0x60, 0, 0, 0},  // 96 Channel uint8
+  {0x61, 1, 0, 0},  // 97 Rotational speed (1 rpm) uint16
+  {0x62, 3, 1, 6},  // 98 Speed (0.000001 m/s) int32
+  {0x63, 3, 1, 6},  // 99 Acceleration (0.000001 m/s2) int32
+  {0x64, 0, 0, 0},  // 100 Light level (0 = Dark, 1 = Twilight, 2 = Bright) uint8
+  {0x65, 0, 0, 0},  // 101 Settings revision uint8
+  {0xF0, 1, 0, 0},  // 240 Device type id uint16
+  {0xF1, 3, 0, 0},  // 241 Firmware version (F100010204 = 4.2.1.0} uint32
+  {0xF2, 2, 0, 0},  // 242 Firmware version (F2000106 = 6.1.0} uint24
+  {0xFF, 0, 0, 0}   // 255 sentinel
 };
 
 /*-------------------------------------------------------------------------------------------*/
@@ -2365,11 +2394,21 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
   bool hasTemp = false;
   bool hasHum  = false;
   uint32_t multi = 0;
-  uint32_t multi_event = 0;
+  uint32_t multi_binary = 0;
   uint32_t multi_unparsed = 0;
   uint32_t last_obj_id = 0;
 
   // Second pass: parse all measurement objects
+  uint8_t current_binary[4] = { 0 };
+  for (uint32_t i = 0; i < sizeof(MIBLEsensors[_slot].bthome_binary); i++) {
+    if (MIBLEsensors[_slot].bthome_binary[i] & 0x7F) {
+      current_binary[i] = MIBLEsensors[_slot].bthome_binary[i] >> 7;
+      MIBLEsensors[_slot].bthome_binary[i] &= 0x7F;  // Reset value, keep obj_id
+    } else {
+      MIBLEsensors[_slot].bthome_binary[i] = 0;
+    }
+  }
+
   int res = 0;
   obj_id = 0;
   idx = 1;
@@ -2495,16 +2534,16 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
 
       case 0x0F ... 0x11:
       case 0x15 ... 0x2D: { // Binary sensor catch all (uint8, 0 or 1)
-        if (0 == multi_event) {  // Reset events
-          for (uint32_t i = 0; i < sizeof(MIBLEsensors[_slot].bthome_event); i++) {
-            MIBLEsensors[_slot].bthome_event[i] = 0;
+        if (multi_binary < sizeof(MIBLEsensors[_slot].bthome_binary)) {
+          uint8_t current_value = MIBLEsensors[_slot].bthome_binary[multi_binary] >> 7;
+          MIBLEsensors[_slot].bthome_binary[multi_binary++] = value_uint << 7 | obj_id;
+          MIBLEsensors[_slot].feature.events  = 1;
+/*
+          if (current_value != value_uint) {  // Event if changed
+            MIBLEsensors[_slot].eventType.event = 1;
+            res = 1;
           }
-        }
-        if (multi_event < sizeof(MIBLEsensors[_slot].bthome_event)) {
-          MIBLEsensors[_slot].bthome_event[multi_event++] = value_uint << 7 | obj_id;
-          MIBLEsensors[_slot].events++;
-          MIBLEsensors[_slot].eventType.event = 1;
-          res = 1;
+*/
         }
       } break;
 
@@ -2609,6 +2648,14 @@ void MI32ParseBTHomePacket(const uint8_t * _buf, uint32_t length, const uint8_t 
   if (hasTemp && hasHum) {
     MIBLEsensors[_slot].feature.tempHum   = 1;
     MIBLEsensors[_slot].eventType.tempHum = 1;
+  }
+
+  for (uint32_t i = 0; i < sizeof(MIBLEsensors[_slot].bthome_binary); i++) {
+    if (current_binary[i] != (MIBLEsensors[_slot].bthome_binary[i] >> 7)) {
+      MIBLEsensors[_slot].feature.events  = 1;
+      MIBLEsensors[_slot].eventType.event = 1;
+      res = 1;
+    }
   }
 
   if (res || MI32.option.directBridgeMode) {
@@ -2990,14 +3037,7 @@ void MI32notifyHT_LY(int _slot, char *_buf, int len){
     if (MIBLEsensors[_slot].type == MI_LYWSD02MMC || MIBLEsensors[_slot].type == MI_LYWSD02MMC2 || MIBLEsensors[_slot].type == MI_LYWSD03MMC || MIBLEsensors[_slot].type == MI_MHOC401){
       // ok, so CR2032 is 3.0v, but drops immediately to ~2.9.
       // so we'll go with the 2.1 min, 2.95 max.
-      float minVolts = 2100.0;
-      //float maxVolts = 2950.0;
-      //float range = maxVolts - minVolts;
-      //float divisor = range/100; // = 8.5
-      float percent = (((float)LYWSD0x_HT.volt) - minVolts) / 8.5; //divisor;
-      if (percent > 100) percent = 100;
-
-      MIBLEsensors[_slot].bat = (int)percent;
+      MIBLEsensors[_slot].bat = changeUIntScale(LYWSD0x_HT.volt, 2100, 2950, 0, 100);
       MIBLEsensors[_slot].batLastSeen = Rtc.local_time;
       MIBLEsensors[_slot].lastTime = Rtc.local_time;
       AddLog(BLE_ESP32::BLELogLevel[LOG_LEVEL_DEBUG_MORE], PSTR("M32: %s: LYWSD0x Bat updated %d"), MIaddrStr(MIBLEsensors[_slot].MAC), MIBLEsensors[_slot].bat);
@@ -3737,11 +3777,13 @@ void MI32GetOneSensorJson(int slot, int hidename){
 
   } // minimal summary
 
-  if ((p->type == MI_BTHOME) && p->eventType.event) {
-    for (uint32_t i = 0; i < sizeof(p->bthome_event); i++) {
-      if (p->bthome_event[i] > 0) {
-        ResponseAppend_P(PSTR(",\"Evt%d\":%d"),
-          p->bthome_event[i] & 0x7F, p->bthome_event[i] >> 7);
+  if ((p->type == MI_BTHOME) && p->feature.events) {
+    for (uint32_t i = 0; i < sizeof(p->bthome_binary); i++) {
+      if (p->bthome_binary[i] > 0) {
+        if (p->eventType.event) {
+          ResponseAppend_P(PSTR(",\"Evt%d\":%d"), p->bthome_binary[i] & 0x7F, p->bthome_binary[i] >> 7);
+        }
+        ResponseAppend_P(PSTR(",\"State%d\":%d"), p->bthome_binary[i] & 0x7F, p->bthome_binary[i] >> 7);
       }
     }
   }
@@ -4286,10 +4328,6 @@ const char SI_WEB_CSS[] PROGMEM =
   ".itd td:last-child{width:45px}"
   ".itd .bt{margin-right:10px;}" // Margin right should be half of the not-first width
   ".itr{line-height:20px}"
-  // Signal Strength Indicator
-  ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0;"
-  "i{width:3px;margin-right:1px;border-radius:3px;background-color:var(--c_txt)}"
-  ".b0{height:25%%}.b1{height:50%%}.b2{height:75%%}.b3{height:100%%}}.o30{opacity:.3}"
   "</style>"
   "{t}";             // ... and open new table for devices
 
@@ -4509,6 +4547,22 @@ void MI32Show(bool json)
           (p->feature.lux && (p->lux!=0x00ffffff))
          ) {
         WSContentSend_P(SI_WEB_LINE_START);
+        if (p->feature.events){
+          if (p->type == MI_BTHOME) {
+            // Binary sensors are shown as 0 or 1 with sub index from table BTHOME_OBJECTS
+            for (uint32_t i = 0; i < sizeof(p->bthome_binary); i++) {
+              if (p->bthome_binary[i] > 0) {
+                uint32_t obj_idx = p->bthome_binary[i] & 0x7F;
+                uint32_t state = p->bthome_binary[i] >> 7;
+//                WSContentSend_PD(PSTR(" &#x1F3C1;<sub>%d</sub> %d"), obj_idx, state);  // 🏁
+//                WSContentSend_PD(PSTR(" &#x2B0%d;<sub>%d</sub>"), (state) ? 6 : 7, obj_idx);  // ⬇ or ⬆
+                WSContentSend_PD(PSTR(" %d<sub>%d</sub>"), state, obj_idx);  // 0 or 1
+              }
+            }
+          } else {
+            WSContentSend_PD(PSTR(" &#x1F3C3; %u"), p->events);  // Number of events / alarms - 🏃 Runner
+          }
+        }
         if (!isnan(p->temp)) {
           float temp = ConvertTempToFahrenheit(p->temp); // convert if SO8 on
           WSContentSend_PD(PSTR(" &#x2600;&#xFE0F; %*_f" D_UNIT_DEGREE "%c"), Settings->flag2.temperature_resolution, &temp, TempUnit());  // ☀ Sun
@@ -4529,9 +4583,6 @@ void MI32Show(bool json)
         if (p->feature.pres) {
           float pressure = ConvertPressure(p->pres);  // SetOption24 - Switch between hPa or mmHg pressure unit, SetOption139 - Switch between mmHg or inHg pressure unit
           WSContentSend_PD(PSTR(" &#x26C5; %*_f%s"), Settings->flag2.pressure_resolution, &pressure, PressureUnit().c_str());  // ⛅
-        }
-        if (p->feature.events){
-          WSContentSend_PD(PSTR(" &#x1F3C3; %u"), p->events);  // Number of events / alarms - 🏃 Runner
         }
         if (p->feature.NMT){
           // no motion time

@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Số lần khởi động"
 #define D_BRIGHTLIGHT "Bright"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Độ C"
 #define D_CHANNEL "Kênh"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "Khí CO2"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Lạnh"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Tối"
 #define D_DATA "Dữ liệu"
 #define D_DEBUG "Tìm lỗi"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Điểm sương"
 #define D_DISABLED "Vô hiệu hóa"
 #define D_DISCONNECTED "Disconnected"
@@ -128,6 +131,8 @@
 #define D_ILLUMINANCE "Độ sáng"
 #define D_IMMEDIATE "ngay lập tức"      // Button immediate
 #define D_INDEX "Chỉ mục"
+#define D_AIRQUALITY "Chất lượng không khí"
+#define D_IAQ_CALIBRATING "(hiệu chuẩn đường cơ sở, giữ không khí trong sạch)"
 #define D_INFO "Thông tin"
 #define D_INFRARED "Hồng ngoại"
 #define D_INITIALIZED "Khởi tạo"
@@ -227,6 +232,7 @@
 #define D_WATER_DEPTH "Độ sâu nước"
 #define D_WEB_SERVER "Máy chủ Web"
 #define D_WEIGHT "Cân nặng"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "Cảnh báo phiên bản này không hỗ trợ các cài đặt vĩnh viễn"

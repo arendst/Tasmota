@@ -18,10 +18,10 @@
 #
 
 #################################################################################
-# Matter 1.4.1 Device Specification
+# Matter 1.6.1 Device Specification
 #################################################################################
 # Device Type: Extended Color Light (0x010D)
-# Device Type Revision: 4 (Matter 1.4.1)
+# Device Type Revision: 4 (kept deliberately, Groupcast rev 5 not implemented)
 # Class: Simple | Scope: Endpoint
 # Superset: Color Temperature Light (0x010C)
 #
@@ -41,69 +41,50 @@
 # - Level Control: OnOff feature M, Lighting feature M, CurrentLevel 1-254, MinLevel 1, MaxLevel 254
 # - Color Control: HueSaturation O, EnhancedHue O, ColorLoop O, XY M, ColorTemperature M, RemainingTime M
 #
-# IMPORTANT (Matter 1.4.1):
-# Extended Color Light MUST support BOTH HueSaturation AND ColorTemperature modes.
-# This is a change from earlier versions where one mode was sufficient.
+# IMPLEMENTATION (light3 = RGB):
+# - FeatureMap / ColorCapabilities = 0x09 (HS | XY), cluster revision 6 kept
+# - CT is not implemented: RGB-only hardware has no CT channel (use light5 for RGB+CT)
+# - XY is derived from HS through the native `light_state` conversion
 #################################################################################
 
 #################################################################################
-# Matter 1.4.1 Color Control Cluster (0x0300) - HueSaturation Mode
+# Matter 1.6.1 Color Control Cluster (0x0300) - HueSaturation + XY
 #################################################################################
-# Cluster Revision: 7 (Matter 1.4.1)
-# Role: Application | Scope: Endpoint
+# The Color Control server is shared and lives in Matter_Plugin_Light1, gated by
+# `CC_FEAT`. Light3 only provides the HS and XY shadows and the HS<->XY conversion.
 #
-# FEATURES (for HS mode):
-# - Bit 0 (HS): HueSaturation (M for this device)
-# - Bit 4 (CT): ColorTemperature (M for Extended Color Light in Matter 1.4.1)
-#
-# ATTRIBUTES (HueSaturation Mode):
-# ID     | Name                          | Type   | Constraint        | Quality | Default | Access | Conf
-# -------|-------------------------------|--------|-------------------|---------|---------|--------|-----
-# 0x0000 | CurrentHue                    | uint8  | 0-254             | SN      | 0       | RW VO  | HS
-# 0x0001 | CurrentSaturation             | uint8  | 0-254             | SN      | 0       | RW VO  | HS
-# 0x0007 | ColorTemperatureMireds        | uint16 | 0,PhysMin-PhysMax | SN      | 0x00FA  | RW VO  | CT
-# 0x0008 | ColorMode                     | enum8  | desc              | S       | 0       | R V    | M
-# 0x000F | Options                       | map8   | all               |         | 0       | RW VO  | M
-# 0x0010 | NumberOfPrimaries             | uint8  | 0-6               | FX      | null    | R V    | O
-# 0x4001 | EnhancedColorMode             | enum8  | desc              | S       | 0       | R V    | M
-# 0x400A | ColorCapabilities             | map16  | all               | F       | 0       | R V    | M
-# 0x400B | ColorTempPhysicalMinMireds    | uint16 | 0-0xFEFF          | F       | 0       | R V    | CT
-# 0x400C | ColorTempPhysicalMaxMireds    | uint16 | 0-0xFEFF          | F       | 0xFEFF  | R V    | CT
-# 0xFFFC | FeatureMap                    | map32  | all               | F       | 0       | R V    | M
+# ATTRIBUTES:
+# ID     | Name                          | Type   | Constraint        | Quality | Conf
+# -------|-------------------------------|--------|-------------------|---------|-----
+# 0x0000 | CurrentHue                    | uint8  | 0-254             | NQ      | HS
+# 0x0001 | CurrentSaturation             | uint8  | 0-254             | NQ      | HS
+# 0x0002 | RemainingTime                 | uint16 | 0-65534           | Q       | M (always 0)
+# 0x0003 | CurrentX                      | uint16 | 0-65279           | NQ      | XY
+# 0x0004 | CurrentY                      | uint16 | 0-65279           | NQ      | XY
+# 0x0008 | ColorMode                     | enum8  | desc              | N       | M
+# 0x000F | Options                       | map8   | bit 0 only        |         | M (RW, volatile)
+# 0x0010 | NumberOfPrimaries             | uint8  | 0-6               | FX      | M (0)
+# 0x4001 | EnhancedColorMode             | enum8  | desc              | N       | M
+# 0x400A | ColorCapabilities             | map16  | all               |         | M (0x09)
+# 0xFFFC | FeatureMap                    | map32  | all               | F       | M (0x09)
 #
 # ColorMode/EnhancedColorMode values:
-# - 0: CurrentHue and CurrentSaturation (used by this device for HS mode)
+# - 0: CurrentHue and CurrentSaturation
 # - 1: CurrentX and CurrentY
-# - 2: ColorTemperatureMireds
 #
-# ColorCapabilities bitmap:
-# - Bit 0: HueSaturation (0x01 - used by this device)
-# - Bit 1: EnhancedHue
-# - Bit 2: ColorLoop
-# - Bit 3: XY
-# - Bit 4: ColorTemperature (0x10 - also required for Extended Color Light)
-#
-# COMMANDS (HueSaturation Mode):
-# ID   | Name                    | Dir  | Response | Access | Conf
-# -----|-------------------------|------|----------|--------|-----
-# 0x0000 | MoveToHue              | C→S  | Y        | O      | HS
-# 0x0001 | MoveHue                | C→S  | Y        | O      | HS
-# 0x0002 | StepHue                | C→S  | Y        | O      | HS
-# 0x0003 | MoveToSaturation       | C→S  | Y        | O      | HS
-# 0x0004 | MoveSaturation         | C→S  | Y        | O      | HS
-# 0x0005 | StepSaturation         | C→S  | Y        | O      | HS
-# 0x0006 | MoveToHueAndSaturation | C→S  | Y        | O      | HS
-# 0x0047 | StopMoveStep           | C→S  | Y        | O      | M
-#
-# MoveToHue: {Hue:uint8(0-254), Direction:enum8, TransitionTime:uint16, OptionsMask:map8, OptionsOverride:map8}
-# MoveToSaturation: {Saturation:uint8(0-254), TransitionTime:uint16, OptionsMask:map8, OptionsOverride:map8}
-# MoveToHueAndSaturation: {Hue:uint8(0-254), Saturation:uint8(0-254), TransitionTime:uint16, OptionsMask:map8, OptionsOverride:map8}
+# COMMANDS (AcceptedCommandList 0x00..0x09, 0x47):
+# 0x00 MoveToHue, 0x01 MoveHue, 0x02 StepHue, 0x03 MoveToSaturation, 0x04 MoveSaturation,
+# 0x05 StepSaturation, 0x06 MoveToHueAndSaturation, 0x07 MoveToColor, 0x08 MoveColor,
+# 0x09 StepColor, 0x47 StopMoveStep
+# - MoveTo* and Step* are applied instantly, TransitionTime is ignored
+# - Move* and StopMoveStep are validated and accepted as no-ops, RemainingTime is always 0
 #
 # NOTES:
 # - Hue: 0-254 maps to 0-360 degrees (254 = 360°, not 255)
 # - Saturation: 0-254 maps to 0-100% (254 = 100%, not 255)
 # - Value 255 is reserved and should not be used
-# - Extended Color Light must support both HS and CT modes (Matter 1.4.1 requirement)
+# - After an XY command the commanded CurrentX/CurrentY are reported; any later HS change
+#   recomputes them from HS
 #################################################################################
 
 import matter
@@ -124,10 +105,11 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
     # 0x0062: inherited                                     # Scenes Management 1.4 (PROVISIONAL) - replaces 0x0005
     # 0x0006: inherited                                     # On/Off 1.5 p.48
     # 0x0008: inherited                                     # Level Control 1.6 p.57
-    0x0300: [0,1,8,0xF,0x4001,0x400A],                      # Color Control 3.2 p.111 - HS mode only
+    0x0300: [0,1,2,3,4,8,0xF,0x10,0x4001,0x400A],           # Color Control 3.2 p.111 - HS + XY, RemainingTime, NumberOfPrimaries
   })
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Hue", "Sat")
-  static var TYPES = { 0x010D: 4 }                  # Extended Color Light - Matter 1.4.1 Device Library Rev 4
+  static var TYPES = { 0x010D: 4 }                  # Extended Color Light - Device Library Rev 4
+  static var CC_FEAT = 0x09                                 # HS | XY
 
   # Inherited
   # var device                                        # reference to the `device` global object
@@ -138,8 +120,11 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   # var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
   # var shadow_onoff                                  # (bool) status of the light power on/off
   # var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
+  # var shadow_color_mode, cc_options                 # Color Control, see Light1
   var shadow_hue                                    # (int 0..254) hue of color, may need to be extended to 0..360 for value in degrees
   var shadow_sat                                    # (int 0..254) saturation of color
+  var shadow_x, shadow_y                            # (int 0..0xFEFF) CurrentX/CurrentY
+  var ls_conv                                       # light_state used for HS<->XY and the web swatch, allocated once
 
   #############################################################
   # Constructor
@@ -147,27 +132,73 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
     super(self).init(device, endpoint, arguments)
     self.shadow_hue = 0
     self.shadow_sat = 0
+    self.hs_to_xy()                                 # seed CurrentX/CurrentY from HS (not nullable)
+    self.cc_init(arguments)                         # Color Control mode, Options (and CT for Light5)
   end
 
   #############################################################
-  # Update shadow
+  # cc_update
   #
-  def update_shadow()
-    if !self.VIRTUAL && !self.BRIDGE
-      import light
-      super(self).update_shadow()
-      var light_status = light.get(self.light_index)
-      if light_status != nil
-        var hue = light_status.find('hue', nil)
-        var sat = light_status.find('sat', nil)
-        if hue != nil     hue = tasmota.scale_uint(hue, 0, 360, 0, 254)   else hue = self.shadow_hue      end
-        if sat != nil     sat = tasmota.scale_uint(sat, 0, 255, 0, 254)   else sat = self.shadow_sat      end
-        if hue != self.shadow_hue   self.attribute_updated(0x0300, 0x0000)   self.shadow_hue = hue   end
-        if sat != self.shadow_sat   self.attribute_updated(0x0300, 0x0001)   self.shadow_sat = sat   end
-      end
-    else
-      super(self).update_shadow()
-    end
+  # Shadow sync from Light1's single `light.get()` map (local light)
+  def cc_update(st)
+    var hue = st.find('hue')
+    var sat = st.find('sat')
+    self.set_shadow_hs((hue != nil) ? tasmota.scale_uint(hue, 0, 360, 0, 254) : nil,
+                       (sat != nil) ? tasmota.scale_uint(sat, 0, 255, 0, 254) : nil)
+    super(self).cc_update(st)                       # CT and colormode for Light5
+  end
+
+  # update HS shadows (nil = unchanged), report changes, recompute XY only when HS changed
+  def set_shadow_hs(hue, sat)
+    var chg = false
+    if hue != nil && hue != self.shadow_hue   self.shadow_hue = hue   self.attribute_updated(0x0300, 0x0000)   chg = true   end
+    if sat != nil && sat != self.shadow_sat   self.shadow_sat = sat   self.attribute_updated(0x0300, 0x0001)   chg = true   end
+    if chg   self.hs_to_xy()   end
+  end
+
+  # update XY shadows, report changes
+  def set_shadow_xy(x, y)
+    if x != self.shadow_x   self.shadow_x = x   self.attribute_updated(0x0300, 0x0003)   end
+    if y != self.shadow_y   self.shadow_y = y   self.attribute_updated(0x0300, 0x0004)   end
+  end
+
+  # one light_state per plugin: light_state has no deinit and its native object is never freed
+  def get_ls()
+    if self.ls_conv == nil   self.ls_conv = light_state(3)   end      # 3 = RGB
+    return self.ls_conv
+  end
+
+  # recompute CurrentX/CurrentY from the HS shadows
+  def hs_to_xy()
+    var l = self.get_ls()
+    l.set_huesat(tasmota.scale_uint(self.shadow_hue, 0, 254, 0, 360), tasmota.scale_uint(self.shadow_sat, 0, 254, 0, 255))
+    self.set_shadow_xy(self.xy_u16(l.x), self.xy_u16(l.y))
+  end
+
+  # CIE coordinate (real) -> Matter uint16, clamped in float domain before int()
+  def xy_u16(f)
+    if !(f >= 0)   f = 0       end              # also catches NaN
+    if f > 0.996   f = 0.996   end              # 0.996 * 65536 < 0xFEFF
+    return int(f * 65536 + 0.5)
+  end
+
+  # CIE xy (Matter uint16) -> [hue 0..254, sat 0..254]
+  def xy_to_hs(x, y)
+    var l = self.get_ls()
+    l.set_xy(x / 65536.0, y / 65536.0)
+    return [tasmota.scale_uint(l.hue, 0, 360, 0, 254), tasmota.scale_uint(l.sat, 0, 255, 0, 254)]
+  end
+
+  #############################################################
+  # set_xy
+  #
+  # Drive the light through Hue/Sat in XY mode, report the commanded XY exactly
+  # Returns [hue, sat] sent to the light
+  def set_xy(x, y)
+    var hs = self.xy_to_hs(x, y)
+    self.set_hue_sat(hs[0], hs[1], 1)               # mode 1 directly: no 1->0->1 ColorMode report
+    self.set_shadow_xy(x, y)                        # overrides the HS->XY recomputation done by the shadow update
+    return hs
   end
 
   #############################################################
@@ -175,7 +206,9 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   #
   # `hue` 0..254 or `nil`
   # `sat` 0..255 or `nil`
-  def set_hue_sat(hue_254, sat_254)
+  # `mode` ColorMode to switch to, `nil` = 0 (HS)
+  def set_hue_sat(hue_254, sat_254, mode)
+    self.set_color_mode((mode != nil) ? mode : 0)   # before update_shadow()
     # sanity checks on values
     if hue_254 != nil
       if hue_254 < 0      hue_254 = 0     end
@@ -202,12 +235,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
         end
       end
     elif self.VIRTUAL
-      if hue_254 != nil
-        if hue_254 != self.shadow_hue   self.attribute_updated(0x0300, 0x0000)   self.shadow_hue = hue_254   end
-      end
-      if sat_254 != nil
-        if sat_254 != self.shadow_sat   self.attribute_updated(0x0300, 0x0001)   self.shadow_sat = sat_254   end
-      end
+      self.set_shadow_hs(hue_254, sat_254)
     else
       var hue_360 = (hue_254 != nil) ? tasmota.scale_uint(hue_254, 0, 254, 0, 360) : nil
       var sat_255 = (sat_254 != nil) ? tasmota.scale_uint(sat_254, 0, 254, 0, 255) : nil
@@ -221,97 +249,6 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
       end
       self.update_shadow()
     end
-  end
-
-  #############################################################
-  # read an attribute
-  #
-  def read_attribute(session, ctx, tlv_solo)
-    var cluster = ctx.cluster
-    var attribute = ctx.attribute
-      
-    # ====================================================================================================
-    if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
-      self.update_shadow_lazy()
-      if   attribute == 0x0000          #  ---------- CurrentHue / u1 ----------
-        return tlv_solo.set_or_nil(0x06 #-TLV.U4-#, self.shadow_hue)
-      elif attribute == 0x0001          #  ---------- CurrentSaturation / u2 ----------
-        return tlv_solo.set_or_nil(0x06 #-TLV.U4-#, self.shadow_sat)
-      elif attribute == 0x0008          #  ---------- ColorMode / u1 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 0)# 0 = CurrentHue and CurrentSaturation
-      elif attribute == 0x000F          #  ---------- Options / u1 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 0)
-      elif attribute == 0x4001          #  ---------- EnhancedColorMode / u1 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 0)
-      elif attribute == 0x400A          #  ---------- ColorCapabilities / map2 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 0x01)    # HS
-      
-      # Defined Primaries Information Attribute Set
-      elif attribute == 0x0010          #  ---------- NumberOfPrimaries / u1 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 0)
-
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 0x01)    # HS
-      end
-
-    end
-    return super(self).read_attribute(session, ctx, tlv_solo)
-  end
-
-  #############################################################
-  # Invoke a command
-  #
-  # returns a TLV object if successful, contains the response
-  #   or an `int` to indicate a status
-  def invoke_request(session, val, ctx)
-    var TLV = matter.TLV
-    var cluster = ctx.cluster
-    var command = ctx.command
-
-    # ====================================================================================================
-    if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
-      if !self.mqtt_command_ready(ctx)   return nil   end
-      self.update_shadow_lazy()
-      if   command == 0x0000            # ---------- MoveToHue ----------
-        var hue_in = val.findsubval(0)  # Hue 0..254
-        self.set_hue_sat(hue_in, nil)
-        ctx.log = "hue:"+str(hue_in)
-        self.publish_command('Hue', hue_in)
-        return true
-      elif command == 0x0001            # ---------- MoveHue ----------
-        # TODO, we don't really support it
-        return true
-      elif command == 0x0002            # ---------- StepHue ----------
-        # TODO, we don't really support it
-        return true
-      elif command == 0x0003            # ---------- MoveToSaturation ----------
-        var sat_in = val.findsubval(0)  # Sat 0..254
-        self.set_hue_sat(nil, sat_in)
-        ctx.log = "sat:"+str(sat_in)
-        self.publish_command('Sat', sat_in)
-        return true
-      elif command == 0x0004            # ---------- MoveSaturation ----------
-        # TODO, we don't really support it
-        return true
-      elif command == 0x0005            # ---------- StepSaturation ----------
-        # TODO, we don't really support it
-        return true
-      elif command == 0x0006            # ---------- MoveToHueAndSaturation ----------
-        var hue_in = val.findsubval(0)  # Hue 0..254
-        var sat_in = val.findsubval(1)  # Sat 0..254
-        self.set_hue_sat(hue_in, sat_in)
-        ctx.log = "hue:"+str(hue_in)+" sat:"+str(sat_in)
-        self.publish_command('Hue', hue_in, 'Sat', sat_in)
-        return true
-      elif command == 0x0047            # ---------- StopMoveStep ----------
-        # TODO, we don't really support it
-        return true
-      end
-
-    else
-      return super(self).invoke_request(session, val, ctx)
-    end
-
   end
 
   #############################################################
@@ -346,30 +283,16 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
         var sat = int(hsb_list[1])
         # dimmer is already available
 
-        if hue != nil     hue = tasmota.scale_uint(hue, 0, 360, 0, 254)   else hue = self.shadow_hue      end
-        if sat != nil     sat = tasmota.scale_uint(sat, 0, 100, 0, 254)   else sat = self.shadow_sat      end
-        if hue != self.shadow_hue   self.attribute_updated(0x0300, 0x0000)   self.shadow_hue = hue   end
-        if sat != self.shadow_sat   self.attribute_updated(0x0300, 0x0001)   self.shadow_sat = sat   end
+        self.set_shadow_hs((hue != nil) ? tasmota.scale_uint(hue, 0, 360, 0, 254) : nil,
+                           (sat != nil) ? tasmota.scale_uint(sat, 0, 100, 0, 254) : nil)
       end
     end
   end
-  
-  #############################################################
-  # web_values
-  #
-  # Show values of the remote device as HTML
-  def web_values()
-    import webserver
-    self.web_values_prefix()        # display '| ' and name if present
-    webserver.content_send(format("%s %s %s",
-                              self.web_value_onoff(self.shadow_onoff), self.web_value_dimmer(),
-                              self.web_value_RGB()))
-  end
 
-  # Show on/off value as html
+  # Show RGB color as html
   def web_value_RGB()
     if self.shadow_hue != nil && self.shadow_sat != nil
-      var l = light_state(3)      # RGB virtual light state object
+      var l = self.get_ls()       # RGB virtual light state object
       l.set_bri(255)              # set full brightness to get full range RGB
       l.set_huesat(tasmota.scale_uint(self.shadow_hue, 0, 254, 0, 360), tasmota.scale_uint(self.shadow_sat, 0, 254, 0, 255))
       var rgb_hex = format("#%02X%02X%02X", l.r, l.g, l.b)

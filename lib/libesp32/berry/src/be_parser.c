@@ -175,26 +175,23 @@ void begin_varinfo(bparser *parser, bstring *name)
     finfo->proto->nvarinfo = be_vector_capacity(&finfo->varvec);
 }
 
-void end_varinfo(bparser *parser, int beginpc)
+void end_varinfo(bparser *parser)
 {
     bfuncinfo *finfo = parser->finfo;
-    bblockinfo *binfo = finfo->binfo;
-    bvarinfo *it = be_vector_data(&finfo->varvec);
-    bvarinfo *end = be_vector_end(&finfo->varvec);
-    if (beginpc == -1) /* use block->beginpc by default */
-        beginpc = binfo->beginpc;
-    /* skip the variable of the previous blocks */
-    for (; (it <= end) && (it->beginpc < beginpc); ++it);
-    for (; it <= end; ++it) {
-        if (!it->endpc) /* write to endpc only once */
-            it->endpc = finfo->pc;
+    bvarinfo *var = be_vector_data(&finfo->varvec);
+    int i, count = be_vector_count(&finfo->varvec);
+    /* skip the variables of the previous blocks: a variable declared just
+     * before the block can have the same beginpc as the block itself */
+    for (i = finfo->binfo->nvarinfo; i < count; ++i) {
+        if (!var[i].endpc) /* write to endpc only once */
+            var[i].endpc = finfo->pc;
     }
 }
 
 #else
 
 #define begin_varinfo(parser, name)
-#define end_varinfo(parser, beginpc) (void)(beginpc)
+#define end_varinfo(parser)
 
 #endif
 
@@ -209,13 +206,16 @@ static void begin_block(bfuncinfo *finfo, bblockinfo *binfo, int type)
     binfo->lastjmp = 0;
     binfo->beginpc = finfo->pc; /* set starting pc for this block */
     binfo->nactlocals = (bbyte)be_list_count(finfo->local); /* count number of local variables in previous block */
+#if BE_DEBUG_VAR_INFO
+    binfo->nvarinfo = be_vector_count(&finfo->varvec);
+#endif
     if (type & BLOCK_LOOP) {
         binfo->breaklist = NO_JUMP;
         binfo->continuelist = NO_JUMP;
     }
 }
 
-static void end_block_ex(bparser *parser, int beginpc)
+static void end_block(bparser *parser)
 {
     bfuncinfo *finfo = parser->finfo;
     bblockinfo *binfo = finfo->binfo;
@@ -225,15 +225,10 @@ static void end_block_ex(bparser *parser, int beginpc)
         be_code_patchjump(finfo, binfo->breaklist);
         be_code_patchlist(finfo, binfo->continuelist, binfo->beginpc);
     }
-    end_varinfo(parser, beginpc);
+    end_varinfo(parser);
     be_list_resize(parser->vm, finfo->local, binfo->nactlocals); /* remove local variables from this block, they are now out of scope */
     finfo->freereg = binfo->nactlocals; /* adjust first free register accordingly */
     finfo->binfo = binfo->prev; /* restore previous block */
-}
-
-static void end_block(bparser *parser)
-{
-    end_block_ex(parser, -1);
 }
 
 #if BE_DEBUG_SOURCE_FILE
@@ -1325,14 +1320,14 @@ static void for_iter(bparser *parser, bstring *var, bexpdesc *it)
     stmtlist(parser);
 }
 
-static void for_leave(bparser *parser, int jcatch, int beginpc)
+static void for_leave(bparser *parser, int jcatch)
 {
     bexpdesc e;
     bfuncinfo *finfo = parser->finfo;
     int jbrk = finfo->binfo->breaklist;
     init_exp(&e, ETSTRING, 0);
     e.v.s = parser_newstr(parser, "stop_iteration");
-    end_block_ex(parser, beginpc); /* leave except & loop block */
+    end_block(parser); /* leave except & loop block */
     if (jbrk != NO_JUMP) { /* has `break` statement in iteration block */
         be_code_exblk(finfo, 1);
         jbrk = be_code_jump(finfo);
@@ -1359,7 +1354,7 @@ static void for_stmt(bparser *parser)
     bstring *var;
     bexpdesc iter;
     bblockinfo binfo;
-    int jcatch, beginpc = parser->finfo->pc;
+    int jcatch;
     /* FOR ID : expr block END */
     scan_next_token(parser); /* skip 'for' */
     begin_block(parser->finfo, &binfo, BLOCK_EXCEPT | BLOCK_LOOP);
@@ -1368,7 +1363,7 @@ static void for_stmt(bparser *parser)
     for_init(parser, &iter);
     jcatch = be_code_exblk(parser->finfo, 0);
     for_iter(parser, var, &iter);
-    for_leave(parser, jcatch, beginpc);
+    for_leave(parser, jcatch);
     match_token(parser, KeyEnd); /* skip 'end' */
 }
 

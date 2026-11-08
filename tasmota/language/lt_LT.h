@@ -66,6 +66,7 @@
 #define D_BATTERY_CHARGE "Įkrova"    // Battery charge in %
 #define D_BLINK "Mirksėti"
 #define D_BLINKOFF "Mirksėjimas išjungtas"
+#define D_BOOST "Boost"
 #define D_BOOT_COUNT "Pakrovimų skaičius"
 #define D_BRIGHTLIGHT "Šviesus"
 #define D_BSSID "BSSId"
@@ -74,6 +75,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsijus"
 #define D_CHANNEL "Kanalas"
+#define D_CHILD_LOCK "Child Lock"
 #define D_CO2 "Anglies dioksidas"
 #define D_CODE "kodas"                // Button code
 #define D_COLDLIGHT "Šalta"
@@ -89,6 +91,7 @@
 #define D_DARKLIGHT "Tamsu"
 #define D_DATA "Duomenys"
 #define D_DEBUG "Derinimas"
+#define D_DECRYPTION "Decryption"
 #define D_DEWPOINT "Rasos taškas"
 #define D_DISABLED "Išjungta"
 #define D_DISCONNECTED "Disconnected"
@@ -128,6 +131,8 @@
 #define D_ILLUMINANCE "Apšvietimas"
 #define D_IMMEDIATE "nedelsiant"      // Mygtuko veikimas nedelsiant
 #define D_INDEX "Indeksas"
+#define D_AIRQUALITY "Oro kokybė"
+#define D_IAQ_CALIBRATING "(bazinės linijos kalibravimas, palaikykite orą švarų)"
 #define D_INFO "Informacija"
 #define D_INFRARED "Infraraudonieji spinduliai"
 #define D_INITIALIZED "Inicializuota"
@@ -227,6 +232,7 @@
 #define D_WATER_DEPTH "Vandens gylis"
 #define D_WEB_SERVER "Web serveris"
 #define D_WEIGHT "Svoris"
+#define D_WINDOW_OPEN "Window open"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ĮSPĖJIMAS: Ši versija nepalaiko nuolatinių nustatymų"

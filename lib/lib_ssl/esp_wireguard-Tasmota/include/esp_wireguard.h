@@ -116,6 +116,21 @@ esp_err_t esp_wireguard_init(wireguard_config_t *config, wireguard_ctx_t *ctx);
 esp_err_t esp_wireguard_connect(wireguard_ctx_t *ctx);
 
 /**
+ * @brief Create a WireGuard interface using an already resolved endpoint.
+ *
+ * This avoids a second DNS lookup when the caller has just resolved the
+ * endpoint. All other behavior matches esp_wireguard_connect().
+ *
+ * @param ctx Context of WireGuard.
+ * @param endpoint_ip Resolved endpoint IP address.
+ * @return
+ *      - ESP_OK on success.
+ *      - ESP_ERR_INVALID_ARG if ctx or endpoint_ip is invalid.
+ *      - ESP_FAIL on failure.
+ */
+esp_err_t esp_wireguard_connect_with_ip(wireguard_ctx_t *ctx, const ip_addr_t *endpoint_ip);
+
+/**
  * @brief Test if the peer is up.
  * @param ctx Context of WireGuard
  * @return

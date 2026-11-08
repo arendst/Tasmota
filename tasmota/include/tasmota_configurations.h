@@ -553,8 +553,6 @@
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
 #define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
 
-#define UPGRADE_V8_MIN                           // do not support upgrading from version below 8.0.0
-
 // -- MQTT - TLS - AWS IoT ------------------------
 #ifdef USE_ZBBRIDGE_TLS                            // Enable TLS for ZbBridge
   #define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)

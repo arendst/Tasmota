@@ -29,7 +29,7 @@ License along with NeoPixel.  If not, see
 
 #pragma once
 
-#if defined(ARDUINO_ARCH_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C2)
+#if defined(ARDUINO_ARCH_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C61)
 
 /*  General Reference documentation for the APIs used in this implementation
 LOW LEVEL:  (what is actually used)
@@ -399,7 +399,7 @@ public:
     rmt_channel_handle_t RmtChannelNumber = NULL;
 };
 
-#if !defined(CONFIG_IDF_TARGET_ESP32C5) &&  !defined(CONFIG_IDF_TARGET_ESP32C6) // C5 & C6 only 2 RMT channels
+#if !defined(CONFIG_IDF_TARGET_ESP32C5) && !defined(CONFIG_IDF_TARGET_ESP32C6) // C5 & C6 only 2 RMT channels
 class NeoEsp32RmtChannel2
 {
 public:
@@ -417,7 +417,7 @@ protected:
     rmt_channel_handle_t RmtChannelNumber = NULL;
 };
 #endif // !defined(CONFIG_IDF_TARGET_ESP32C6)
-#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3) &&  !defined(CONFIG_IDF_TARGET_ESP32C5) &&  !defined(CONFIG_IDF_TARGET_ESP32C6)
+#if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C5) && !defined(CONFIG_IDF_TARGET_ESP32C6)
 
 class NeoEsp32RmtChannel4
 {

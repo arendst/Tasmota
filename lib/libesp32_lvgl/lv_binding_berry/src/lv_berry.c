@@ -149,6 +149,184 @@ int lv_x_call_c(bvm *vm) {
   return be_call_c_func(vm, func, return_type, arg_type);
 }
 
+/*********************************************************************************************\
+ * Find a method in a compact class table (see `lv_ntv_method_t` in lv_berry.h)
+ *
+ * The name is split into a verb prefix (longest match in `lv_method_verbs`) and the rest,
+ * entries are sorted by (verb code, rest) so a binary search finds the method.
+ * Returns NULL if not found.
+\*********************************************************************************************/
+static const lv_ntv_method_t * lv_method_find(const lv_ntv_class_def_t * cl, const char * name) {
+  // split verb prefix, longest match wins
+  uint32_t verb = 0;
+  size_t verb_len = 0;
+  for (uint32_t v = 1; v < LV_METHOD_VERBS_NB; v++) {
+    size_t len = strlen(lv_method_verbs[v]);
+    if (len > verb_len && strncmp(name, lv_method_verbs[v], len) == 0) {
+      verb = v;
+      verb_len = len;
+    }
+  }
+  const char * rest = name + verb_len;
+
+  int32_t low = 0;
+  int32_t high = (int32_t)cl->size - 1;
+  while (low <= high) {
+    int32_t mid = (low + high) / 2;
+    const lv_ntv_method_t * m = &cl->methods[mid];
+    int32_t comp = (int32_t)verb - (int32_t)(m->sig >> LV_METHOD_SIG_BITS);
+    if (comp == 0) {
+      comp = strcmp(rest, &lv_method_names[m->name]);
+    }
+    if (comp < 0) {
+      high = mid - 1;
+    } else if (comp > 0) {
+      low = mid + 1;
+    } else {
+      return m;
+    }
+  }
+  return NULL;
+}
+
+/*********************************************************************************************\
+ * Generic style accessors (see `lv_style_ntv_prop_t` in lv_berry.h)
+ *
+ * `obj.set_style_<p>(v, sel)`, `obj.get_style_<p>(part)` and `style.set_<p>(v)` are not
+ * stored as individual methods. They are resolved from `lv_style_props[]` and call
+ * the generic LVGL API, with exactly the same semantics as the generated LVGL functions.
+ *
+ * The C wrappers below are called by `be_call_c_func()`. The second argument `pk` is
+ * inserted by `lv_x_call_style()` and holds the property id (8 low bits) and the
+ * value kind (LV_SKIND_*, next bits).
+\*********************************************************************************************/
+static lv_style_value_t lvbe_style_value(uint32_t kind, intptr_t v) {
+  lv_style_value_t sv;
+  memset(&sv, 0, sizeof(sv));
+  switch (kind) {
+    case LV_SKIND_U8:     sv.num = (uint8_t) v;              break;
+    case LV_SKIND_U16:    sv.num = (uint16_t) v;             break;
+    case LV_SKIND_BOOL:   sv.num = (v != 0);                 break;
+    case LV_SKIND_COLOR:  // Berry passes `lv.color` as 0xRRGGBB, same bits as `lv_color_t` passed by value
+      sv.color.blue  = (v      ) & 0xFF;
+      sv.color.green = (v >>  8) & 0xFF;
+      sv.color.red   = (v >> 16) & 0xFF;
+      break;
+    case LV_SKIND_PTR:    sv.ptr = (const void *) v;         break;
+    default:              sv.num = (int32_t) v;              break;
+  }
+  return sv;
+}
+
+static void lvbe_obj_set_style_prop(lv_obj_t * obj, int32_t pk, intptr_t value, lv_style_selector_t selector) {
+  LV_CHECK_OBJ(obj, &lv_obj_class, return);
+  lv_obj_set_local_style_prop(obj, (lv_style_prop_t)(pk & 0xFF), lvbe_style_value(pk >> 8, value), selector);
+}
+
+static intptr_t lvbe_obj_get_style_prop(lv_obj_t * obj, int32_t pk, lv_part_t part) {
+  LV_CHECK_OBJ(obj, &lv_obj_class, return 0);
+  lv_style_value_t v = lv_obj_get_style_prop(obj, part, (lv_style_prop_t)(pk & 0xFF));
+  switch (pk >> 8) {
+    case LV_SKIND_U8:     return (uint8_t) v.num;
+    case LV_SKIND_U16:    return (uint16_t) v.num;
+    case LV_SKIND_BOOL:   return v.num != 0;
+    case LV_SKIND_COLOR:  return v.color.blue | (v.color.green << 8) | (v.color.red << 16);
+    case LV_SKIND_PTR:    return (intptr_t) v.ptr;
+    default:              return v.num;
+  }
+}
+
+static void lvbe_style_set_prop(lv_style_t * style, int32_t pk, intptr_t value) {
+  lv_style_set_prop(style, (lv_style_prop_t)(pk & 0xFF), lvbe_style_value(pk >> 8, value));
+}
+
+// native closure, upvals: 0=func, 1=return type, 2=arg type, 3=pk
+// inserts `pk` as second argument (after self) and calls `be_call_c_func`
+static int lv_x_call_style(bvm *vm) {
+  be_getupval(vm, 0, 0);
+  void * func = be_tocomptr(vm, -1);
+  be_getupval(vm, 0, 1);
+  const char * return_type = be_tostring(vm, -1);
+  be_getupval(vm, 0, 2);
+  const char * arg_type = be_tostring(vm, -1);
+  be_getupval(vm, 0, 3);
+  int32_t pk = be_toint(vm, -1);
+  be_pop(vm, 4);
+
+  // shift arguments 2..top by one and put `pk` at index 2
+  int32_t top = be_top(vm);
+  be_pushnil(vm);
+  for (int32_t i = top; i >= 2; i--) {
+    be_moveto(vm, i, i + 1);
+  }
+  be_pushint(vm, pk);
+  be_moveto(vm, -1, 2);
+  be_pop(vm, 1);
+  return be_call_c_func(vm, func, return_type, arg_type);
+}
+
+// Try to resolve a generic style accessor for class `class_name`
+// Returns true and pushes a native closure if found
+static bbool lv_style_member(bvm *vm, const char * class_name, const char * name) {
+  uint32_t flag;
+  size_t verb_len;
+  if (strcmp(class_name, "lv_obj") == 0) {
+    if (strncmp(name, "set_style_", 10) == 0)       { flag = LV_SPROP_OBJ_SET;    verb_len = 10; }
+    else if (strncmp(name, "get_style_", 10) == 0)  { flag = LV_SPROP_OBJ_GET;    verb_len = 10; }
+    else { return bfalse; }
+  } else if (strcmp(class_name, "lv_style") == 0 && strncmp(name, "set_", 4) == 0) {
+    flag = LV_SPROP_STYLE_SET;
+    verb_len = 4;
+  } else {
+    return bfalse;
+  }
+  const char * rest = name + verb_len;
+
+  // binary search in `lv_style_props`, sorted by name
+  const lv_style_ntv_prop_t * p = NULL;
+  int32_t low = 0;
+  int32_t high = (int32_t)LV_STYLE_PROPS_NB - 1;
+  while (low <= high) {
+    int32_t mid = (low + high) / 2;
+    int32_t comp = strcmp(rest, &lv_method_names[lv_style_props[mid].name]);
+    if (comp < 0)       { high = mid - 1; }
+    else if (comp > 0)  { low = mid + 1; }
+    else                { p = &lv_style_props[mid]; break; }
+  }
+  if (p == NULL || ((p->info >> 5) & flag) == 0) { return bfalse; }
+
+  const lv_style_ntv_type_t * t = &lv_style_types[p->info & 0x1F];
+  char arg_type[48];
+  const char * return_type = "";
+  const void * func;
+  if (flag == LV_SPROP_OBJ_SET) {
+    snprintf(arg_type, sizeof(arg_type), "(lv.obj)i%si", t->value_arg);
+    func = (const void *) &lvbe_obj_set_style_prop;
+  } else if (flag == LV_SPROP_OBJ_GET) {
+    snprintf(arg_type, sizeof(arg_type), "(lv.obj)ii");
+    return_type = t->return_type;
+    func = (const void *) &lvbe_obj_get_style_prop;
+  } else {
+    snprintf(arg_type, sizeof(arg_type), "(lv.style)i%s", t->value_arg);
+    func = (const void *) &lvbe_style_set_prop;
+  }
+
+  be_pushntvclosure(vm, &lv_x_call_style, 4);   // 4 upvals
+  be_pushcomptr(vm, (void *) func);
+  be_setupval(vm, -2, 0);
+  be_pop(vm, 1);
+  be_pushstring(vm, return_type);
+  be_setupval(vm, -2, 1);
+  be_pop(vm, 1);
+  be_pushstring(vm, arg_type);
+  be_setupval(vm, -2, 2);
+  be_pop(vm, 1);
+  be_pushint(vm, p->prop | (t->kind << 8));
+  be_setupval(vm, -2, 3);
+  be_pop(vm, 1);
+  return btrue;
+}
+
 // virtual method, arg1: instance, arg2: name of method
 int lv_x_member(bvm *vm) {
   int32_t argc = be_top(vm); // Get the number of arguments
@@ -161,30 +339,30 @@ int lv_x_member(bvm *vm) {
       // look for class descriptor
       int32_t class_idx = be_map_bin_search(class_name, &lv_classes[0].name, sizeof(lv_classes[0]), lv_classes_size);
       if (class_idx >= 0) {
-        const be_ntv_func_def_t * methods_calls = lv_classes[class_idx].func_table;
-        size_t methods_size = lv_classes[class_idx].size;
-
-        int32_t method_idx = be_map_bin_search(method_name, methods_calls, sizeof(be_ntv_func_def_t), methods_size);
-        if (method_idx >= 0) {
+        const lv_ntv_method_t * method = lv_method_find(&lv_classes[class_idx], method_name);
+        if (method != NULL) {
           // method found
-          const be_ntv_func_def_t * method = &methods_calls[method_idx];
-          // berry_log_C("lv_x_member method found func=%p return_type=%s arg_type=%s", method->func, method->return_type, method->arg_type);
+          const lv_ntv_sig_t * sig = &lv_method_sigs[method->sig & LV_METHOD_SIG_MASK];
           // push native closure
           be_pushntvclosure(vm, &lv_x_call_c, 3);   // 3 upvals
 
-          be_pushcomptr(vm, method->args.func);
+          be_pushcomptr(vm, (void*) method->func);
           be_setupval(vm, -2, 0);
           be_pop(vm, 1);
 
-          be_pushstring(vm, method->args.return_type);
+          be_pushstring(vm, sig->return_type);
           be_setupval(vm, -2, 1);
           be_pop(vm, 1);
 
-          be_pushstring(vm, method->args.arg_type);
+          be_pushstring(vm, sig->arg_type);
           be_setupval(vm, -2, 2);
           be_pop(vm, 1);
 
           // all good
+          be_return(vm);
+        }
+        // generic style accessors for `lv_obj` and `lv_style`
+        if (lv_style_member(vm, class_name, method_name)) {
           be_return(vm);
         }
       }
@@ -307,11 +485,62 @@ extern const size_t lv0_constants_size;
 extern const be_ctypes_class_by_name_t be_ctypes_lvgl_classes[];
 extern const size_t be_ctypes_lvgl_classes_size;
 
+extern const lv_const_group_t lv0_constants_groups[];
+extern const size_t lv0_constants_groups_size;
+
+#define LV_CONST_GROUP_PREFIX_MAX   15      // must match CONST_GROUP_MAX_PREFIX_LEN in tools/convert.py
+
+int lv0_constants_as_hash(bvm *vm);     // defined below
+
+/*********************************************************************************************\
+ * Search constants grouped by prefix, ex: `STYLE_BG_COLOR` is "BG_COLOR" in group "STYLE"
+ *
+ * Supports the same encodings as `be_const_member_dual()` for int, `$` string,
+ * `&` comptr and `@` native function (the generator only groups these).
+ * Returns true and pushes the value if found.
+\*********************************************************************************************/
+static bbool lv0_member_grouped(bvm *vm, const char * needle) {
+  const char * sep = strchr(needle, '_');
+  if (sep == NULL) { return bfalse; }
+  size_t prefix_len = sep - needle;
+  if (prefix_len == 0 || prefix_len > LV_CONST_GROUP_PREFIX_MAX) { return bfalse; }
+  char prefix[LV_CONST_GROUP_PREFIX_MAX + 1];
+  memcpy(prefix, needle, prefix_len);
+  prefix[prefix_len] = 0;
+
+  int32_t g = be_map_bin_search(prefix, &lv0_constants_groups[0].prefix, sizeof(lv0_constants_groups[0]), lv0_constants_groups_size);
+  if (g < 0) { return bfalse; }
+  const lv_const_group_t * group = &lv0_constants_groups[g];
+  int32_t idx = be_map_bin_search(sep + 1, &group->members[0].name, sizeof(group->members[0]), group->size);
+  if (idx < 0) { return bfalse; }
+
+  const be_const_member_t * m = &group->members[idx];
+  switch (m->name[0]) {
+    case '$': be_pushstring(vm, (const char*) m->value);           break;
+    case '&': be_pushcomptr(vm, (void*) m->value);                 break;
+    case '@': be_pushntvfunction(vm, (bntvfunc) m->value);         break;
+    default:  be_pushint(vm, m->value);                            break;
+  }
+  return btrue;
+}
+
 int lv0_member(bvm *vm);
 int lv0_member(bvm *vm) {
   // first try the standard way
   if (be_const_module_member(vm, lv0_constants, lv0_constants_size)) {
     be_return(vm);
+  }
+  // then constants grouped by prefix
+  if (be_top(vm) == 1 && be_isstring(vm, 1)) {
+    const char * needle = be_tostring(vm, 1);
+    if (lv0_member_grouped(vm, needle)) {
+      be_return(vm);
+    }
+    // `lv._constants()` returns a map of all int constants (see tools/lv_export_const.be)
+    if (strcmp(needle, "_constants") == 0) {
+      be_pushntvfunction(vm, lv0_constants_as_hash);
+      be_return(vm);
+    }
   }
   // try alternative members
   int32_t argc = be_top(vm); // Get the number of arguments
@@ -372,18 +601,37 @@ int lv0_member(bvm *vm) {
 /*********************************************************************************************\
  * Return a hash of all LV int constants
 \*********************************************************************************************/
+// add one int constant to the map at top of stack, skip non-int (string, pointer, function)
+static void lv0_constants_hash_add(bvm *vm, const char * prefix, const be_const_member_t * m) {
+  char first_char = m->name[0];
+  if ( !(first_char >= 'a' && first_char <='z') && !(first_char >= 'A' && first_char <='Z') ) {
+    return;
+  }
+  if (prefix) {
+    char name[64];
+    snprintf(name, sizeof(name), "%s_%s", prefix, m->name);   // rebuild full name, ex: "STYLE" + "BG_COLOR"
+    be_pushstring(vm, name);
+  } else {
+    be_pushstring(vm, m->name);
+  }
+  be_pushint(vm, m->value);
+  be_data_insert(vm, -3);
+  be_pop(vm, 2);
+}
+
+// `lv._constants()` returns a map of all int constants with their numerical value
+// used by `tools/lv_export_const.be`
 int lv0_constants_as_hash(bvm *vm) {
   be_newobject(vm, "map");
 
-  for (int i = 0; i < lv0_constants_size; i++) {
-    char first_char = lv0_constants[i].name[0];
-    if ( !(first_char >= 'a' && first_char <='z') && !(first_char >= 'A' && first_char <='Z') ) {
-      continue;
+  for (size_t i = 0; i < lv0_constants_size; i++) {
+    lv0_constants_hash_add(vm, NULL, &lv0_constants[i]);
+  }
+  for (size_t g = 0; g < lv0_constants_groups_size; g++) {
+    const lv_const_group_t * group = &lv0_constants_groups[g];
+    for (size_t i = 0; i < group->size; i++) {
+      lv0_constants_hash_add(vm, group->prefix, &group->members[i]);
     }
-    be_pushstring(vm, lv0_constants[i].name);
-    be_pushint(vm, lv0_constants[i].value);
-    be_data_insert(vm, -3);
-    be_pop(vm, 2);
   }
   be_pop(vm, 1);
   be_return(vm);

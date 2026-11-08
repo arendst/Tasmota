@@ -54,6 +54,10 @@ class LVGLPreprocessor:
     def clean_source(self, raw: str) -> str:
         """Clean source code by removing comments, preprocessor directives, etc."""
         raw = self.comment_remover(raw)
+
+        # Remove `LV_DEPRECATED("msg")` / `LV_DEPRECATED(MSG_MACRO)` attributes (LVGL 9.6+)
+        # so deprecated-but-still-available functions are kept in the mapping
+        raw = re.sub(r'\bLV_DEPRECATED\s*\((?:"(?:\\.|[^"\\])*"|[^()"])*\)', ' ', raw)
         
         # Normalize line endings
         raw = re.sub(r'\r\n', '\n', raw)
@@ -150,7 +154,8 @@ class LVGLPreprocessor:
         
         # Extract LV_EXPORT_CONST_INT constants
         const_ints = re.findall(r'LV_EXPORT_CONST_INT\((\w+)\)', source, flags=re.DOTALL)
-        enum_values.update(const_ints)
+        enum_values.update(c for c in const_ints
+                           if not any(c.startswith(prefix) for prefix in self.enum_exclude_prefixes))
         
         return enum_values
 

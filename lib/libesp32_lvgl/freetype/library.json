@@ -22,6 +22,7 @@
 
         "+<base/ftbbox.c>",
         "+<base/ftglyph.c>",
+        "+<base/ftmm.c>",
 
         "+<base/ftbdf.c>",
 

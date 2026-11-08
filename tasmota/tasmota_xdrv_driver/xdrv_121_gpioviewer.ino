@@ -184,7 +184,12 @@ int GetPinMode(uint32_t pin) {
 
 #ifdef ESP32
 #ifdef SOC_ADC_SUPPORTED
+// IDF 5.x and earlier: soc/adc_periph.h; IDF 6.x+: moved to hal/adc_periph.h
+#if __has_include("soc/adc_periph.h")
 #include "soc/adc_periph.h"
+#else
+#include "hal/adc_periph.h"
+#endif
 
 int8_t GVDigitalPinToAnalogChannel(uint8_t pin) {
   uint8_t channel = 0;

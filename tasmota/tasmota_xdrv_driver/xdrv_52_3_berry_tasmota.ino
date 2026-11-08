@@ -22,6 +22,7 @@
 
 #include <berry.h>
 #include <Wire.h>
+#include "esp_wifi.h"
 
 const uint32_t BERRY_MAX_LOGS = 16;   // max number of print output recorded when outside of REPL, used to avoid infinite grow of logs
 const uint32_t BERRY_MAX_REPL_LOGS = 50;   // max number of print output recorded when inside REPL
@@ -204,6 +205,50 @@ extern "C" {
     be_return(vm);
   }
 
+  // Berry: tasmota.rtc_utc_ms([b:bytes]) -> int64 or bytes or nil
+  //
+  // UTC time in milliseconds since 1970-01-01, monotonic, see RtcUtcMillis()
+  // - without argument: returns a new int64 instance, or nil if int64 is not compiled
+  // - with a bytes() argument: resizes it to 8 bytes, fills it with the value as
+  //   little endian uint64 and returns it. Read it with `b.get(0,4)` and `b.get(4,4)`.
+  //   No allocation if the buffer has already room for 8 bytes, e.g. a reused `bytes(8)`.
+  // int64 instances are immutable by convention, so they are never filled in place.
+  int32_t l_rtc_utc_ms(struct bvm *vm);
+  int32_t l_rtc_utc_ms(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    uint64_t utc_ms = RtcUtcMillis();
+    if (top >= 1 && !be_isnil(vm, 1)) {
+      if (!be_isbytes(vm, 1)) {
+        be_raise(vm, kTypeError, "bytes expected");
+      }
+      // b.resize(8), allocates only if the buffer is too small
+      be_getmember(vm, 1, "resize");
+      be_pushvalue(vm, 1);
+      be_pushint(vm, 8);
+      be_call(vm, 2);
+      be_pop(vm, 3);
+      size_t len = 0;
+      uint8_t * buf = (uint8_t*) be_tobytes(vm, 1, &len);
+      if (buf == nullptr || len < 8) {
+        be_raise(vm, "internal_error", "cannot resize buffer");
+      }
+      for (uint32_t i = 0; i < 8; i++) {
+        buf[i] = (uint8_t)(utc_ms >> (8 * i));
+      }
+      be_pushvalue(vm, 1);
+      be_return(vm);
+    }
+    if (be_getglobal(vm, "int64")) {
+      be_getmember(vm, -1, "fromu32");
+      be_pushint(vm, (int32_t)(uint32_t)utc_ms);
+      be_pushint(vm, (int32_t)(uint32_t)(utc_ms >> 32));
+      be_call(vm, 2);         // int64.fromu32(low, high)
+      be_pop(vm, 2);
+      be_return(vm);
+    }
+    be_return_nil(vm);
+  }
+
   // Berry: tasmota.memory() -> map
   //
   int32_t l_memory(struct bvm *vm);
@@ -244,6 +289,20 @@ extern "C" {
     be_return(vm);
   }
 
+#ifdef USE_HEAP_MAP
+  // Berry: tasmota.heapmap([label:string [, header:bool]]) -> nil
+  //
+  // Log a heap map row with the given label (default "berry"), header forces the table header
+  int32_t l_heapmap(struct bvm *vm);
+  int32_t l_heapmap(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    const char *label = (top >= 1 && be_isstring(vm, 1)) ? be_tostring(vm, 1) : "berry";
+    bool header = (top >= 2) ? be_tobool(vm, 2) : false;
+    HeapMap(label, header);
+    be_return_nil(vm);
+  }
+#endif  // USE_HEAP_MAP
+
   // Berry: tasmota.wifi() -> map
   //
   int32_t l_wifi(struct bvm *vm);
@@ -283,6 +342,42 @@ extern "C" {
         be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
         be_map_insert_str(vm, "ssid", SettingsTextEscaped(SET_STASSID1 + Settings->sta_active).c_str());
         be_map_insert_str(vm, "bssid", WiFi.BSSIDstr().c_str());
+        be_map_insert_int(vm, "channel", WiFi.channel());
+        wifi_ap_record_t ap_info;
+        if (ESP_OK == esp_wifi_sta_get_ap_info(&ap_info)) {
+          const char * security = "";
+          switch (ap_info.authmode) {
+            case WIFI_AUTH_OPEN:
+              security = "open";  break;
+            case WIFI_AUTH_WEP:
+              security = "wep";   break;
+            case WIFI_AUTH_WPA_PSK:
+              security = "wpa";   break;
+            case WIFI_AUTH_WPA2_PSK:
+            case WIFI_AUTH_WPA_WPA2_PSK:
+            case WIFI_AUTH_WPA2_ENTERPRISE:
+              security = "wpa2";  break;
+            case WIFI_AUTH_WPA3_PSK:
+            case WIFI_AUTH_WPA2_WPA3_PSK:
+            case WIFI_AUTH_WPA3_ENT_192:
+          #if ESP_IDF_VERSION_MAJOR < 6
+            case WIFI_AUTH_WPA3_EXT_PSK:
+            case WIFI_AUTH_WPA3_EXT_PSK_MIXED_MODE:
+          #endif
+              security = "wpa3"; break;
+            default:                          break;
+          }
+          be_map_insert_str(vm, "security", security);
+          // highest PHY mode supported by the access point
+          const char * phy = "";
+          if (ap_info.phy_11ax)       { phy = "11ax"; }
+          else if (ap_info.phy_11ac)  { phy = "11ac"; }
+          else if (ap_info.phy_11n)   { phy = "11n"; }
+          else if (ap_info.phy_11g)   { phy = "11g"; }
+          else if (ap_info.phy_11b)   { phy = "11b"; }
+          else if (ap_info.phy_11a)   { phy = "11a"; }
+          be_map_insert_str(vm, "phy", phy);
+        }
       }
     }
     be_pop(vm, 1);

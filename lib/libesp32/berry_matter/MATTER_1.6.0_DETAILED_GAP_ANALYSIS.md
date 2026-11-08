@@ -219,6 +219,24 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 
 **Tasmota Impact**: Minimal. Current implementation in `Matter_Plugin_2_Sensor_Air_Quality.be` does **not implement** Uncertainty attribute at all (neither reads nor validates), so the v1.6.1 change (removing constraints) has zero code impact. If Uncertainty is added in future, no constraint checks are needed.
 
+### 3.2 Color Control (0x0300) — Light conformance (L1)
+
+**Status**: ⚠️ Partial (implemented without transitions).
+
+The Color Control server is shared in `Matter_Plugin_3_Light1.be`, gated by `CC_FEAT` (Light1 = 0, unchanged dimmer). FeatureMap = ColorCapabilities: `light2` 0x10 (CT), `light3` 0x09 (HS + XY), `light5` 0x19 (HS + XY + CT).
+
+**Implemented:**
+- Attributes: RemainingTime 0x0002 (always 0), CurrentX/CurrentY (XY derived from HS through `light_state`), Options 0x000F (writable, bit 0 ExecuteIfOff only, volatile), NumberOfPrimaries 0x0010 (0), CoupleColorTempToLevelMinMireds 0x400D (= physical min), StartUpColorTemperatureMireds 0x4010 (writable, nullable, persisted as `ct_startup`, applied when Matter starts)
+- AcceptedCommandList: `light2` 0x0A/0x47/0x4B/0x4C, `light3` 0x00..0x09/0x47, `light5` 0x00..0x0A/0x47/0x4B/0x4C
+- Commands: field validation (INVALID_COMMAND / CONSTRAINT_ERROR), ExecuteIfOff with OptionsMask/OptionsOverride, Step\* and MoveTo\* applied instantly, ColorMode follows the last command
+
+**Documented deviations:**
+- No transitions: TransitionTime is ignored, Move\* and StopMoveStep are accepted without effect. Expected TC failures: TC_CC_3_1, 3_2, 3_3 (2c/3c), 4_1, 4_2, 4_3, 6_2, and TC_CC_2_2 steps 34–43 on `light2`/`light5` (no RemainingTime reports)
+- No CT on `light3` (RGB-only hardware), although CT is mandatory for 0x010D
+- Cluster revision kept at 6: quieter reporting (Q, revision 7) is not implemented
+- Level Control AcceptedCommandList, Options and ExecuteIfOff left for a follow-up
+- MQTT bridges report HS-derived XY after the RESULT arrives, not the exact commanded XY
+
 ---
 
 ## Part 4: Implementation Roadmap (Phases 1-4)
@@ -346,7 +364,9 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 | File | Changes | Phase |
 |---|---|---|
 | `Matter_Plugin_1_Root.be` | DataModelRevision (18→20), complete Access Control read, add GKM attributes | 1 |
-| `Matter_Plugin_0.be` | CLUSTER_REVISIONS: 0x003F: 2→4; FEATURE_MAPS updates for new clusters | 1 |
+| `Matter_Plugin_0.be` | CLUSTER_REVISIONS: 0x003F: 2→4; FEATURE_MAPS updates for new clusters; generic `get_accepted_commands()` hook (AcceptedCommandList) ✅ | 1 |
+| `Matter_Plugin_3_Light1.be` | Shared Color Control server gated by `CC_FEAT` (§3.2) ✅ | — |
+| `Matter_Plugin_4_Light2.be`, `Matter_Plugin_4_Light3.be`, `Matter_Plugin_4_Light5.be` | Color Control FeatureMap/attribute lists, Light3 HS + XY conversion, CT code duplication removed (§3.2) ✅ | — |
 | `Matter_Plugin_z_All.be` | No changes (auto-discovery of new plugins) | — |
 
 ---
@@ -362,6 +382,7 @@ The Tasmota Matter implementation is currently aligned with **Matter 1.4.1** (Da
 | **Doorbell** | None | 0x0148/0x0141/0x0143 | ❌ Missing | 1 week |
 | **Access Control** | Partial | Complete read + rev updates | ⚠️ Partial | 3-5 days |
 | **Group Key Management** | Rev 2 | Rev 4 | ⚠️ Outdated | 1 week |
+| **Color Control** | HS or CT only, no XY | HS + XY + CT, Step\*, Options, StartUp CT, AcceptedCommandList; no transitions, revision 6 kept (§3.2) | ⚠️ Partial | Transitions: future |
 | **Groupcast (0x0006)** | Skeleton | Full protocol (disabled by default) | ⏸️ Out of scope | — |
 
 ---

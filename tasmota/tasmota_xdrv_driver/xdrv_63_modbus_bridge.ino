@@ -782,6 +782,11 @@ void ModbusTCPHandle(void)
         {
           // For functioncode 15 & 16 ignore bytecount, modbusBridgeModbus does calculate this
           uint8_t dataStartByte = mbfunctioncode <= 6 ? 10 : 13;
+          if (dataStartByte > buf_len) {
+            AddLog(LOG_LEVEL_ERROR, PSTR("MBS: data start larger than buffer"));
+            return;
+          }
+
           uint16_t byteCount = (buf_len - dataStartByte);
           modbusBridge.byteCount = 2;
           modbusBridge.dataCount = 1;
@@ -859,7 +864,7 @@ void CmndModbusBridgeSend(void)
     if (modbusBridge.command_data == nullptr)
     {
       // Let's store the command data
-      modbusBridge.command_data = (char *)malloc(XdrvMailbox.data_len);
+      modbusBridge.command_data = (char *)malloc(XdrvMailbox.data_len + 1);
 
       if (modbusBridge.command_data == nullptr)
       {
@@ -870,6 +875,7 @@ void CmndModbusBridgeSend(void)
       }
 
       memcpy(modbusBridge.command_data, XdrvMailbox.data, XdrvMailbox.data_len);
+      modbusBridge.command_data[XdrvMailbox.data_len] = 0;  // data_len excludes the terminator; JsonParser needs a NUL terminated string
     }
     else
     {

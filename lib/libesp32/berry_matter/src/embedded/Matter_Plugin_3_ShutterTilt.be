@@ -255,5 +255,16 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
 
   end
 
+  #############################################################
+  # get_accepted_commands
+  #
+  # Window Covering: lift commands, plus GoToTiltPercentage
+  def get_accepted_commands(cluster)
+    if cluster == 0x0102
+      return bytes("0001020508")
+    end
+    return super(self).get_accepted_commands(cluster)
+  end
+
 end
 matter.Plugin_ShutterTilt = Matter_Plugin_ShutterTilt

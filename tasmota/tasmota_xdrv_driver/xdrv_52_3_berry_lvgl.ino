@@ -41,7 +41,7 @@
 // Berry easy logging
 extern "C" {
   extern void berry_log_C(const char * berry_buf, ...);
-  extern const be_ntv_class_def_t lv_classes[];
+  extern const lv_ntv_class_def_t lv_classes[];
   extern const size_t lv_classes_size;
 }
 
@@ -111,7 +111,7 @@ public:
 };
 LVBE_globals lvbe;
 
-extern void start_lvgl(const char * uconfig);
+extern bool start_lvgl(const char * uconfig);
 extern void lv_ex_get_started_1(void);
 
 extern "C" {
@@ -496,7 +496,10 @@ extern "C" {
       if (argc == 1) {
         uconfig = be_tostring(vm, 1);
       }
-      start_lvgl(uconfig);
+      if (!start_lvgl(uconfig)) {
+        // abort here, otherwise any following lv.* call crashes with LVGL not initialized
+        be_raise(vm, "internal_error", "LVGL could not start, check display configuration (display.ini, Option A3)");
+      }
 
       // call lv.splash_remove() to kill any current splash screen
       if (be_getglobal(vm, "lv")) {
@@ -612,8 +615,8 @@ extern "C" {
     if (f) {
       lvgl_set_screenshot_file(&f);
 
-      uint32_t bmp_width = lv_display_get_horizontal_resolution(nullptr);
-      uint32_t bmp_height = lv_display_get_vertical_resolution(nullptr);
+      uint32_t bmp_width = lv_display_get_horizontal_resolution(lv_display_get_default());
+      uint32_t bmp_height = lv_display_get_vertical_resolution(lv_display_get_default());
 
       // write BMP header
       static const uint8_t bmp_sign[] = { 0x42, 0x4d };   // BM = Windows

@@ -767,7 +767,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
             return;
         }
         /*Tabview pages*/
-        else if(lv_obj_check_type(lv_obj_get_parent(parent), &lv_tabview_class)) {
+        else if(lv_obj_get_parent(parent) && lv_obj_check_type(lv_obj_get_parent(parent), &lv_tabview_class)) {    /* LVGL 9.6: parent of a screen is NULL, avoid LV_CHECK_ARG warning */
             lv_obj_add_style(obj, &theme->styles.pad_normal, 0);
             lv_obj_add_style(obj, &theme->styles.rotary_scroll, 0);
             lv_obj_add_style(obj, &theme->styles.scrollbar, LV_PART_SCROLLBAR);

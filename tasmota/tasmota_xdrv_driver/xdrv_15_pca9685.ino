@@ -135,7 +135,9 @@ void PCA9685_SetPWM(uint8_t pin, uint16_t pwm, bool inverted) {
   } else {
     PCA9685_SetPWM_Reg(pin, 0, pwm_val);
   }
-  pca9685_pin_pwm_value[pin] = pwm_val;
+  if (pin < 16) {  // Skip 61
+    pca9685_pin_pwm_value[pin] = pwm_val;
+  }
 }
 
 bool PCA9685_Command(void) {

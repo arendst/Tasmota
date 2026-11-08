@@ -40,10 +40,11 @@ class Matter_EventQueued
   var priority
   var data0, data1, data2
   var event_no
-  var epoch_timestamp
+  var epoch_lo, epoch_hi                # posix-ms (UTC milliseconds since 1970) as uint64 low/high 32 bits, avoids keeping an int64 per event
   var raw_tlv                           # content encoded as full TLV
 
-  def init(event_no, endpoint, cluster, event_id, is_urgent, priority, data0, data1, data2)
+  # epoch_buf: optional bytes(8) scratch buffer reused across events to avoid an allocation
+  def init(event_no, endpoint, cluster, event_id, is_urgent, priority, data0, data1, data2, epoch_buf)
     self.event_no = event_no
     self.endpoint = endpoint
     self.cluster = cluster
@@ -53,10 +54,16 @@ class Matter_EventQueued
     # priority
     if (self.priority < 0)                        self.priority = 0                       end
     if (self.priority > 2 #-matter.EVENT_CRITICAL-#)    self.priority = 2 #-matter.EVENT_CRITICAL-#   end
-    # epoch_time
-    self.epoch_timestamp = tasmota.rtc('utc')
-    if (self.epoch_timestamp < 1700000000)
-      self.epoch_timestamp = tasmota.rtc('config_time')    # no valid time, take the last config time
+    # epoch_time in posix-ms
+    if (tasmota.rtc('utc') >= 1700000000)
+      if (epoch_buf == nil)   epoch_buf = bytes(8)    end
+      tasmota.rtc_utc_ms(epoch_buf)                         # UTC with millisecond resolution, little endian uint64
+      self.epoch_lo = epoch_buf.get(0, 4)
+      self.epoch_hi = epoch_buf.get(4, 4)
+    else
+      var epoch_ms = int64(tasmota.rtc('config_time')) * int64(1000)    # no valid time, take the last config time
+      self.epoch_lo = epoch_ms.low32()
+      self.epoch_hi = epoch_ms.high32()
     end
     self.data0 = data0
     self.data1 = data1
@@ -73,7 +80,7 @@ class Matter_EventQueued
   def to_raw_bytes()
     if (self.raw_tlv == nil)
       self.raw_tlv = bytes(64)
-      self.eventreport2raw(self.raw_tlv, self.endpoint, self.cluster, self.event_id, self.is_urgent, self.priority, self.event_no, self.epoch_timestamp, self.data0, self.data1, self.data2)
+      self.eventreport2raw(self.raw_tlv, self.endpoint, self.cluster, self.event_id, self.is_urgent, self.priority, self.event_no, self.epoch_lo, self.epoch_hi, self.data0, self.data1, self.data2)
       # var event_report = matter.EventReportIB()
       # var event_ib = matter.EventDataIB()
       # event_report.event_data = event_ib
@@ -85,7 +92,7 @@ class Matter_EventQueued
       # event_ib.path = event_path
       # event_ib.priority = self.priority
       # event_ib.event_number = self.event_no
-      # event_ib.epoch_timestamp = self.epoch_timestamp
+      # event_ib.epoch_timestamp = int64.fromu32(self.epoch_lo, self.epoch_hi)
       # event_ib.data = matter.TLV.Matter_TLV_struct()
       # if (self.data0 != nil)   event_ib.data.add_obj(0, self.data0)   end
       # if (self.data1 != nil)   event_ib.data.add_obj(1, self.data1)   end
@@ -102,7 +109,7 @@ class Matter_EventQueued
   # 15 = EventReportIB
   #   3501 = EventDataIB
   #     
-  def eventreport2raw(raw, endpoint, cluster, event, is_urgent, priority, event_no, epoch_timestamp, data0, data1, data2)
+  def eventreport2raw(raw, endpoint, cluster, event, is_urgent, priority, event_no, epoch_lo, epoch_hi, data0, data1, data2)
     # open struct EventReportIB
     raw.add(0x15, 1)              # add 15
     # open sturct EventDataIB
@@ -116,9 +123,10 @@ class Matter_EventQueued
     # priority
     raw.add(0x2402, -2)           # add 2402
     raw.add(priority, 1)          # add priority as one byte
-    # EpochTimestamp
-    raw.add(0x2603, -2)           # add 2603
-    raw.add(epoch_timestamp, 4)   # add epoch as 32 bits
+    # EpochTimestamp: posix-ms, uint64 milliseconds since 1970-01-01
+    raw.add(0x2703, -2)           # add 2703
+    raw.add(epoch_lo, 4)          # uint64 low part
+    raw.add(epoch_hi, 4)          # uint64 high part
     # Data struct
     raw.add(0x3507, -2)           # add 3507
 
@@ -259,12 +267,14 @@ class Matter_EventHandler
   # Events
   var counter_event_no                # event number, monotonically increasing even after restarts
   var counter_event_no_persisted      # the nest number persisted for after the restart
+  var epoch_buf                       # bytes(8) scratch buffer for tasmota.rtc_utc_ms(), reused for each event
 
   def init(device)
     self.device = device
     self.queue_debug = []
     self.queue_info = []
     self.queue_critical = []
+    self.epoch_buf = bytes(8)
     self.load_event_no_persisted()    # initializes self.counter_event_no and self.counter_event_no_persisted
   end
 
@@ -466,7 +476,7 @@ class Matter_EventHandler
   # generate a new event
   #
   def publish_event(endpoint, cluster, event_id, is_urgent, priority, data0, data1, data2)
-    var new_event = matter.EventQueued(self.get_next_event_no(), endpoint, cluster, event_id, is_urgent, priority, data0, data1, data2)
+    var new_event = matter.EventQueued(self.get_next_event_no(), endpoint, cluster, event_id, is_urgent, priority, data0, data1, data2, self.epoch_buf)
     if tasmota.loglevel(3)
       var data_str = ''
       if (data0 != nil)   data_str = str(data0)             end

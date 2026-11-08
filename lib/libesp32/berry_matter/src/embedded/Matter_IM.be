@@ -216,7 +216,11 @@ class Matter_IM
     var message = self.find_sendqueue_by_exchangeid(msg.exchange_id)
     if status == 0x00 #-matter.SUCCESS-#
       if message
-        return message.status_ok_received(msg)         # re-arm the sending of next packets for the same exchange
+        var ret = message.status_ok_received(msg)     # re-arm the sending of next packets for the same exchange
+        if message.finished
+          self.remove_sendqueue_by_exchangeid(msg.exchange_id)
+        end
+        return ret
       else
         log(format("MTR: >OK        (%6i) exch=%i not found", msg.session.local_session_id, msg.exchange_id), 4)      # don't show 'SUCCESS' to not overflow logs with non-information
       end

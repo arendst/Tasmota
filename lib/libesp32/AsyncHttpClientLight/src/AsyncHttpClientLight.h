@@ -71,6 +71,11 @@
 #define HTTPC_ERROR_READ_TIMEOUT         (-11)
 #endif
 
+// sync call refused: an async job of this client is still running
+#ifndef HTTPC_ERROR_ASYNC_BUSY
+#define HTTPC_ERROR_ASYNC_BUSY           (-12)
+#endif
+
 #ifndef HTTP_TCP_BUFFER_SIZE
 #define HTTP_TCP_BUFFER_SIZE 1460
 #endif
@@ -107,7 +112,7 @@ public:
   void setAuthorization(const char * user, const char * password);
   void setAuthorization(const char * auth);
   void setConnectTimeout(int32_t connectTimeout) { _connectTimeout = connectTimeout; }
-  void setTimeout(uint16_t timeout);
+  void setTimeout(uint32_t timeout);
   void useHTTP10(bool useHTTP10) { _useHTTP10 = useHTTP10; _reuse = !useHTTP10; }
   void setFollowRedirects(followRedirects_t follow) { _followRedirects = follow; }
   void setRedirectLimit(uint16_t limit) { _redirectLimit = limit; }
@@ -170,6 +175,9 @@ public:
   void asyncAbort();
 
 private:
+#ifdef ESP32
+  void asyncWaitDone();     // abort + wait for an in-flight async job
+#endif
   int readBodyToStreamString(StreamString& s, int size_limit);
 
   struct IClientLite {
@@ -181,7 +189,7 @@ private:
     virtual int    available() = 0;
     virtual bool   connected() = 0;
     virtual void   stop() = 0;
-    virtual void   setTimeout(uint16_t ms) = 0;
+    virtual void   setTimeout(uint32_t ms) = 0;
   };
 
   class AsyncTcpAdapter : public IClientLite {
@@ -194,14 +202,14 @@ private:
     size_t write(const uint8_t* data, size_t len) override;
     int    read(uint8_t* buf, size_t len) override;
     int    available() override;
-    bool   connected() override { return _isConnected && _fd >= 0; }
+    bool   connected() override;
     void   stop() override;
-    void   setTimeout(uint16_t ms) override { _rwTimeout = ms; }
+    void   setTimeout(uint32_t ms) override { _rwTimeout = ms; }
 
   private:
     int      _fd = -1;
     bool     _isConnected = false;
-    uint16_t _rwTimeout = 5000;
+    uint32_t _rwTimeout = 5000;
 
     bool connect_fd(const struct sockaddr_in& sa, int32_t timeout_ms);
   };
@@ -221,7 +229,7 @@ private:
     int    available() override;
     bool   connected() override;
     void   stop() override;
-    void   setTimeout(uint16_t ms) override;
+    void   setTimeout(uint32_t ms) override;
 
   private:
     std::unique_ptr<BearSSL::WiFiClientSecure_light> _cli;
@@ -235,6 +243,8 @@ private:
   int  handleHeaderResponse();
   int  writeToStreamDataBlock(Stream * stream, int size);
   bool writeAllWithOneReconnect(const uint8_t* data, size_t len, bool allow_retry_if_zero_sent);
+
+  enum AsyncOp_t : uint8_t { AOP_NONE=0, AOP_GET=1, AOP_POST=2 };
 
 #ifdef ESP32
   struct Job {
@@ -250,7 +260,7 @@ private:
   int  runJob(Job::Fn fn, void* arg);
 
   // Non-blocking job start (for async mode): 1=queued, 0=busy, <0=error.
-  int  startJob(Job::Fn fn, void* arg);
+  int  startJob(Job::Fn fn, void* arg, AsyncOp_t op);
 #endif
 
   struct SendBufArg { AsyncHttpClientLight* self; const char* method; uint8_t* payload; size_t size; };
@@ -284,7 +294,7 @@ private:
   String _headers;
   String _userAgent = F("AsyncHttpClientLight");
   String _base64Authorization;
-  uint16_t _tcpTimeout = 5000;
+  uint32_t _tcpTimeout = 5000;
   int32_t  _connectTimeout = 10000;
   bool _reuse = true;
   bool _canReuse = false;
@@ -318,7 +328,6 @@ private:
   // -------------------------
   // Async internal state
   // -------------------------
-  enum AsyncOp_t : uint8_t { AOP_NONE=0, AOP_GET=1, AOP_POST=2 };
   AsyncOp_t     _asyncOp = AOP_NONE;
   AsyncState_t  _asyncState = ASYNC_IDLE;
   volatile bool _asyncAbortReq = false;

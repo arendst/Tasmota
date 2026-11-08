@@ -58,6 +58,9 @@ typedef struct bblockinfo {
     int breaklist;    /* break list */
     int beginpc;      /* begin pc */
     int continuelist; /* continue list */
+#if BE_DEBUG_VAR_INFO
+    int nvarinfo;     /* number of variable debug entries before this block */
+#endif
 } bblockinfo;
 
 typedef struct bfuncinfo {

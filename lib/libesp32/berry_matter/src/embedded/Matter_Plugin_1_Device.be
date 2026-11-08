@@ -320,6 +320,10 @@ class Matter_Plugin_Device : Matter_Plugin
         else
           return tlv_solo.set(0x08 #-TLV.BOOL-#, 1)     # by default we are reachable
         end
+      elif attribute == 0xFFFA && self.BRIDGE && self.http_remote != nil  # EventList
+        var events = matter.TLV.Matter_TLV_array()
+        events.add_TLV(nil, 0x06 #-TLV.U4-#, 0x03)     # ReachableChanged
+        return events
       end
 
     end

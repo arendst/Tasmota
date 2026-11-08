@@ -8,6 +8,7 @@
 
 #ifdef ESP32
 #ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+#if __has_include("esp_hosted.h")
 #ifndef FIRMWARE_SAFEBOOT
 /*********************************************************************************************\
  * Support for Hosted MCU to be used on ESP32-H2 and ESP32-P4
@@ -399,5 +400,11 @@ bool Xdrv84(uint32_t function) {
 }
 
 #endif  // FIRMWARE_SAFEBOOT
+#else   // !__has_include("esp_hosted.h") - stub implementations for platforms without Hosted MCU support
+// Stub functions so callers compile on platforms where esp_hosted.h is unavailable (e.g. ESP32-C3 with IDF 6.x)
+String GetHostedFwVersion(uint32_t device) { return String(""); }
+String GetHostedMCU(void) { return String(""); }
+void HostedMCUStatus(void) {}
+#endif  // __has_include("esp_hosted.h")
 #endif  // CONFIG_ESP_WIFI_REMOTE_ENABLED
 #endif  // ESP32

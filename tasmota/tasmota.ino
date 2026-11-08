@@ -97,6 +97,7 @@
 #ifdef ESP32
 #include "include/tasconsole.h"
 #if SOC_USB_SERIAL_JTAG_SUPPORTED
+#include "soc/io_mux_reg.h"                 // USB_INT_PHY0_Dx_GPIO_NUM
 #include "hal/usb_serial_jtag_ll.h"
 #include "esp_private/rtc_clk.h"
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
@@ -222,7 +223,7 @@ WiFiUDP PortUdp;                            // UDP Syslog and Alexa
     CONFIG_IDF_TARGET_ESP32S2 ||            // support USB via USBCDC
     CONFIG_IDF_TARGET_ESP32S3               // support USB via HWCDC using JTAG interface or USBCDC
 */
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
 
 //#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_CDC_CONSOLE
 #ifdef USE_USB_CDC_CONSOLE
@@ -251,11 +252,11 @@ TASCONSOLE TasConsole{Serial};
 bool tasconsole_serial = true;
 //#warning **** TasConsole uses Serial ****
 #endif  // USE_USB_CDC_CONSOLE
-#else   // No ESP32C3, S2 or S3
+#else   // No USB CDC-capable target
 TASCONSOLE TasConsole{Serial};
 bool tasconsole_serial = true;
 //#warning **** TasConsole uses Serial ****
-#endif  // ESP32C3, S2 or S3
+#endif  // USB CDC-capable targets
 
 #else   // No ESP32
 HardwareSerial TasConsole = Serial;         // Only serial interface
@@ -505,7 +506,7 @@ void setup(void) {
   }
 
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32C61 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4 || CONFIG_IDF_TARGET_ESP32S31
 #ifdef USE_USB_CDC_CONSOLE
 
   bool is_connected_to_USB = false;
@@ -521,6 +522,11 @@ void setup(void) {
   is_connected_to_USB = true;      // S2
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
 
+  // Detect if esp-emu, if so disable CDC
+  if (WiFiHelper::macAddress().equals("24:0A:C4:00:00:01")) {
+    is_connected_to_USB = false;
+  }
+
   if (is_connected_to_USB) {
     // TasConsole is already running
 #if !ARDUINO_USB_MODE
@@ -531,6 +537,12 @@ void setup(void) {
   } else {
 #if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
     HWCDCSerial.~HWCDC();       // not needed, deinit CDC
+    // HWCDC::deinit() leaves USB D-/D+ as OUTPUT_OPEN_DRAIN driven LOW (forces host re-enumeration)
+    // No host detected so re-enumeration is not needed: release the pins to high impedance
+    // GPIO_MODE_DISABLE clears output, input and open-drain, so GPIO matrix peripherals (LEDC, RMT...)
+    // can later drive these pins in push-pull mode. Not gpio_reset_pin(): it enables the pull-up on D+
+    gpio_set_direction((gpio_num_t)USB_INT_PHY0_DM_GPIO_NUM, GPIO_MODE_DISABLE);
+    gpio_set_direction((gpio_num_t)USB_INT_PHY0_DP_GPIO_NUM, GPIO_MODE_DISABLE);
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
     // Init command serial console preparing for AddLog use
     Serial.begin(TasmotaGlobal.baudrate);
@@ -563,6 +575,7 @@ void setup(void) {
 #endif  // ESP32
 
   // Ready for AddLog use
+  HEAP_MAP(PSTR("setup"))
 
 //  AddLog(LOG_LEVEL_INFO, PSTR("ADR: Settings %p, Log %p"), Settings, TasmotaGlobal.log_buffer);
 #ifdef ESP32
@@ -585,6 +598,7 @@ void setup(void) {
   SettingsLoad();
   SettingsDelta();
   SettingsMinimum();                           // Set life-saving parameters if out-of-range due to reconfig Settings Area
+  HEAP_MAP(PSTR("settings"))
 
   OsWatchInit();
 
@@ -691,7 +705,7 @@ void setup(void) {
     // and then expand the string.
     SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
     const char* first_spec = strchr(SettingsText(SET_HOSTNAME), '%');
-    const char* second_spec = strchr(first_spec + 1, '%');
+    const char* second_spec = first_spec ? strchr(first_spec + 1, '%') : nullptr;  // #25189 WIFI_HOSTNAME may be a literal without '%'
     bool use_topic_only = (first_spec && !second_spec && ('s' == *(first_spec +1)));  // #24731 Backward compatibility to undocumented single specifier "%s"
     if (use_topic_only || (first_spec && second_spec)) {
       // Two (or more) specifiers: expands first as mqtt topic and second as chip ID
@@ -725,9 +739,11 @@ void setup(void) {
   if (!TasmotaGlobal.no_autoexec) {
     BerryInit();                 // Load preinit.be
   }
+  HEAP_MAP(PSTR("berry"))
 #endif  // USE_BERRY
 
   XdrvXsnsCall(FUNC_PRE_INIT);   // FUNC_PRE_INIT
+  HEAP_MAP(PSTR("preinit"))
 
   TasmotaGlobal.init_state = INIT_GPIOS;
 
@@ -747,6 +763,7 @@ void setup(void) {
 #endif  // ESP8266
 
   XdrvXsnsCall(FUNC_INIT);       // FUNC_INIT
+  HEAP_MAP(PSTR("init"))
 #ifdef USE_SCRIPT
   if (bitRead(Settings->rule_enabled, 0)) Run_Scripter(">BS",3,0);
 #endif  // USE_SCRIPT

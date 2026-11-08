@@ -213,7 +213,7 @@ void DomoticzSettingsLoad(bool erase) {
     Domoticz->Settings.sensor_idx[i] = 0;
   }
 
-#ifndef CONFIG_IDF_TARGET_ESP32P4
+#if !CONFIG_IDF_TARGET_ESP32P4 && !CONFIG_IDF_TARGET_ESP32S31
   // Init any other parameter in struct DzSettings
   Domoticz->Settings.update_timer = Settings->domoticz_update_timer;
   for (uint32_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
@@ -233,7 +233,7 @@ void DomoticzSettingsLoad(bool erase) {
     }
   }
   // *** End Init default values ***
-#endif  // CONFIG_IDF_TARGET_ESP32P4
+#endif  // !CONFIG_IDF_TARGET_ESP32P4 && !CONFIG_IDF_TARGET_ESP32S31
 
   // Try to load key
   if (erase) {

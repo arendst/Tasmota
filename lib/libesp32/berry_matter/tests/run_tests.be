@@ -41,14 +41,17 @@ end
 matter.get_attribute_name = def (cluster, attribute) return nil end
 
 class TestTasmota
-  var utc_time, local_time, now
+  var utc_time, local_time, now, wifi_info
   def init()
     self.utc_time = 1
     self.local_time = 1700000000
     self.now = 0
+    self.wifi_info = {'up': false}
   end
+  def wifi() return self.wifi_info end
   def rtc_utc() return self.utc_time end
   def rtc(mode) return self.local_time end
+  def rtc_utc_ms(b) var v = int64(self.local_time) * int64(1000) if b == nil return v end b.clear() b.add(v.low32(), 4) b.add(v.high32(), 4) return b end
   def millis() return self.now end
   def time_reached(deadline) return self.now >= deadline end
   def loglevel(level) return false end
@@ -204,9 +207,10 @@ class TestGarageEvents
 end
 
 class TestGarageDevice
-  var tick, events
+  var tick, events, disable_bridge_mode
   def init()
     self.tick = 1
+    self.disable_bridge_mode = false
     self.events = TestGarageEvents()
   end
   def attribute_updated(endpoint, cluster, attribute, fabric_specific) end
@@ -328,6 +332,61 @@ tasmota.utc_time = 1
 ctx.attribute = 0x0000
 assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).typ == 0x14)
 print("  Matter epoch conversion for UTC and local time: OK")
+
+# Wi-Fi Network Diagnostics attributes are null when Wi-Fi is not connected.
+ctx = matter.Path(0, 0x0036, 0x0000)
+for attr : 0..4
+  ctx.attribute = attr
+  assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).typ == 0x14)
+end
+tasmota.wifi_info = {'up': true, 'bssid': 'AA:BB:CC:01:02:03', 'channel': 6, 'rssi': -61,
+                     'security': 'wpa2', 'phy': '11ax'}
+ctx.attribute = 0x0000
+assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == bytes("AABBCC010203"))
+ctx.attribute = 0x0001
+assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 4)
+ctx.attribute = 0x0002
+assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 5)
+ctx.attribute = 0x0003
+assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 6)
+ctx.attribute = 0x0004
+var rssi = root.read_attribute(session, ctx, TLV.Matter_TLV_item())
+assert(rssi.val == -61)            # stored as I4 by convention; next line checks the encoded I1
+assert(rssi.tlv2raw() == bytes("00C3"))
+tasmota.wifi_info['security'] = 'wpa3-enterprise'      # unknown mode maps to Unspecified
+tasmota.wifi_info['phy'] = ''                          # unknown PHY is null
+ctx.attribute = 0x0001
+assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 0)
+ctx.attribute = 0x0002
+assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).typ == 0x14)
+
+# Roaming to another access point or channel is reported to subscribers.
+class TestWifiDevice
+  var tick, updates
+  def init() self.tick = 0 self.updates = [] end
+  def attribute_updated(endpoint, cluster, attribute, fabric_specific)
+    self.updates.push(attribute)
+  end
+end
+var wifi_root = TestRoot()
+wifi_root.device = TestWifiDevice()
+wifi_root.update_shadow()
+assert(wifi_root.device.updates == [0, 1, 2, 3])
+wifi_root.device.updates = []
+wifi_root.update_shadow()
+assert(wifi_root.device.updates == [])
+tasmota.wifi_info['bssid'] = 'AA:BB:CC:01:02:04'
+wifi_root.update_shadow()
+assert(wifi_root.device.updates == [0, 1, 2])
+wifi_root.device.updates = []
+tasmota.wifi_info['channel'] = 11
+wifi_root.update_shadow()
+assert(wifi_root.device.updates == [3])
+wifi_root.device.updates = []
+tasmota.wifi_info = {'up': false}
+wifi_root.update_shadow()
+assert(wifi_root.device.updates == [0, 1, 2, 3])
+print("  Wi-Fi Network Diagnostics attributes and roaming: OK")
 
 ctx = matter.Path(0, 0x003F, 0xFFFB)
 var attribute_list = root.read_attribute(session, ctx, TLV.Matter_TLV_item())
@@ -667,6 +726,220 @@ assert(virtual_garage.current_position_enum() == virtual_garage.CP_CLOSED)
 assert(virtual_garage.target_position_enum() == virtual_garage.TP_OPEN)
 print("  virtual garage door commands and updates: OK")
 tasmota = test_tasmota
+
+# Keep this test group scoped independently from the main regression script.
+def test_generic_switch()
+  # Generic Switch events are recorded with endpoint and typed fields, so the
+  # tests exercise the real dispatch and event construction without network I/O.
+  class TestButtonEvents
+    var published
+    def init() self.published = [] end
+    def publish_event(endpoint, cluster, event_id, urgent, priority, data0, data1, data2)
+      self.published.push({
+        "endpoint": endpoint, "cluster": cluster, "event": event_id,
+        "urgent": urgent, "priority": priority,
+        "data0": data0 ? data0.val : nil, "type0": data0 ? data0.typ : nil,
+        "data1": data1 ? data1.val : nil, "type1": data1 ? data1.typ : nil,
+        "data2": data2 ? data2.val : nil
+      })
+    end
+  end
+
+  class TestButtonDevice : matter.Device
+    var updates
+    def init()
+      self.plugins = []
+      self.events = TestButtonEvents()
+      self.updates = []
+    end
+    def attribute_updated(endpoint, cluster, attribute, fabric_specific)
+      self.updates.push([endpoint, cluster, attribute])
+    end
+  end
+
+  class TestButtonTasmota : TestTasmota
+    var response
+    def find_key_i(object, name)
+      for key : object.keys()
+        if string.toupper(key) == string.toupper(name) return key end
+      end
+      return nil
+    end
+    def find_list_i(values, name)
+      var i = 0
+      while i < size(values)
+        if string.toupper(values[i]) == string.toupper(name) return i end
+        i += 1
+      end
+      return nil
+    end
+    def resp_cmnd(value) self.response = value end
+    def resp_cmnd_str(value) self.response = value end
+    def resp_cmnd_done() self.response = "Done" end
+  end
+
+  # The event sequence and its fields are the contract consumed by controllers:
+  # press/release for each tap, ongoing count from tap 2, then one final count.
+  def assert_button_sequence(events, endpoint, presses)
+    assert(size(events) == presses * 3)
+    var cursor = 0
+    for press : 1..presses
+      assert(events[cursor]["event"] == 1)
+      assert(events[cursor]["data1"] == nil)
+      cursor += 1
+      if press > 1
+        assert(events[cursor]["event"] == 5)
+        assert(events[cursor]["data1"] == press)
+        assert(events[cursor]["type1"] >= 0x04 && events[cursor]["type1"] <= 0x07)
+        cursor += 1
+      end
+      assert(events[cursor]["event"] == 3)
+      assert(events[cursor]["data1"] == nil)
+      cursor += 1
+    end
+    assert(events[cursor]["event"] == 6)
+    assert(events[cursor]["data1"] == presses)
+    assert(events[cursor]["type1"] >= 0x04 && events[cursor]["type1"] <= 0x07)
+    for event : events
+      assert(event["endpoint"] == endpoint)
+      assert(event["cluster"] == 0x003B)
+      assert(event["urgent"])
+      assert(event["priority"] == 1)
+      assert(event["data0"] == 1 && event["type0"] >= 0x04 && event["type0"] <= 0x07)
+      assert(event["data2"] == nil)
+    end
+  end
+
+  var button_device = TestButtonDevice()
+  var button_one = matter.Plugin_Sensor_GenericSwitch_Btn(button_device, 33, {"button": 1, "name": 'Button "one"'})
+  var button_two = matter.Plugin_Sensor_GenericSwitch_Btn(button_device, 34, {"button": 2, "name": "Button two"})
+  button_device.plugins = [button_one, button_two]
+  ctx = matter.Path(33, 0x003B, 1)
+  var position = button_one.read_attribute(nil, ctx, TLV.Matter_TLV_item())
+  assert(position.typ >= 0x04 && position.typ <= 0x07 && position.val == 0, "new button CurrentPosition must be a non-null released value")
+  assert(button_two.shadow_position == 0)
+  assert(json.load(button_one.state_json())["Switch"] == 0)
+  assert(json.load(button_one.state_json())["Name"] == 'Button "one"')
+
+  # Device dispatch broadcasts callbacks; only the configured button may react.
+  button_device.button_handler(9, 1, 1, 0)
+  assert(size(button_device.events.published) == 0)
+  assert(size(button_device.updates) == 0)
+  button_device.button_handler(1, 1, 1, 0)
+  assert(button_one.shadow_position == 1 && button_two.shadow_position == 0)
+  assert(json.load(button_one.state_json())["Switch"] == 1)
+  button_device.button_handler(1, 1, 0, 0)
+  button_device.button_handler(1, 2, 0, 1)
+  assert_button_sequence(button_device.events.published, 33, 1)
+  assert(button_one.shadow_position == 0 && button_two.shadow_position == 0)
+  for update : button_device.updates assert(update[0] == 33) end
+  button_device.events.published.clear()
+  button_device.updates.clear()
+  button_device.button_handler(2, 1, 1, 0)
+  button_device.button_handler(2, 1, 0, 0)
+  button_device.button_handler(2, 2, 0, 1)
+  assert_button_sequence(button_device.events.published, 34, 1)
+  for update : button_device.updates assert(update[0] == 34) end
+
+  ctx = matter.Path(33, 0x003B, 0xFFFA)
+  var advertised_events = []
+  for event : button_one.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val
+    advertised_events.push(event.val)
+  end
+  assert(size(advertised_events) == 4)
+  for event_id : [1, 3, 5, 6] assert(advertised_events.find(event_id) != nil) end
+  ctx.attribute = 0xFFFC
+  assert(button_one.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val == 0x16)
+  ctx.attribute = 2
+  assert(button_one.read_attribute(nil, ctx, TLV.Matter_TLV_item()).val == 5)
+  print("  local Generic Switch initialization, routing and metadata: OK")
+
+  # Virtual buttons reuse the declared event contract and remain released after
+  # each completed sequence. Identical requests represent distinct user actions.
+  var virtual_button = matter.Plugin_Virt_Sensor_GenericSwitch_Btn(button_device, 35, {"name": "Virtual button"})
+  var virtual_button_two = matter.Plugin_Virt_Sensor_GenericSwitch_Btn(button_device, 36, {"name": "Other virtual button"})
+  button_device.plugins.push(virtual_button)
+  button_device.plugins.push(virtual_button_two)
+  assert(virtual_button.VIRTUAL && virtual_button.TYPE == "v_gensw")
+  assert(virtual_button.UPDATE_COMMANDS.find("Presses") != nil)
+  ctx = matter.Path(35, 0x003B, 1)
+  position = virtual_button.read_attribute(nil, ctx, TLV.Matter_TLV_item())
+  assert(position.typ >= 0x04 && position.typ <= 0x07 && position.val == 0)
+  for presses : 1..5
+    button_device.events.published.clear()
+    virtual_button.update_virtual({"Presses": presses})
+    assert_button_sequence(button_device.events.published, 35, presses)
+    for event : button_device.events.published
+      assert(advertised_events.find(event["event"]) != nil)
+    end
+    assert(virtual_button.shadow_position == 0 && virtual_button_two.shadow_position == 0)
+    assert(json.load(virtual_button.state_json())["Switch"] == 0)
+  end
+  button_device.events.published.clear()
+  virtual_button.update_virtual({"Presses": 1})
+  virtual_button.update_virtual({"Presses": 1})
+  assert(size(button_device.events.published) == 6)
+  assert(button_device.events.published[2]["event"] == 6)
+  assert(button_device.events.published[5]["event"] == 6)
+  var prior_updates = size(button_device.updates)
+  for invalid : [0, 6, -1, 1.0, 1.5, "1", true, nil, [], {}]
+    assert(type(virtual_button.update_virtual({"Presses": invalid})) == "string")
+    assert(size(button_device.events.published) == 6)
+    assert(size(button_device.updates) == prior_updates)
+    assert(virtual_button.shadow_position == 0)
+  end
+  assert(virtual_button.update_virtual({}) == nil)
+  assert(size(button_device.events.published) == 6)
+  assert(size(button_device.updates) == prior_updates)
+
+  # Physical callbacks must not turn a virtual button into a second copy of a
+  # hardware button, even when its inherited default button index happens to fit.
+  button_device.events.published.clear()
+  button_device.button_handler(1, 1, 1, 0)
+  button_device.button_handler(1, 1, 0, 0)
+  button_device.button_handler(1, 2, 0, 1)
+  assert_button_sequence(button_device.events.published, 33, 1)
+  assert(virtual_button.shadow_position == 0 && virtual_button_two.shadow_position == 0)
+  print("  virtual Generic Switch sequences, validation and isolation: OK")
+
+  # Exercise the real MtrUpdate dispatch/filtering path, not just update_virtual.
+  # Case-insensitive keys, numeric endpoint selection and exact friendly-name
+  # selection must each reach one endpoint and return valid, released state JSON.
+  tasmota = TestButtonTasmota()
+  button_device.events.published.clear()
+  button_device.MtrUpdate("MtrUpdate", 1, "", {"ep": 35, "pReSsEs": 2})
+  assert_button_sequence(button_device.events.published, 35, 2)
+  var button_response = json.load(tasmota.response)["MtrUpdate"]
+  assert(button_response["Ep"] == 35 && button_response["Switch"] == 0)
+  button_device.events.published.clear()
+  button_device.MtrUpdate("MtrUpdate", 1, "", {"NAME": "Other virtual button", "Presses": 1})
+  assert_button_sequence(button_device.events.published, 36, 1)
+  button_response = json.load(tasmota.response)["MtrUpdate"]
+  assert(button_response["Ep"] == 36 && button_response["Switch"] == 0)
+  button_device.events.published.clear()
+  button_device.MtrUpdate("MtrUpdate", 1, "", {"Ep": 35, "Presses": 1, "Unexpected": 1})
+  assert(size(button_device.events.published) == 0)
+  assert(string.find(tasmota.response, "Invalid attribute") != nil)
+  prior_updates = size(button_device.updates)
+  for invalid : [0, 6, -1, 1.0, 1.5, "1", true, nil, [], {}]
+    button_device.MtrUpdate("MtrUpdate", 1, "", {"Ep": 35, "Presses": invalid})
+    assert(string.find(tasmota.response, "expected integer 1..5") != nil)
+    assert(size(button_device.events.published) == 0)
+    assert(size(button_device.updates) == prior_updates)
+    assert(virtual_button.shadow_position == 0 && virtual_button_two.shadow_position == 0)
+  end
+  button_device.MtrUpdate("MtrUpdate", 1, "", {"Ep": 35})
+  button_response = json.load(tasmota.response)["MtrUpdate"]
+  assert(button_response["Ep"] == 35 && button_response["Switch"] == 0)
+  assert(size(button_device.events.published) == 0)
+  assert(size(button_device.updates) == prior_updates)
+  button_device.MtrUpdate("MtrUpdate", 1, "", {"Ep": 33, "Presses": 1})
+  assert(size(button_device.events.published) == 0)
+  assert(tasmota.response == "Device is not virtual")
+  tasmota = test_tasmota
+  print("  MtrUpdate virtual button routing and response: OK")
+end
+test_generic_switch()
 
 # ConfigurationVersion changes with endpoint composition and is persisted.
 var config_device = TestConfigurationDevice()

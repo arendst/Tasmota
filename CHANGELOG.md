@@ -3,16 +3,118 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.6.0.2]
+## [16.0.0.3]
+### Added
+
+
+### Breaking Changed
+
+
+### Changed
+
+
+### Fixed
+
+
+### Removed
+- Support for migration from versions below v9.1
+
+
+## [16.0.0.2]
+### Added
+- ESP32 `PsrMode` displaying whether PSRAM is `QIO`/`OPI` (#25213)
+- BME680 IAQ (air quality index) to BMP sensor driver (#25175)
+
+### Breaking Changed
+- Reduce max number of ZCDimmer PWM channels to 5 due to allocated persistent data size (#25222)
+
+### Changed
+- ESP8266 platform update from 2026.09.00 to 2026.10.00 (#25196)
+- ESP32 Platform from 2026.09.50 to 2026.10.50, Framework (Arduino Core) from v3.3.12 to v3.3.12-1 and IDF v5.5.5 (#25196)
+- OTA give up on a stalled OTA after 30 s, not 300 reads (#25177)
+- BLE EQ3-TRV avoid sending of empty status (#25182)
+- GUI allow `;` or `{` in a password saved from the settings page (#25184)
+- ESP32 web login uses own Basic auth instead Arduino (#25210)
+- Refactor JPEG size retrieval function (#25226)
+
+### Fixed
+- ESP32 `UfsServe` (`UFILESYS_STATIC_SERVING`) compilation, and reject `..` in served paths (#25211)
+- ESP32 `Restart -1` fails to crash (#25223)
+- OTA and file upload security issue
+- MiEL HVAC Modbus mirror total energy to holding register 40027 (#25214)
+- Missing NUL terminator for stored `ModbusBridgeSend` command data (#25218)
+- Matter event EpochTimestamp sent as seconds instead of milliseconds, using new Berry `tasmota.rtc_utc_ms()` (#25234)
+- TuyaV1 and TuyaV2 out-of-bounds accessing `tuya_fnid_map[]` (#25222)
+
+## [16.0.0.1] 20261031
+### Added
+- Support MAC OUI wildcard for command MI32Keys in case multiple devices use same bindkey like IoTorero: `mi32keys 0C3D5EFFFFFF=48656c6c6f204254486f6d65210d0a00`
+- uDisplay support for SPI QSPI displays (#25156)
+- LVGL/HASPmota visual touch pointer (dot under finger) (#25158)
+- LVGL add logging before crash when heap allocation fails (#25170)
+- BLE timeout and eQ3 TRV enhancements (#25173)
+- TuyaMCU pace outgoing frames so the MCU is never written to back-to-back (#25151)
+- Heap Map optional feature fur detailed memory usage at boot (#25186)
+
+### Breaking Changed
+- BTHome un-reverse MAC address usage for command `MI32Keys` to make it consistent
+
+### Changed
+- HttpClientLight keep read timeouts longer than 65 s (#25180)
+
+### Fixed
+- Security issues caused by buffer overflows
+- MiEL HVAC Modbus no response timeouts now serves the RS485 slave from its own task (#25157)
+- ESP32 `PWMFrequency` < 8 result in WDT exception after restart (#25155)
+- LVGL Panel extension crash (#25165)
+- LVGL Panel improved click handling (#25171)
+- LVGL touch more responsive (#25172)
+- VEML7700 lux/white rounding, add new command (#25150)
+- WifiManager name the setup AP as it is turned on (#25169)
+- Berry `lv.start()` raises an error instead of crashing when the display can't start (#25193)
+- ESP32-S3 RGB display permanent image shift after flash writes, DMA sync guard (#25194)
+- SML ESP8266 serial mode (#25201)
+- MPR121 sizeof (#25203)
+- ESP32 steady 38 kHz IR carrier (fixes #25168) (#25176)
+- DisplayText [pN] command now works when followed by another [pN] (#25188)
+- Boot loop when using a literal WIFI_DEFAULT_HOSTNAME (#25205)
+- Wireguard reconnect when a dynamic DNS `Endpoint` changes IP (#25204)
+- WebAsync rare crash and race conditions (#25209)
+
+## [Released]
+
+## [16.0.0] 20261016
+- Release Theo
+
+## [15.6.0.3] 20261016
+### Added
+- LVGL option to prefer PSRAM for draw buffers using bit 5 (0x20) of `:B` in display.ini (#25120)
+- Matter support for Light RBG+CT (5 channels) and refactoring of lights
+- Initial support for ESP32-S31 (#25130)
+- Matter Wi-Fi Network Diagnostics cluster (BSSID, security, Wi-Fi version, channel, RSSI) (#25126)
+- Berry `tasmota.wifi()` reports `channel`, `security` and `phy` (#25126)
+- Initial support for ESP32-C61 (#25135)
+
+### Changed
+- LVGL library from v9.5.0 to v9.6.0 (#25144)
+
+### Fixed
+- Unauthenticated UFS writes on web password enabled systems
+- Display dsi dma2d psram buffers (#24949)
+- Matter MQTT subscription when Matter is disabled (#25140)
+- HttpClientLight time out reading a body when the server goes silent (#25139)
+- AsyncHttpClientLight finish a chunked body at the empty line after the last chunk (#25142)
+- Berry webclient.connected() was implemented but not exposed (#25145)
+
+## [15.6.0.2] 20261008
 ### Added
 - DALI-2 push button bindings to control gear targets with command `DaliBind` (toggle, on, off, up, down) (#25073)
 - Matter Electrical Power Measurement cluster to On/Off Plug-in Unit (#24922)
 - Matter Soil Sensor device type with Soil Measurement cluster (Matter 1.6.0) (#25088)
 - Matter physical and virtual Garage Door device types with Closure Control cluster (Matter 1.6.0) (#25089)
 - OpenTherm support the second heating circuit (CH2) (#25098)
-
-### Breaking Changed
-
+- Command `HwDump` to dump detailed hardware GPIO configuration (#25111)
+- BLE EQ3-TRV encryption support (#25113)
 
 ### Changed
 - Shutter split `EnableEndStopTime` into `OpenEndStopTime` and `CloseEndStopTime` (#25020)
@@ -20,14 +122,13 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2026.05.50 to 2026.09.50, Framework (Arduino Core) from v3.3.8 to v3.3.12 and IDF from v5.5.4.260407 to v5.5.5 (#25072)
 - IR accept raw data in JSON (#25077)
 - Matter update specs to 1.6.1 (to be used by AI) (#25083)
+- Refresh EQ3 web UI (#25105)
+- Disable CDC on esp-emu (#25112)
 
 ### Fixed
 - Matter non-bridge endpoint topology (#25099)
 - MQTT false connected events when unconfigured (#25100)
-
-### Removed
-
-
+- PWM on CDC GPIO (#25106)
 
 ## [15.6.0.1] 20260926
 ### Added
@@ -63,8 +164,6 @@ All notable changes to this project will be documented in this file.
 - WT32_ETH01 ethernet initialization (#25051)
 - Touch GT911 fix template (#25068)
 - Matter commissioning mDNS announcements (#25069)
-
-## [Released]
 
 ## [15.6.0] 20260825
 - Release Sylvie
@@ -174,6 +273,7 @@ All notable changes to this project will be documented in this file.
 - MiElHVAC extend support of AirDirection control (#24675)
 - Command `SetOption [0..2]` to display SetOption values
 - Command `WcResolution 0..24` increasing camera max resolution from 14 to 24
+- Support for ESP32-P4R3 (#24677)
 
 ### Changed
 - ESP32 Platform from 2025.04.30 to 2026.04.50, Framework (Arduino Core) from v3.1.11 to v3.3.8 and IDF from v5.3.4.260127 to v5.5.4.260407 (#24676)

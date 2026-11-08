@@ -35,21 +35,23 @@ Adafruit_VEML7700 veml7700 = Adafruit_VEML7700(); //create object copy
 #define D_WHITE_CONTENT "White content"
 
 const char HTTP_SNS_WHITE[] PROGMEM = "{s}%s " D_WHITE_CONTENT "{m}%d {e}";
-const char JSON_SNS_VEML7700[] PROGMEM = ",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_WHITE_CONTENT "\":%d}";
+const char JSON_SNS_VEML7700[] PROGMEM = ",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%s,\"" D_JSON_WHITE_CONTENT "\":%d}";
 
 #define D_CMND_VEML7700_PWR "power"
 #define D_CMND_VEML7700_GAIN "gain"
 #define D_CMND_VEML7700_INTTIME "inttime"
 #define D_CMND_VEML7700_PERSIST "persist"
+#define D_CMND_VEML7700_RES "res"
 
 const char S_JSON_VEML7700_COMMAND_NVALUE[] PROGMEM = "{\"" D_NAME_VEML7700 "\":{\"%s\":%d}}";
-const char kVEML7700_Commands[] PROGMEM  = D_CMND_VEML7700_PWR "|" D_CMND_VEML7700_GAIN "|" D_CMND_VEML7700_INTTIME "|" D_CMND_VEML7700_PERSIST;
+const char kVEML7700_Commands[] PROGMEM  = D_CMND_VEML7700_PWR "|" D_CMND_VEML7700_GAIN "|" D_CMND_VEML7700_INTTIME "|" D_CMND_VEML7700_PERSIST "|" D_CMND_VEML7700_RES;
 
 enum VEML7700_Commands {         // commands for Console
   CMND_VEML7700_PWR,
   CMND_VEML7700_GAIN,
   CMND_VEML7700_SET_IT,
   CMND_VEML7700_PERSIST,
+  CMND_VEML7700_RES
 };
 
 struct VEML7700STRUCT
@@ -57,8 +59,9 @@ struct VEML7700STRUCT
   bool active = 0;
   char types[9]   = D_NAME_VEML7700;
   uint8_t address = VEML7700_I2CADDR_DEFAULT;
-  uint32_t lux_normalized = 0;
+  float f_lux_normalized = 0.0f;
   uint32_t white_normalized = 0;
+  uint32_t resolution = 0;
 } veml7700_sensor;
 
 
@@ -97,21 +100,23 @@ uint8_t VEML7700TranslateItInt (uint16_t ittimems){
 }
 
 void VEML7700EverySecond(void) {
-  veml7700_sensor.lux_normalized = (uint32_t) veml7700.readLuxNormalized();
-  veml7700_sensor.white_normalized = (uint32_t) veml7700.readWhiteNormalized();
+  veml7700_sensor.f_lux_normalized = veml7700.readLuxNormalized();
+  veml7700_sensor.white_normalized = (uint32_t) veml7700.readWhiteNormalized() + 0.5f;
 }
 
 void VEML7700Show(bool json)
 {
+  char s_lux_normalized[FLOATSZ];
+  dtostrfd(veml7700_sensor.f_lux_normalized, veml7700_sensor.resolution, s_lux_normalized);
   if (json) {
-    ResponseAppend_P(JSON_SNS_VEML7700, D_NAME_VEML7700, veml7700_sensor.lux_normalized, veml7700_sensor.white_normalized);
+    ResponseAppend_P(JSON_SNS_VEML7700, D_NAME_VEML7700, s_lux_normalized, veml7700_sensor.white_normalized);
 
 #ifdef USE_DOMOTICZ
-      if (0 == TasmotaGlobal.tele_period) DomoticzSensor(DZ_ILLUMINANCE, veml7700_sensor.lux_normalized);
+      if (0 == TasmotaGlobal.tele_period) DomoticzSensor(DZ_ILLUMINANCE, s_lux_normalized);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_ILLUMINANCE, D_NAME_VEML7700, veml7700_sensor.lux_normalized);
+    WSContentSend_PD(HTTP_SNS_S_ILLUMINANCE, D_NAME_VEML7700, s_lux_normalized);
     WSContentSend_PD(HTTP_SNS_WHITE, D_NAME_VEML7700, veml7700_sensor.white_normalized);
 #endif // USE_WEBSERVER
   }
@@ -158,6 +163,14 @@ bool VEML7700Cmd(void) {
        }
        Response_P(S_JSON_VEML7700_COMMAND_NVALUE, command, veml7700.getPersistence());
        break;
+    case CMND_VEML7700_RES:
+      if (XdrvMailbox.data_len) {
+        if (3 >= XdrvMailbox.payload) {
+          veml7700_sensor.resolution = XdrvMailbox.payload;
+        }
+      }
+      Response_P(S_JSON_VEML7700_COMMAND_NVALUE, command, veml7700_sensor.resolution);
+      break;
     default:
       return false;
     }

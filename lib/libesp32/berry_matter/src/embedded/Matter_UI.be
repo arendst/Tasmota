@@ -187,13 +187,13 @@ class Matter_UI
   "</script>"
 
   static var _CLASSES_TYPES_STD =
-                              "|relay|relay_power|light0|light1|light2|light3|shutter|shutter+tilt|garage"
+                              "|relay|relay_power|light0|light1|light2|light3|light5|shutter|shutter+tilt|garage"
                               "|gensw_btn"
                               "|temperature|pressure|illuminance|humidity|occupancy|onoff|contact|flow|rain|waterleak"
                               "|airquality|soil"
   static var _CLASSES_TYPES_VIRTUAL =
-                              "-virtual|v_relay|v_relay_power|v_light0|v_light1|v_light2|v_light3|v_garage"
-                              "|v_fan|v_hvac|v_hvac_option"
+                              "-virtual|v_relay|v_relay_power|v_light0|v_light1|v_light2|v_light3|v_light5|v_garage"
+                              "|v_fan|v_hvac|v_hvac_option|v_gensw"
                               "|v_temp|v_pressure|v_illuminance|v_humidity|v_occupancy|v_contact|v_flow|v_rain|v_waterleak"
                               "|v_airquality|v_soil"
   static var _CLASSES_TYPES2= "|http_relay|http_relay_power|http_light0|http_light1|http_light2|http_light3"
@@ -1069,7 +1069,9 @@ class Matter_UI
 
     if !webserver.check_privileged_access() return nil end
 
-    self.device.ensure_discovery()          # lazy subscribe to tasmota/discovery/# on first visit
+    if self.matter_enabled
+      self.device.ensure_discovery()        # lazy subscribe to tasmota/discovery/# on first visit
+    end
 
     webserver.content_start("Matter")           #- title of the web page -#
     webserver.content_send_style()                  #- send standard Tasmota styles -#
@@ -1113,14 +1115,17 @@ class Matter_UI
 
     # detect lights
     var light1, light2, light3    # contains a relay number of nil
+    # RGB+CT remotes stay light3 until an http_light5 bridge exists
     if status11.contains("HSBColor")
       light3 = power_cnt
       power_cnt -= 1
+
     elif status11.contains("CT")
-      light2 =  power_cnt
+      light2 = power_cnt
       power_cnt -= 1
+
     elif status11.contains("Dimmer")
-      light1 =  power_cnt
+      light1 = power_cnt
       power_cnt -= 1
     end
 
@@ -1520,7 +1525,8 @@ class Matter_UI
         var matter_commissioning_requested = webserver.has_arg("comm")
         var matter_disable_bridge_mode_requested = (webserver.arg("nobridge") == 'on')
         var matter_disable_bridge_mode_current = self.device.disable_bridge_mode
-        var matter_bridge_mode_changed = matter_disable_bridge_mode_current != matter_disable_bridge_mode_requested
+        # when Matter is disabled, `device.disable_bridge_mode` is `nil` and the checkbox is not displayed
+        var matter_bridge_mode_changed = self.matter_enabled && (matter_disable_bridge_mode_current != matter_disable_bridge_mode_requested)
         if matter_bridge_mode_changed
           # Persist the next-boot topology while keeping the live topology coherent
           # until the restart below rebuilds all fixed Descriptor metadata.
@@ -1541,7 +1547,7 @@ class Matter_UI
           #- and force restart -#
           webserver.redirect("/?rst=")
         else
-          if matter_commissioning_requested != (self.device.commissioning.commissioning_open != nil)
+          if self.matter_enabled && matter_commissioning_requested != (self.device.commissioning.commissioning_open != nil)
             if matter_commissioning_requested
               self.device.commissioning.start_root_basic_commissioning()
             else

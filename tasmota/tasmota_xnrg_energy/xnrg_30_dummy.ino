@@ -138,11 +138,11 @@ bool NrgDummyCommand(void) {
 #ifdef ESP32
     // EnergyConfig11 to 18 = Set Energy->current[channel] in A like 0.417 for 417mA
     if ((XdrvMailbox.index > 10) && (XdrvMailbox.index < ENERGY_MAX_PHASES + 10)) {
-      NrgDummy.current[XdrvMailbox.index -1] = value;
+      NrgDummy.current[XdrvMailbox.index -11] = value;
     }
     // EnergyConfig111 to 118 = Set Energy->active_power[channel] in W like 100 for 100W
     if ((XdrvMailbox.index > 110) && (XdrvMailbox.index < ENERGY_MAX_PHASES +110)) {
-      NrgDummy.power[XdrvMailbox.index -4] = value;
+      NrgDummy.power[XdrvMailbox.index -111] = value;
     }
 #endif
   }

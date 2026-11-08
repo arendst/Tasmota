@@ -21,6 +21,9 @@
 #include <Arduino.h>
 #include <IPAddress.h>
 #include <SBuffer.hpp>
+#ifdef ESP32
+#include "esp_memory_utils.h"
+#endif // ESP32
 
 /*********************************************************************************************\
  * va_list extended support
@@ -255,7 +258,14 @@ char * copyStr(const char * str) {
 }
 
 const char ext_invalid_mem[] PROGMEM = "<--INVALID-->";
-const uint32_t min_valid_ptr = 0x3F000000;    // addresses below this line are invalid
+
+static bool ext_ptr_is_readable(uint32_t ptr) {
+#ifdef ESP32
+  return esp_ptr_byte_accessible((const void *)(uintptr_t)ptr);
+#else // ESP32
+  return ptr >= 0x3F000000;
+#endif // ESP32
+}
 
 int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_list va) {
   va_list va_cpy;
@@ -315,7 +325,7 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
           case 'H':     // Hex, decimals indicates the length, default 2
             {
               if (decimals < 0) { decimals = 0; }
-              if (cur_val < min_valid_ptr) { new_val_str = ext_invalid_mem; }
+              if (!ext_ptr_is_readable(cur_val)) { new_val_str = ext_invalid_mem; }
               else if (decimals > 0) {
                 char * hex_char = (char*) malloc(decimals*2 + 2);
                 if (hex_char == nullptr) { goto free_allocs; }
@@ -329,7 +339,7 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
 
           case 'B':     // Pointer to SBuffer
             {
-              if (cur_val < min_valid_ptr) { new_val_str = ext_invalid_mem; }
+              if (!ext_ptr_is_readable(cur_val)) { new_val_str = ext_invalid_mem; }
               else {
                 const SBuffer & buf = *(const SBuffer*)cur_val;
                 size_t buf_len = (&buf != nullptr) ? buf.len() : 0;
@@ -358,7 +368,7 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
           case 'V':     // 2-byte values, decimals indicates the length, default 2
             {
               if (decimals < 0) { decimals = 0; }
-              if (cur_val < min_valid_ptr) { new_val_str = ext_invalid_mem; }
+              if (!ext_ptr_is_readable(cur_val)) { new_val_str = ext_invalid_mem; }
               else if (decimals > 0) {
                 uint32_t val_size = decimals*6 + 2;
                 char * val_char = (char*) malloc(val_size);
@@ -402,7 +412,7 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
           // Note: float MUST be passed by address, because C alsays promoted float to double when in vararg
           case 'f':     // input is `float`, printed to float with 2 decimals
             {
-              if (cur_val < min_valid_ptr) { new_val_str = ext_invalid_mem; }
+              if (!ext_ptr_is_readable(cur_val)) { new_val_str = ext_invalid_mem; }
               else {
                 bool truncate = false;
                 if (decimals < 0) {
@@ -438,7 +448,7 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
           // '%_X' outputs a 64 bits unsigned int to uppercase HEX with 16 digits
           case 'X':     // input is `uint64_t*`, printed as 16 hex digits (no prefix 0x)
             {
-              if (cur_val < min_valid_ptr) { new_val_str = ext_invalid_mem; }
+              if (!ext_ptr_is_readable(cur_val)) { new_val_str = ext_invalid_mem; }
               else {
                 if ((decimals < 0) || (decimals > 16)) { decimals = 16; }
                 U64toHex(*(uint64_t*)cur_val, hex, decimals);
@@ -452,7 +462,7 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
           // '%_U' outputs a 64 bits unsigned int to decimal
           case 'U':     // input is `uint64_t*`, printed as decimal
             {
-              if (cur_val < min_valid_ptr) { new_val_str = ext_invalid_mem; }
+              if (!ext_ptr_is_readable(cur_val)) { new_val_str = ext_invalid_mem; }
               else {
                 U64toStr(*(uint64_t*)cur_val, hex);
                 new_val_str = copyStr(hex);

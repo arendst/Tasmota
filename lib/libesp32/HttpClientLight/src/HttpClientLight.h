@@ -176,7 +176,7 @@ public:
     void setAuthorization(const char * user, const char * password);
     void setAuthorization(const char * auth);
     void setConnectTimeout(int32_t connectTimeout);
-    void setTimeout(uint16_t timeout);
+    void setTimeout(uint32_t timeout);
 
     // Redirections
     void setFollowRedirects(followRedirects_t follow);
@@ -248,7 +248,7 @@ protected:
     uint16_t _port = 0;
     int32_t _connectTimeout = HTTPCLIENT_DEFAULT_TCP_TIMEOUT;  // Do not set to -1 as it fails WiFiClient connect()
     bool _reuse = true;
-    uint16_t _tcpTimeout = HTTPCLIENT_DEFAULT_TCP_TIMEOUT;
+    uint32_t _tcpTimeout = HTTPCLIENT_DEFAULT_TCP_TIMEOUT;
     bool _useHTTP10 = false;
     bool _secure = false;
 

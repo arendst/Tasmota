@@ -1558,9 +1558,12 @@ void CmndShutterButton(void)
             case 6:
             case 7:
             case 8:
+              if (field==1)
+                setting.position[i-5].mqtt_broadcast = true;
+            break;
             case 9:
               if (field==1)
-                setting.position[i-6].mqtt_broadcast = true;
+                setting.mqtt_all = true;
             break;
           }
           if (isShortCommand) {
@@ -1647,6 +1650,7 @@ void CmndShutterButton(void)
             else
               setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR(" -"));
           }
+          setting_chr_ptr += sprintf_P(setting_chr_ptr, setting.mqtt_all ? PSTR(" 1") : PSTR(" -"));
         }
       }
       ShutterSettingsSave();
