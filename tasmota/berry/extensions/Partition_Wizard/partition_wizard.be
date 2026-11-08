@@ -106,12 +106,39 @@ class Partition_wizard_UI
     return nil
   end
 
+  # ----------------------------------------------------------------------
+  # Partition that can be removed when it is after last fs
+  #
+  # Only `coredump` (data, subtype 0x03), found after the FS in
+  # Arduino's default layout. Any other partition may hold user data.
+  # ----------------------------------------------------------------------
+  static def is_disposable(slot)
+    return slot.type == 1 && slot.subtype == 0x03
+  end
+
+  # ----------------------------------------------------------------------
+  # Get partition after last fs that must be kept
+  #
+  # Return the last such slot, or nil if all can be removed
+  # ----------------------------------------------------------------------
+  def get_kept_after_last_fs(p)
+    var sz = size(p.slots)
+    var idx = 1
+    while idx < sz
+      var slot = p.slots[-idx]
+      if slot.is_spiffs()                 return nil  end
+      if !self.is_disposable(slot)        return slot end
+      idx += 1
+    end
+    return nil
+  end
+
   #- ---------------------------------------------------------------------- -#
   #- Get fs unallocated size
   #- ---------------------------------------------------------------------- -#
   def get_unallocated_k(p)
     var last_fs = self.get_last_fs(p)
-    if last_fs != nil
+    if last_fs != nil && self.get_kept_after_last_fs(p) == nil
       # verify that last slot is filesystem
       var flash_size_k = self.get_max_flash_size_k(p)
       var partition_end_k = (last_fs.start + last_fs.sz) / 1024   # last kb used for fs
@@ -153,17 +180,17 @@ class Partition_wizard_UI
   end
 
   # ----------------------------------------------------------------------
-  # Remove any non wanted partion after last FS
+  # Remove any disposable partion after last FS
   # ----------------------------------------------------------------------
   def remove_partition_after_last_fs(p)
-    # remove any partition after last fs
+    # remove any disposable partition after last fs
     do
       var last_fs = self.get_last_fs(p)
       var changed = false
       if last_fs != nil
         while true
           var last_slot = p.slots[-1]
-          if !last_slot.is_spiffs() && (last_slot.type != 0)
+          if self.is_disposable(last_slot)
             p.slots.remove(size(p.slots) - 1)     # remove last slot
             changed = true
           else
@@ -396,7 +423,7 @@ class Partition_wizard_UI
   #     `app0` changed subtype to `factory`
   #     `app1` moved to right after `factory` and resized
   #     `app1` changed subtype to `app0` and renamed `app0`
-  #     remove any partition past the last fs
+  #     remove any disposable partition past the last fs
   #
   # Returns:
   # - false if READY
@@ -404,6 +431,8 @@ class Partition_wizard_UI
   # - string if ERROR, indicating the error
   def test_step_3(p)
     if !self.factory_migrate_eligible(p)    return "not eligible to migration" end
+    var kept = self.get_kept_after_last_fs(p)
+    if kept != nil    return "partition `" + kept.label + "` after file system" end
 
     return false
     # var app0 = p.get_ota_slot(0)
@@ -646,9 +675,9 @@ class Partition_wizard_UI
 
     var unallocated = self.get_unallocated_k(p)
     if unallocated > 0
-      var last_slot = p.slots[-1]
-      # verify that last slot is file-system
-      var partition_end_k = (last_slot.start + last_slot.sz) / 1024   # last kb used for fs
+      var last_fs = self.get_last_fs(p)
+      # unallocated space starts at the end of last fs
+      var partition_end_k = (last_fs.start + last_fs.sz) / 1024   # last kb used for fs
       webserver.content_send(string.format("<tr><td title='offset:0x%06X size:0x%06X'>&lt;free&gt;:&nbsp;</td><td align='right'> %i KB</td></tr>",
                                             partition_end_k * 1024, unallocated * 1024, unallocated))
     end
@@ -829,6 +858,13 @@ class Partition_wizard_UI
     var p = partition_core.Partition()                    # load partition layout
     self.patch_partition_core(p)
     if !self.factory_migrate_eligible(p) return true end
+
+    # check step 3 can be done before starting
+    var step3_check = self.test_step_3(p)
+    if type(step3_check) == 'string'
+      tasmota.log("UPL: can't migrate, " + step3_check, 2)
+      return step3_check
+    end
 
     # STEP 1
     var step1_state = self.test_step_1(p)
