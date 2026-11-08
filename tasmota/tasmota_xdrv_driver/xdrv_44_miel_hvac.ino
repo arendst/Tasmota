@@ -121,6 +121,7 @@
  *   30041 0x0028  operating time, lower 16 bits
  *   30042 0x0029  remote temperature x10 (the value last written to 40013)
  *   30043 0x002a  remote temperature auto-clear time, seconds
+ *   30044 0x002b  operating time, whole hours (from the same counter, limited to 65535)
  *
  *   30049 0x0030  timer mode: 0 none, 1 off timer, 2 on timer, 3 both
  *   30050 0x0031  on timer set, minutes
@@ -185,7 +186,7 @@
  *   40014 0x000d  remote temperature auto-clear time, seconds
  *   40015 0x000e  raw wide vane byte, sent to the unit without any check (a read is 0)
  *
- *   Read-only mirror 40016..40027 of input registers, for masters that only speak FC03.
+ *   Read-only mirror 40016..40031 of input registers, for masters that only speak FC03.
  *   A write to these answers with exception 02.
  *
  *   40016 0x000f  room temperature x10               (= 30033)
@@ -200,6 +201,10 @@
  *   40025 0x0018  error code, BCD decimal, 8000 none (= 30085)
  *   40026 0x0019  error code, two characters         (= 30086)
  *   40027 0x001a  total energy, kWh x10              (= 30039)
+ *   40028 0x001b  compressor frequency, Hz           (= 30037)
+ *   40029 0x001c  operating time, hours              (= 30044)
+ *   40030 0x001d  number of fan speeds               (= 30067)
+ *   40031 0x001e  outdoor temperature x10, 0x8000 if no sensor (= 30034)
  *
  *   Coils (FC01 read, FC05 / FC0F write, 0xxxx)
  *   -----------------------------------------------------------------------------------
@@ -975,7 +980,7 @@ struct miel_hvac_capabilities
 #define MIEL_HVAC_MB_MAX_BAUDRATE     115200
 
 #define MIEL_HVAC_MB_INPUT_COUNT      0x100   /* input registers 0x0000..0x00ff */
-#define MIEL_HVAC_MB_HOLD_COUNT       0x1b    /* holding registers 0x0000..0x001a */
+#define MIEL_HVAC_MB_HOLD_COUNT       0x1f    /* holding registers 0x0000..0x001e */
 #define MIEL_HVAC_MB_DI_COUNT         7       /* discrete inputs 0..6 */
 #define MIEL_HVAC_MB_COIL_COUNT       5       /* coils 0..4 */
 
@@ -3292,6 +3297,17 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 		    | rt->operationtime2) & 0xffff));
 	case 0x0029: return ((uint16_t)(int16_t)(sc->sc_remotetemp_half * 5));
 	case 0x002a: return ((uint16_t)(sc->sc_remotetemp_auto_clear_time / 1000));
+	case 0x002b:
+	{
+		uint32_t hours;
+
+		if (!has_rt) return (0);
+		/* the unit counts minutes, a 16-bit register holds 7.4 years of hours */
+		hours = (((uint32_t)rt->operationtime << 16)
+		    | ((uint32_t)rt->operationtime1 << 8)
+		    | rt->operationtime2) / 60;
+		return (hours > 0xffff ? 0xffff : (uint16_t)hours);
+	}
 
 	case 0x0030: return (has_tm ? tm->mode : 0);
 	case 0x0031: return (has_tm ? (uint16_t)tm->onminutes * 10 : 0);
@@ -3355,6 +3371,9 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
  *                                  master that only speaks FC03 can still reach them
  *   0x0018..0x0019 (40025..40026)  error state mirror (input regs 0x0054..0x0055)
  *   0x001a         (40027)         total energy kWh x10 (input reg 0x0026)
+ *   0x001b..0x001e (40028..40031)  compressor Hz, operating hours, fan speed count,
+ *                                  outdoor temperature x10 (input regs 0x0024, 0x002b,
+ *                                  0x0042, 0x0021)
  */
 #define MIEL_HVAC_MB_HOLD_MIRROR_BASE 0x000f
 static uint16_t
@@ -3377,6 +3396,10 @@ miel_hvac_mb_reg_holding(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 		0x0054,   /* 0x0018 (40025) error BCD code (8000 = no error) */
 		0x0055,   /* 0x0019 (40026) error packed two-char code */
 		0x0026,   /* 0x001a (40027) total energy kWh x10 */
+		0x0024,   /* 0x001b (40028) compressor frequency Hz */
+		0x002b,   /* 0x001c (40029) operating time hours */
+		0x0042,   /* 0x001d (40030) number of fan speeds */
+		0x0021,   /* 0x001e (40031) outdoor temperature x10 */
 	};
 
 	*ok = true;
