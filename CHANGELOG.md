@@ -12,9 +12,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-
 ### Fixed
-
+- Function `subStr()` possible buffer overflow
 
 ### Removed
 - Support for migration from versions below v9.1

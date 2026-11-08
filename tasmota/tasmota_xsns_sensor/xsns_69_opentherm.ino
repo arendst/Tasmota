@@ -454,7 +454,7 @@ uint8_t sns_opentherm_read_flags(char *data, uint32_t len)
     char sub_string[XdrvMailbox.data_len + 1];
     for (int i = 1; i <= tokens; ++i)
     {
-        char *flag = subStr(sub_string, data, ",", i);
+        char *flag = subStr(sub_string, sizeof(sub_string), data, ",", i);
         if (!flag)
         {
             break;

@@ -251,7 +251,7 @@ void AdcFreeUnusedSettings(void) {
   char parameters[40];
   for (uint32_t param_idx = 0; param_idx <= MAX_ADCS; param_idx++) {
     if (strchr(SettingsText(SET_ADC_PARAM1 + param_idx), ',') != nullptr) {
-      uint32_t pin = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + param_idx), ",", 6));
+      uint32_t pin = atoi(subStr(parameters, sizeof(parameters), SettingsText(SET_ADC_PARAM1 + param_idx), ",", 6));
       uint32_t channel;
       for (channel = 0; channel < Adcs.present; channel++) {
         if (pin == Adc[channel].pin) { break; }
@@ -268,8 +268,8 @@ int AdcFindSlot(uint32_t channel) {
   char parameters[40];
   for (uint32_t param_idx = 0; param_idx < MAX_ADCS; param_idx++) {
     if (strchr(SettingsText(SET_ADC_PARAM1 + param_idx), ',') != nullptr) {
-//      if (Adc[channel].pin == atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + param_idx), ",", 6))) {  // Assuming pin 0 is never an ADC channel
-      subStr(parameters, SettingsText(SET_ADC_PARAM1 + param_idx), ",", 6);
+//      if (Adc[channel].pin == atoi(subStr(parameters, sizeof(parameters), SettingsText(SET_ADC_PARAM1 + param_idx), ",", 6))) {  // Assuming pin 0 is never an ADC channel
+      subStr(parameters, sizeof(parameters), SettingsText(SET_ADC_PARAM1 + param_idx), ",", 6);
       if (strlen(parameters) && (atoi(parameters) == Adc[channel].pin)) {
         return param_idx;  // Found
       }
@@ -305,9 +305,9 @@ uint32_t AdcGetType(uint32_t channel, uint32_t param_idx) {
   // Get params and adc_type
   char parameters[40];
   for (uint32_t i = 0; i < 4; i++) {
-    Adc[channel].param[i] = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + param_idx), ",", i +2));
+    Adc[channel].param[i] = atoi(subStr(parameters, sizeof(parameters), SettingsText(SET_ADC_PARAM1 + param_idx), ",", i +2));
   }
-  return atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + param_idx), ",", 1));
+  return atoi(subStr(parameters, sizeof(parameters), SettingsText(SET_ADC_PARAM1 + param_idx), ",", 1));
 }
 
 bool AdcGetSettings(uint32_t channel) {

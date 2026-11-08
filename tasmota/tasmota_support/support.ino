@@ -307,18 +307,22 @@ uint32_t ArgC(void) {
 }
 
 // Function to return a substring defined by a delimiter at an index
-char* subStr(char* dest, char* str, const char *delim, int index) {
+char* subStr(char* dest, int dest_len, char* str, const char *delim, int index) {
   char* write = dest;
   char* read = str;
   char ch = '.';
 
-  while (index && (ch != '\0')) {
+  while (index && dest_len && (ch != '\0')) {
     ch = *read++;
     if (strchr(delim, ch)) {
       index--;
-      if (index) { write = dest; }
+      if (index) { 
+        write = dest;
+        dest_len--;    // Prep for 0
+      }
     } else {
       *write++ = ch;
+      dest_len--;
     }
   }
   *write = '\0';
@@ -327,7 +331,7 @@ char* subStr(char* dest, char* str, const char *delim, int index) {
 }
 
 char* ArgV(char* dest, int index) {
-  return subStr(dest, XdrvMailbox.data, ",", index);
+  return subStr(dest, XdrvMailbox.data_len, XdrvMailbox.data, ",", index);
 }
 
 uint32_t ArgVul(uint32_t *args, uint32_t count) {
@@ -2589,8 +2593,8 @@ void SyslogAsync(bool refresh) {
          :programname, isequal, "tasmota" stop                       # Do not log in syslog
       */
       char timestamp[mxtime];
-      subStr(timestamp, line, " ", 1);                        // 00:00:02.096-026
-      subStr(timestamp, timestamp, "-", 1);                   // 00:00:02.096
+      subStr(timestamp, sizeof(timestamp), line, " ", 1);                        // 00:00:02.096-026
+      subStr(timestamp, sizeof(timestamp), timestamp, "-", 1);                   // 00:00:02.096
 
       snprintf_P(header, sizeof(header), PSTR("<%d>1 %s%s000%s %s tasmota - - - "),
         128 + min(loglevel * 3, 7),                           // Error (1) = 131, Info (2) = 134, Debug (3) = 135, DebugMore = (4) 135
@@ -2601,7 +2605,7 @@ void SyslogAsync(bool refresh) {
       char msgid[5];
       char* line_msgid = strchr(msg_start, ' ');
       if (line_msgid && (line_msgid - msg_start < sizeof(msgid))) {  // Only 3 character message ids supported
-        subStr(msgid, msg_start, " ", 1);                     // HTP:
+        subStr(msgid, sizeof(msgid), msg_start, " ", 1);                     // HTP:
         uint32_t strlen_msgid = strlen(msgid) +1;
         msg_start += strlen_msgid;
         msg_len -= strlen_msgid;
