@@ -491,23 +491,7 @@ typedef struct {
   SOBitfield    flag;                      // 010
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
-  union {
-    struct {
-      char      text_pool[699];            // 017
-    };
-    struct {
-      char      text_pool_017[138];        // 017
-      char      ex_sta_ssid[2][33];        // 0A1
-      char      ex_sta_pwd[2][65];         // 0E3
-      uint8_t   text_pool_165[132];        // 165
-      char      ex_mqtt_host[33];          // 1E9
-      uint8_t   text_pool_20A[35];         // 20A
-      char      ex_mqtt_user[33];          // 22D
-      char      ex_mqtt_pwd[33];           // 24E
-      char      ex_mqtt_topic[33];         // 26F
-      uint8_t   text_pool_290[66];         // 290
-    };
-  };
+  char          text_pool[699];            // 017
   uint8_t       display_model;             // 2D2
   uint8_t       display_mode;              // 2D3
   uint8_t       display_refresh;           // 2D4

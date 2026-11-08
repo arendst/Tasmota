@@ -167,3 +167,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - LVGL touch more responsive [#25172](https://github.com/arendst/Tasmota/issues/25172)
 
 ### Removed
+- Support for migration from versions below v9.1
