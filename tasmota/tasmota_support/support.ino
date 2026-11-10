@@ -1527,19 +1527,6 @@ void TemplateConvert(uint8_t template8[], uint16_t template16[]) {
   }
   template16[(sizeof(mytmplt) / 2) -2] = Adc0Convert(template8[sizeof(mytmplt8285) -1]);
 }
-
-void ConvertGpios(void) {
-  if (Settings->gpio16_converted != 0xF5A0) {
-    // Convert 8-bit user template
-    TemplateConvert((uint8_t*)&Settings->ex_user_template8, (uint16_t*)&Settings->user_template);
-
-    for (uint32_t i = 0; i < sizeof(Settings->ex_my_gp8.io); i++) {
-      Settings->my_gp.io[i] = GpioConvert(Settings->ex_my_gp8.io[i]);
-    }
-    Settings->my_gp.io[(sizeof(myio) / 2) -1] = Adc0Convert(Settings->ex_my_adc0);
-    Settings->gpio16_converted = 0xF5A0;
-  }
-}
 #endif  // ESP8266
 
 int IRAM_ATTR Pin(uint32_t gpio, uint32_t index = 0) {

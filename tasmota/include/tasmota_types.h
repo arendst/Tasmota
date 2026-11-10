@@ -82,7 +82,6 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t tuya_serial_mqtt_publish : 1; // bit 16 (v6.6.0.21) - SetOption66  - MQTT_TUYA_RECEIVED - (Tuya) Enable (1) TuyaMcuReceived messages over Mqtt
     uint32_t buzzer_enable : 1;            // bit 17 (v6.6.0.1)  - SetOption67  - BUZZER_ENABLE - (Buzzer) Enable (1) buzzer when available
     uint32_t pwm_multi_channels : 1;       // bit 18 (v6.6.0.3)  - SetOption68  - LIGHT_CHANNEL_MODE - (Light) Enable multi-channels PWM (1) instead of Color PWM (0)
-//    uint32_t ex_tuya_dimmer_min_limit : 1; // bit 19 (v6.6.0.5)  - SetOption69  - (not used) Limits Tuya dimmers to minimum of 10% (25) when enabled
     uint32_t sb_receive_invert : 1;        // bit 19 (v14.2.0.3) - SetOption69  - (Serial) Invert Serial receive on SerialBridge (1)
     uint32_t energy_weekend : 1;           // bit 20 (v6.6.0.8)  - CMND_TARIFF
     uint32_t dds2382_model : 1;            // bit 21 (v6.6.0.14) - SetOption71  - ENERGY_DDS2382_MODE - (DDS2382) Select different Modbus registers (1) for Active Energy (#6531)
@@ -519,7 +518,7 @@ typedef struct {
   uint8_t       web_time_start;            // 33C
   uint8_t       web_time_end;              // 33D
   uint8_t       sserial_config;            // 33E
-  uint8_t       tuyamcu_topic;             // 33F  Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
+  uint8_t       tuyamcu_topic;             // 33F
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
 #if !CONFIG_IDF_TARGET_ESP32P4 && !CONFIG_IDF_TARGET_ESP32S31
@@ -529,9 +528,9 @@ typedef struct {
   uint32_t      energy_power_calibration;    // 364 (P4 344)
   uint32_t      energy_voltage_calibration;  // 368 (P4 348)
   uint32_t      energy_current_calibration;  // 36C (P4 34C)
-  uint32_t      energy_power_calibration2;   // 370 (P4 350) - ex_energy_kWhtoday
-  uint32_t      energy_voltage_calibration2; // 374 (P4 354) - ex_energy_kWhyesterday
-  uint32_t      energy_current_calibration2; // 378 (P4 358) - ex_energy_kWhdoy, ex_energy_min_power
+  uint32_t      energy_power_calibration2;   // 370 (P4 350)
+  uint32_t      energy_voltage_calibration2; // 374 (P4 354)
+  uint32_t      energy_current_calibration2; // 378 (P4 358)
   uint16_t      energy_max_power;          // 37C (P4 35C)
   uint16_t      energy_min_voltage;        // 37E (P4 35E)
   uint16_t      energy_max_voltage;        // 380 (P4 360)
@@ -540,9 +539,9 @@ typedef struct {
   uint16_t      energy_max_power_limit;                 // 386 (P4 366)  MaxPowerLimit
   uint16_t      energy_max_power_limit_hold;            // 388 (P4 368)  MaxPowerLimitHold
   uint16_t      energy_max_power_limit_window;          // 38A (P4 36A)  MaxPowerLimitWindow
-  uint16_t      ex_energy_max_power_safe_limit;         // 38C (P4 36C)  MaxSafePowerLimit - Free since 14.1.0.3
-  uint16_t      ex_energy_max_power_safe_limit_hold;    // 38E (P4 36E)  MaxSafePowerLimitHold - Free since 14.1.0.3
-  uint16_t      ex_energy_max_power_safe_limit_window;  // 390 (P4 370)  MaxSafePowerLimitWindow - Free since 14.1.0.3
+
+  uint8_t       free_38C[6];
+
   uint16_t      energy_max_energy;         // 392 (P4 372)  MaxEnergy
   uint16_t      energy_max_energy_start;   // 394 (P4 374)  MaxEnergyStart
   uint16_t      mqtt_retry;                // 396 (P4 376)
@@ -554,16 +553,15 @@ typedef struct {
   SOBitfield3   flag3;                     // 3A0 (P4 380)
   uint16_t      energy_kWhdoy;             // 3A4 (P4 384)
   uint16_t      energy_min_power;          // 3A6 (P4 386)
-  uint32_t      pn532_password;            // 3A8 (P4 388) - ex_switchmode4-7, Free since 9.2.0.6
+  uint32_t      pn532_password;            // 3A8 (P4 388)
 
 #ifdef ESP8266
   // --------------------------------------------------------------
   // Mapping 0x3AC to 0x496 for ESP8266
   // --------------------------------------------------------------
   myio          my_gp;                     // 3AC  2x18 bytes (ESP8266)
-  uint16_t      gpio16_converted;          // 3D0
 
-  uint8_t       free_esp8266_3D2[42];      // 3D2
+  uint8_t       free_esp8266_3D0[44];      // 3D0
 
   mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266)
 
@@ -577,8 +575,8 @@ typedef struct {
   uint8_t       module;                    // 474
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
-  myio8         ex_my_gp8;                 // 484 17 bytes (ESP8266) - Free since 9.0.0.1
-  uint8_t       ex_my_adc0;                // 495  Free since 9.0.0.1 - Do not use anymore because of ESP32S3
+
+  uint8_t       free_esp8266_484[18];      // 484
                                            // 496
 #endif  // ESP8266
 #ifdef ESP32
@@ -740,7 +738,7 @@ typedef struct {
   uint16_t      mqtt_socket_timeout;       // 52E
   uint8_t       mqtt_wifi_timeout;         // 530
   uint8_t       ina219_mode;               // 531
-  uint8_t       weight_precision;          // 532  ex_pulse_timer free since 11.0.0.3
+  uint8_t       weight_precision;          // 532
   uint8_t       knx_CB_registered;         // 533 4A8  Number of Group Address to write
   int8_t        shutter_tilt_pos[MAX_SHUTTERS];  // 534 51C
   uint16_t      influxdb_period;           // 538 520
@@ -779,7 +777,7 @@ typedef struct {
   uint8_t       user_template_base;        // 71F
   char          user_template_name[15];    // 720  15 bytes - Backward compatibility since v8.2.0.3
 #ifdef ESP8266
-  uint8_t       ex_user_template8[5];      // 72F  14 bytes (ESP8266) - Free since 9.0.0.1 - only 5 bytes referenced now
+  uint8_t       free_esp8266_72F[5];       // 72F
 #endif  // ESP8266
 #ifdef ESP32
   uint8_t       webcam_clk;                // 72F
@@ -897,7 +895,7 @@ typedef struct {
   uint8_t       shd_warmup_time;           // F5E
   uint8_t       tcp_config;                // F5F
   uint8_t       light_step_pixels;				 // F60
-  uint8_t       hdmi_cec_device_type;      // F61  - v13.1.0.1 (was ex_modbus_sbaudrate v12.2.0.5)
+  uint8_t       hdmi_cec_device_type;      // F61
   uint8_t       modbus_sconfig;            // F62
   uint8_t       windmeter_measure_intvl;   // F63
   uint32_t      i2c_drivers2[2];           // F64
