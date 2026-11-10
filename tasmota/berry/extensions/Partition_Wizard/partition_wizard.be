@@ -137,15 +137,17 @@ class Partition_wizard_UI
   end
 
   # ----------------------------------------------------------------------
-  # Labels of partitions, as HTML: `<b>a</b>, <b>b</b>`
+  # Partitions named in HTML: `the <b>a</b> partition`,
+  # `the <b>a</b> and <b>b</b> partitions`, `the <b>a</b>, <b>b</b> and <b>c</b> partitions`
   # ----------------------------------------------------------------------
-  static def html_labels(slots)
+  static def html_partitions(slots)
     import webserver
     var labels = []
     for slot: slots
       labels.push("<b>" + webserver.html_escape(slot.label) + "</b>")
     end
-    return labels.concat(", ")
+    if size(labels) == 1    return "the " + labels[0] + " partition" end
+    return "the " + labels[0..-2].concat(", ") + " and " + labels[-1] + " partitions"
   end
 
   #- ---------------------------------------------------------------------- -#
@@ -305,14 +307,14 @@ class Partition_wizard_UI
       webserver.content_send("<fieldset><legend><b>&nbsp;Resize FS to max&nbsp;</b></legend><p></p>")
 
       if wipe
-        webserver.content_send(string.format("<p>You can expand the file system by %i KB<br>by deleting %s after it.<br>Their content will be lost.</p>", unallocated, self.html_labels(kept)))
+        webserver.content_send(string.format("<p>You can expand the file system by %i KB<br>by deleting %s after it.<br>%s content will be lost.</p>", unallocated, self.html_partitions(kept), size(kept) == 1 ? "Its" : "Their"))
       else
         webserver.content_send(string.format("<p>You can expand the file system by %i KB.<br>Its content will be lost.</p>", unallocated))
       end
 
       webserver.content_send("<form action='/part_wiz' method='post' ")
       if wipe
-        webserver.content_send("onsubmit='return confirm(\"This will DELETE the partitions after the file system and cause a restart.\");'")
+        webserver.content_send(string.format("onsubmit='return confirm(\"This will DELETE the %s after the file system and cause a restart.\");'", size(kept) == 1 ? "partition" : "partitions"))
       elif !self.support_grow_on_mount()
         webserver.content_send("onsubmit='return confirm(\"This will DELETE the content of the file system and cause a restart.\");'")
       end
@@ -653,13 +655,13 @@ class Partition_wizard_UI
     var kept = self.get_kept_after_last_fs(p, false)
     var wipe = size(kept) > 0
     var step3_msg = "change partition map"
-    if wipe   step3_msg += ",<br>deleting " + self.html_labels(kept) + " after the file system" end
+    if wipe   step3_msg += ",<br>deleting " + self.html_partitions(kept) + " after the file system" end
     webserver.content_send(string.format("<p>Step 3: %s</p>", self.display_step_state(self.test_step_3(p, wipe), step3_msg)))
     webserver.content_send(string.format("<p>Step 4: %s</p>", self.display_step_state(self.test_step_4(p), "flash final firmware")))
 
     webserver.content_send("<form action='/part_wiz' method='post' ")
     if wipe
-      webserver.content_send("onsubmit='return confirm(\"This will cause multiple restarts and DELETE the partitions after the file system.\");'>")
+      webserver.content_send(string.format("onsubmit='return confirm(\"This will cause multiple restarts and DELETE the %s after the file system.\");'>", size(kept) == 1 ? "partition" : "partitions"))
       webserver.content_send("<input type='hidden' name='wipe' value='1'>")
     else
       webserver.content_send("onsubmit='return confirm(\"This will cause multiple restarts.\");'>")
