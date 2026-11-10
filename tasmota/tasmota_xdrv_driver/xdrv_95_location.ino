@@ -30,15 +30,16 @@
  *   SetOption166 1          - Add "Location" to tele/STATE
  *
  * Pose storage (two tier):
- * - With file system (USE_UFILESYS) as JSON in /.drvset000 using key "drvset95" with full
+ * - With a mounted file system (USE_UFILESYS) as JSON in /.drvset000 using key "drvset95" with full
  *   precision: x/y/z int32 in units of 10^-scale (+/-2147 km at mm), rotation int16 centidegrees.
  *   {"drvset95":{"Scale":3,"Flags":1,"Pos":[1250,3400,900],"Rot":[1235,-50,-17000]}}
  *   Config backup and restore include it.
- * - Without file system (ESP8266) packed into 96 bits in Settings->location_packed (12 bytes
+ * - Without a mounted file system (ESP8266) packed into 96 bits in Settings->location_packed (12 bytes
  *   at 0x3D0, ex gpio16_converted): x/y/z 21 bit (+/-1048575 units, +/-1048 m at mm), rotation 10 bit
  *   (360/1024 = ~0.35 degree steps), scale 3 bit. Values are reduced to this precision when
  *   set, so what is shown is what survives a restart.
- * - On ESP8266 with file system a packed pose is used as default and moved to the file.
+ * - On ESP8266 a packed pose is moved to the file once a file system is mounted.
+ * - ESP32 always has a file system.
 \*********************************************************************************************/
 
 #define XDRV_95                     95
@@ -184,34 +185,48 @@ bool LocationSaveData(void) {
 }
 #endif  // USE_UFILESYS
 
+bool LocationUseFile(void) {
+  // A mounted file system is preferred. Without it ESP8266 uses the packed settings area
+#ifdef USE_UFILESYS
+  return (ffs_type != 0);
+#else
+  return false;
+#endif  // USE_UFILESYS
+}
+
 void LocationSettingsSave(void) {
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart, and after pose changes
   if (!location_loaded) { return; }        // Pose not loaded yet: keep stored data untouched
 #ifdef USE_UFILESYS
-  uint32_t crc32 = GetCfgCrc32((uint8_t*)&Location, sizeof(tLocationPose));
-  if (crc32 != location_crc32) {
-    bool saved;
-    if (!(Location.flags & LOCATION_FLAG_SET) && (LOCATION_SCALE_DEFAULT == Location.scale)) {
-      char key[] = XDRV_95_KEY;
-      UfsJsonSettingsDelete(key);          // No pose: no key, so a packed pose can still be migrated
-      saved = true;
-    } else {
-      saved = LocationSaveData();
-    }
-    if (saved) {
-      location_crc32 = crc32;
+  if (LocationUseFile()) {
+    uint32_t crc32 = GetCfgCrc32((uint8_t*)&Location, sizeof(tLocationPose));
+    if (crc32 != location_crc32) {
+      bool saved;
+      if (!(Location.flags & LOCATION_FLAG_SET) && (LOCATION_SCALE_DEFAULT == Location.scale)) {
+        char key[] = XDRV_95_KEY;
+        UfsJsonSettingsDelete(key);        // No pose: no key, so a packed pose can still be migrated
+        saved = true;
+      } else {
+        saved = LocationSaveData();
+      }
+      if (saved) {
+        location_crc32 = crc32;
 #ifdef ESP8266
-      memset(Settings->location_packed, 0, sizeof(Settings->location_packed));  // File is the only copy
+        memset(Settings->location_packed, 0, sizeof(Settings->location_packed));  // File is the only copy
 #endif  // ESP8266
+      }
     }
+    return;
   }
-#else   // ESP8266 without file system
+#endif  // USE_UFILESYS
+#ifdef ESP8266
+  // No file system
   uint8_t scale = Location.scale;
   LocationPack();                          // Saved with Settings
   if (!LocationUnpack()) {                 // Show what survives a restart
     Location.scale = scale;                // No pose: keep scale until restart
   }
-#endif  // USE_UFILESYS
+#endif  // ESP8266
 }
 
 void LocationSettingsLoad(bool erase) {
@@ -234,6 +249,9 @@ void LocationSettingsLoad(bool erase) {
     UfsJsonSettingsDelete(key);            // Use defaults
     location_crc32 = GetCfgCrc32((uint8_t*)&Location, sizeof(tLocationPose));  // Nothing to save
   }
+  else if (!LocationUseFile()) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Location in settings as no file system"));
+  }
   else if (LocationLoadData()) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Location loaded from file"));
     location_crc32 = GetCfgCrc32((uint8_t*)&Location, sizeof(tLocationPose));
@@ -242,9 +260,9 @@ void LocationSettingsLoad(bool erase) {
 #endif  // ESP8266
   }
   else {
-    // File system not ready or key not found. A pose from the settings area is saved to file on next save
+    // Key not found. A pose from the settings area is saved to file on next save
     location_crc32 = (Location.flags & LOCATION_FLAG_SET) ? 0 : GetCfgCrc32((uint8_t*)&Location, sizeof(tLocationPose));
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CFG: Location use %s as file system not ready or key not found"),
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CFG: Location use %s as key not found"),
       (Location.flags & LOCATION_FLAG_SET) ? PSTR("settings") : PSTR("defaults"));
   }
 #endif  // USE_UFILESYS
