@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 
 
 ### Changed
+- ESP8266 platform update from 2026.10.00 to 2026.11.00 (#25097)
+- ESP32 Platform from 2026.10.50 to 2026.11.50, Framework (Arduino Core) from v3.3.12-1 to v3.3.12-2 and IDF v5.5.5 (#25097)
 
 ### Fixed
 - Function `subStr()` possible buffer overflow
@@ -18,8 +20,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Support for migration from versions below v9.1
 
-
-## [16.0.0.2]
+## [16.0.0.2] 20261108
 ### Added
 - ESP32 `PsrMode` displaying whether PSRAM is `QIO`/`OPI` (#25213)
 - BME680 IAQ (air quality index) to BMP sensor driver (#25175)

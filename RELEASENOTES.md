@@ -114,7 +114,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v16.0.0.2
+## Changelog v16.0.0.3
 ### Added
 - Heap Map optional feature fur detailed memory usage at boot [#25186](https://github.com/arendst/Tasmota/issues/25186)
 - BME680 IAQ (air quality index) to BMP sensor driver [#25175](https://github.com/arendst/Tasmota/issues/25175)
@@ -130,8 +130,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Reduce max number of ZCDimmer PWM channels to 5 due to allocated persistent data size [#25222](https://github.com/arendst/Tasmota/issues/25222)
 
 ### Changed
-- ESP8266 platform update from 2026.09.00 to 2026.10.00 [#25196](https://github.com/arendst/Tasmota/issues/25196)
-- ESP32 Platform from 2026.09.50 to 2026.10.50, Framework (Arduino Core) from v3.3.12 to v3.3.12-1 and IDF v5.5.5 [#25196](https://github.com/arendst/Tasmota/issues/25196)
+- ESP8266 platform update from 2026.09.00 to 2026.11.00 [#25097](https://github.com/arendst/Tasmota/issues/25097)
+- ESP32 Platform from 2026.09.50 to 2026.11.50, Framework (Arduino Core) from v3.3.12 to v3.3.12-2 and IDF v5.5.5 [#25097](https://github.com/arendst/Tasmota/issues/25097)
 - OTA give up on a stalled OTA after 30s, not 300 reads [#25177](https://github.com/arendst/Tasmota/issues/25177)
 - HttpClientLight keep read timeouts longer than 65s [#25180](https://github.com/arendst/Tasmota/issues/25180)
 - GUI allow `;` or `{` in a password saved from the settings page [#25184](https://github.com/arendst/Tasmota/issues/25184)
