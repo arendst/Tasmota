@@ -1394,6 +1394,10 @@ void SettingsDefaultSet2(void) {
 #ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   Settings->latitude = (int)((double)LATITUDE * 1000000);
   Settings->longitude = (int)((double)LONGITUDE * 1000000);
+#ifdef ESP8266
+  memset(Settings->location_packed, 0, sizeof(Settings->location_packed));  // No device local pose (USE_LOCATION)
+  Settings->mbflag2.location_packed_init = 1;
+#endif  // ESP8266
   SettingsResetStd();
   SettingsResetDst();
 //  if (DAWN_NORMAL == SUNRISE_DAWN_ANGLE) { mbflag2.sunrise_dawn_angle |= 0; }
@@ -1710,6 +1714,17 @@ void SettingsDelta(void) {
           Settings->shutter_options[shutter_idx] |= 16;
         }
       }
+    }
+    if (Settings->version < 0x10000004) {  // 16.0.0.4
+#ifdef ESP8266
+      // Ex gpio16_converted and free_esp8266_3D2 now hold the packed device local pose (USE_LOCATION).
+      // Clear once as it may hold the gpio16 conversion marker or ex_friendlyname text from before v9.1.
+      // Kept on downgrade and re-upgrade
+      if (!Settings->mbflag2.location_packed_init) {
+        memset(Settings->location_packed, 0, sizeof(Settings->location_packed));
+        Settings->mbflag2.location_packed_init = 1;
+      }
+#endif  // ESP8266
     }
 
     Settings->version = TASMOTA_VERSION;

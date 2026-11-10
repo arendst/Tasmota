@@ -927,6 +927,13 @@ void MqttShowState(void)
       ipaddress = (uint32_t)WiFi.localIP();
     }
   }
+#ifdef USE_LOCATION
+  if (Settings->flag6.location_tele) {       // SetOption166 - (Location) Add device location/pose to tele/STATE
+    ResponseAppend_P(PSTR(","));
+    LocationResponseAppend();
+  }
+#endif  // USE_LOCATION
+
   // I only want to show one active connection for device access
   ResponseAppend_P(PSTR(",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\""),
     hostname, ipaddress);
