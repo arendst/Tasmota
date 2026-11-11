@@ -57,19 +57,8 @@ enum ZnpCommandType : uint8_t {
 
 #ifdef USE_ZIGBEE_EZSP
 
-// EZSP protocol version: 13 = EmberZNet 7.4.x (default), 8 = EmberZNet 6.9.x
-// Override the default in my_user_config.h. Host and NCP must use the same version.
-#ifndef EZSP_PROTOCOL_VERSION
-  #define EZSP_PROTOCOL_VERSION 13
-#endif
-#if (EZSP_PROTOCOL_VERSION != 8) && (EZSP_PROTOCOL_VERSION != 13)
-  #error "EZSP_PROTOCOL_VERSION must be 8 or 13"
-#endif
-// EZSP_V8 is the #ifdef switch used all over the driver. It is NOT defined for v13,
-// so v13 is the default code path.
-#if EZSP_PROTOCOL_VERSION == 8
-  #define EZSP_V8
-#endif
+// EZSP v8 (EmberZNet 6.9.x) and v13 (EmberZNet 7.4.x) are both supported.
+// The protocol version is negotiated with the NCP at startup, see EZ_ReceiveCheckVersion().
 
 enum EZSPNodeType {
   EMBER_UNKNOWN_DEVICE = 0x00,
@@ -462,7 +451,6 @@ enum EZSP_EmberKeyType {
   EMBER_APPLICATION_LINK_KEY = 5
 };
 
-#ifndef EZSP_V8
 // sl_zb_sec_man_key_type_t (EZSP v13, replaces EmberKeyType for security manager frames)
 enum EZSP_SecManKeyType {
   SL_ZB_SEC_MAN_KEY_TYPE_NONE = 0,
@@ -476,7 +464,6 @@ enum EZSP_SecManKeyType {
   SL_ZB_SEC_MAN_KEY_TYPE_GREEN_POWER_SINK_TABLE_KEY = 9,
   SL_ZB_SEC_MAN_KEY_TYPE_INTERNAL = 10
 };
-#endif // EZSP_V8
 
 // inspired from https://github.com/zigpy/zigpy/blob/dev/zigpy/zdo/types.py
 enum EZSP_ZDO {
@@ -656,12 +643,10 @@ enum EZSP_Commands {
   EZSP_sendTrustCenterLinkKey = 0x0067,
   EZSP_setInitialSecurityState = 0x0068,
   EZSP_getCurrentSecurityState = 0x0069,
-  EZSP_getKey = 0x006A,
-#ifndef EZSP_V8
-  // [EZSP V13 MIGRATION: replaced getKey with exportKey, getKey (0x006A) was deleted in v13]
+  EZSP_getKey = 0x006A,        // EZSP v8 only, removed in v13
+  // [EZSP V13 MIGRATION: replaced getKey with exportKey]
   EZSP_exportKey = 0x0114,
   EZSP_importKey = 0x0115,
-#endif // EZSP_V8
   EZSP_clearTransientLinkKeys = 0x006B,
   EZSP_updateTcLinkKey = 0x006C,
   EZSP_getTransientKeyTableEntry = 0x006D,

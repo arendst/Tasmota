@@ -134,11 +134,7 @@ const char kResetting[] PROGMEM = "Resetting configuration";
 const char kResettingDevice[] PROGMEM = D_LOG_ZIGBEE "Resetting EZSP device";
 const char kReconfiguringDevice[] PROGMEM = D_LOG_ZIGBEE "Factory reset EZSP device";
 const char kZNP123[] PROGMEM = "Only ZNP 1.2 and 3.x are currently supported";
-#ifdef EZSP_V8
-const char kEZ8[] PROGMEM = "Only EZSP protocol v8 is currently supported";
-#else
-const char kEZ8[] PROGMEM = "Only EZSP protocol v13 is currently supported";
-#endif // EZSP_V8
+const char kEZ8[] PROGMEM = "Only EZSP protocol v8 and v13 are supported";
 const char kAbort[] PROGMEM = "Abort";
 const char kZigbeeAbort[] PROGMEM = D_LOG_ZIGBEE "Abort";
 const char kZigbeeGroup0[] PROGMEM = D_LOG_ZIGBEE "Subscribe to group 0 'ZbListen0 0'";
@@ -694,14 +690,12 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
 // wait for RSTACK, meaning the device booted
 ZBM(ZBR_RSTACK, Z_B0(EZSP_rstAck), Z_B1(EZSP_rstAck))        	  // FEFF - internal code for RSTACK
 
-// call version() and ask for the configured EZSP protocol version
-#ifdef EZSP_V8
-ZBM(ZBS_VERSION, EZSP_version, 0x00, 0x08)        	  // 000008
-ZBM(ZBR_VERSION, EZSP_version, 0x00, 0x08, 0x02)      // 00000802 - expect v8, proto v2
-#else
-ZBM(ZBS_VERSION, EZSP_version, 0x00, 0x0D)        	  // 00000D
-ZBM(ZBR_VERSION, EZSP_version, 0x00, 0x0D, 0x02)      // 00000D02 - expect v13, proto v2
-#endif // EZSP_V8
+// call version() and probe the EZSP protocol version of the NCP.
+// The EZSP version command is interoperable between versions; the 3rd byte is the
+// desired protocol version. We ask for v13 first, and if the NCP reports another
+// supported version (v8), EZ_ReceiveCheckVersion() patches this byte and asks again.
+ZBR(ZBS_VERSION, EZSP_version, 0x00, 0x0D)        	  // 00000D, desiredProtocolVersion is patched at runtime
+ZBM(ZBR_VERSION, EZSP_version, 0x00)                  // 0000 + protocolVersion + stackType
 
 // general configuration
 // inspired from bellows: https://github.com/zigpy/bellows/blob/dev/bellows/config/ezsp.py
@@ -719,15 +713,12 @@ ZBM(ZBS_SET_KEY_TBL,      EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG
 ZBM(ZBS_SET_PANID_CNFLCT, EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 0x02, 0x00)// 5300220200
 ZBM(ZBS_SET_ZDO_REQ,      EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_APPLICATION_ZDO_FLAGS, EMBER_APP_RECEIVES_SUPPORTED_ZDO_REQUESTS | EMBER_APP_HANDLES_UNSUPPORTED_ZDO_REQUESTS, 0x00)           // 53002A0300
 ZBM(ZBS_SET_NETWORKS,     EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_SUPPORTED_NETWORKS, 0x01, 0x00)              // 53002D0100
-#ifdef EZSP_V8
+// EZSP v8 only: packet buffer count is configurable (in v13 it is read-only, set
+// with EMBER_PACKET_BUFFER_COUNT when building the NCP)
 ZBM(ZBS_SET_PACKET_BUF,   EZSP_setConfigurationValue, 0x00 /*high*/, EZSP_CONFIG_PACKET_BUFFER_COUNT, 0xFF, 0x00)             // 530001FF00
 // There is a bug in v6.7 where the response is 000000 instead of 530000
-// If we detect the version to be v6.7, the first byte is changed to 00
+// If we detect v6.7, EZ_ReceiveCheckVersion() changes the first byte to 00
 ZBR(ZBR_SET_OK2, EZSP_setConfigurationValue, 0x00 /*high*/, 0x00 /*ok*/)
-#else
-// [EZSP V13 MIGRATION: EZSP_CONFIG_PACKET_BUFFER_COUNT is read-only since v13, the NCP
-//  allocates packet buffers with EMBER_PACKET_BUFFER_COUNT at build time]
-#endif // EZSP_V8
 
 // [EZSP V13 MIGRATION: setConfigurationValue is best-effort, the NCP may answer
 //  EZSP_ERROR_OUT_OF_MEMORY (0x35) because packet buffers are fixed at NCP build
@@ -849,24 +840,20 @@ ZBM(ZBS_SET_MCAST_ENTRY,  EZSP_setMulticastTableEntry, 0x00 /*high*/,
 ZBM(ZBR_SET_MCAST_ENTRY,  EZSP_setMulticastTableEntry, 0x00 /*high*/, 0x00 /* status */)
 
 // check the network key
-#ifdef EZSP_V8
-// getCurrentSecurityState
-// TODO double check the security bitmask
-ZBM(ZBS_GET_KEY_NWK,      EZSP_getKey, 0x00 /*high*/, EMBER_CURRENT_NETWORK_KEY)   // 6A0003
-ZBM(ZBR_GET_KEY_NWK,      EZSP_getKey, 0x00 /*high*/, 0x00 /*status*/)   // 6A0000...
-#else
-// [EZSP V13 MIGRATION: replaced getKey with exportKey and a sl_zb_sec_man_context_t]
-// with a sl_zb_sec_man_context_t asking for the NETWORK key:
+// EZSP v13: getKey was removed, use exportKey with a sl_zb_sec_man_context_t:
 //   core_key_type(uint8), key_index(uint8), derived_type(uint16), eui64(8), multi_network_index(uint8),
 //   flags(uint8), psa_key_alg_permission(uint32)
-ZBM(ZBS_GET_KEY_NWK,      Z_B0(EZSP_exportKey), Z_B1(EZSP_exportKey),
+ZBM(ZBS_GET_KEY_NWK_V13,  Z_B0(EZSP_exportKey), Z_B1(EZSP_exportKey),
                           SL_ZB_SEC_MAN_KEY_TYPE_NETWORK /*core_key_type*/, 0x00 /*key_index*/,
                           0x00, 0x00 /*derived_type*/,
                           0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 /*eui64*/,
                           0x00 /*multi_network_index*/, 0x00 /*flags*/,
                           0x00, 0x00, 0x00, 0x00 /*psa_key_alg_permission*/)   // 1401...
-ZBM(ZBR_GET_KEY_NWK,      Z_B0(EZSP_exportKey), Z_B1(EZSP_exportKey))   // 1401, followed by key (16) and sl_status_t (4)
-#endif // EZSP_V8
+ZBM(ZBR_GET_KEY_NWK_V13,  Z_B0(EZSP_exportKey), Z_B1(EZSP_exportKey))   // 1401, followed by key (16) and sl_status_t (4)
+// EZSP v8: getKey
+// TODO double check the security bitmask
+ZBM(ZBS_GET_KEY_NWK_V8,   EZSP_getKey, 0x00 /*high*/, EMBER_CURRENT_NETWORK_KEY)   // 6A0003
+ZBM(ZBR_GET_KEY_NWK_V8,   EZSP_getKey, 0x00 /*high*/, 0x00 /*status*/)   // 6A0000...
 
 /*********************************************************************************************\
  * Update the relevant commands with Settings
@@ -958,7 +945,9 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     // wait for device to start
     ZI_WAIT_UNTIL(10000, ZBR_RSTACK)     // wait for RSTACK message
 
-    // Init device and probe version
+    // Init device and probe version. EZ_ReceiveCheckVersion() jumps back here with the
+    // version byte patched if the NCP reports another supported protocol version.
+  ZI_LABEL(ZIGBEE_LABEL_PROBE_VERSION)
     ZI_SEND(ZBS_VERSION)                ZI_WAIT_RECV_FUNC(5000, ZBR_VERSION, &EZ_ReceiveCheckVersion)       // check EXT PAN ID
 
     // configure EFR32
@@ -979,11 +968,12 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_SEND(ZBS_SET_PANID_CNFLCT)       ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
     ZI_SEND(ZBS_SET_ZDO_REQ)            ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
     ZI_SEND(ZBS_SET_NETWORKS)           ZI_WAIT_RECV_FUNC(2500, ZBR_SET_OK, &EZ_CheckConfigValue)
-#ifdef EZSP_V8
+    // EZSP v8 only: set the packet buffer count. In v13 it is read-only.
+    ZI_CALL(&EZ_GotoIfV8, ZIGBEE_LABEL_SET_PACKET_BUF)
+    ZI_GOTO(ZIGBEE_LABEL_AFTER_PACKET_BUF)
+  ZI_LABEL(ZIGBEE_LABEL_SET_PACKET_BUF)
     ZI_SEND(ZBS_SET_PACKET_BUF)         ZI_WAIT_RECV(2500, ZBR_SET_OK2)
-#else
-    // [EZSP V13 MIGRATION: removed ZBS_SET_PACKET_BUF step, packet buffer count is read-only]
-#endif // EZSP_V8
+  ZI_LABEL(ZIGBEE_LABEL_AFTER_PACKET_BUF)
 
     // read configuration
     // TODO - not sure it's useful
@@ -1014,8 +1004,13 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_BAD_CONFIG)
     ZI_SEND(ZBS_NETWORK_INIT)           ZI_WAIT_RECV(2500, ZBR_NETWORK_INIT)
     ZI_WAIT_RECV(1500, ZBR_NETWORK_UP)    // wait for network to start
-    // check if configuration is ok
-    ZI_SEND(ZBS_GET_KEY_NWK)            ZI_WAIT_RECV_FUNC(2500, ZBR_GET_KEY_NWK, &EZ_CheckKeyNWK)
+    // check if configuration is ok, the command depends on the EZSP version
+    ZI_CALL(&EZ_GotoIfV8, ZIGBEE_LABEL_GET_KEY_V8)
+    ZI_SEND(ZBS_GET_KEY_NWK_V13)        ZI_WAIT_RECV_FUNC(2500, ZBR_GET_KEY_NWK_V13, &EZ_CheckKeyNWK)
+    ZI_GOTO(ZIGBEE_LABEL_AFTER_GET_KEY)
+  ZI_LABEL(ZIGBEE_LABEL_GET_KEY_V8)
+    ZI_SEND(ZBS_GET_KEY_NWK_V8)         ZI_WAIT_RECV_FUNC(2500, ZBR_GET_KEY_NWK_V8, &EZ_CheckKeyNWK)
+  ZI_LABEL(ZIGBEE_LABEL_AFTER_GET_KEY)
     ZI_SEND(ZBS_GET_EUI64)              ZI_WAIT_RECV_FUNC(2500, ZBR_GET_EUI64, &EZ_GetEUI64)
     ZI_SEND(ZBS_GET_NETW_PARM)          ZI_WAIT_RECV_FUNC(2500, ZBR_CHECK_NETW_PARM, &EZ_NetworkParameters)
 
