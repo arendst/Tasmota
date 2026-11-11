@@ -400,14 +400,21 @@ BERRY_API bint be_str2int(const char *str, const char **endstr)
             c = *str++;
         }
         while (is_digit(c)) {
+            /* Reject before the multiply: when sum equals M_IMAX / 10 (or
+             * M_IMIN / 10) the operation below is only in range while the
+             * digit does not exceed the remainder of the limit.  Checking
+             * the sign afterwards is too late, the overflow has already
+             * happened and is undefined behaviour. */
             if (sign == '-') {
-                if (sum < M_IMIN / 10) goto overflow_neg;
+                if (sum < M_IMIN / 10
+                    || (sum == M_IMIN / 10 && (c - '0') > -(M_IMIN % 10)))
+                    goto overflow_neg;
                 sum = sum * 10 - (c - '0');
-                if (sum > 0) goto overflow_neg; /* overflow check */
             } else {
-                if (sum > M_IMAX / 10) goto overflow_pos;
+                if (sum > M_IMAX / 10
+                    || (sum == M_IMAX / 10 && (c - '0') > M_IMAX % 10))
+                    goto overflow_pos;
                 sum = sum * 10 + (c - '0');
-                if (sum < 0) goto overflow_pos; /* overflow check */
             }
             c = *str++;
         }

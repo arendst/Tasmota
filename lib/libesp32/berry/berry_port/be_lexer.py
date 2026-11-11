@@ -384,6 +384,19 @@ def _wrap_bint(v):
     return v
 
 
+# Integer limits (C M_IMAX / M_IMIN) at the same width as _wrap_bint, plus
+# the C truncating quotient/remainder used by be_str2int's overflow guard.
+if BE_INTGER_TYPE <= 1:
+    _M_IMAX = 2**31 - 1
+else:
+    _M_IMAX = 2**63 - 1
+_M_IMIN = -_M_IMAX - 1
+_IMAX_DIV10 = _M_IMAX // 10            # M_IMAX / 10
+_IMAX_MOD10 = _M_IMAX % 10             # M_IMAX % 10
+_IMIN_DIV10 = -((-_M_IMIN) // 10)      # M_IMIN / 10 (truncated toward 0)
+_IMIN_MOD10_NEG = (-_M_IMIN) % 10      # -(M_IMIN % 10)
+
+
 def be_char2hex(c):
     """Convert a hex character to its integer value, or -1 if invalid."""
     if isinstance(c, str):
@@ -423,19 +436,43 @@ def be_str2int(s, endstr=None):
             idx += 1
         return _wrap_bint(result)
 
-    # Decimal
-    sign = 1
+    # Decimal: saturate to M_IMAX / M_IMIN, rejecting before the multiply
+    # (berry-lang/berry#559).
+    #     while (is_digit(c)) {
+    #         if (sign == '-') {
+    #             if (sum < M_IMIN / 10
+    #                 || (sum == M_IMIN / 10 && (c - '0') > -(M_IMIN % 10)))
+    #                 goto overflow_neg;
+    #             sum = sum * 10 - (c - '0');
+    #         } else {
+    #             if (sum > M_IMAX / 10
+    #                 || (sum == M_IMAX / 10 && (c - '0') > M_IMAX % 10))
+    #                 goto overflow_pos;
+    #             sum = sum * 10 + (c - '0');
+    #         }
+    #         c = *str++;
+    #     }
+    neg = False
     if idx < len(s) and s[idx] in ('+', '-'):
-        if s[idx] == '-':
-            sign = -1
+        neg = s[idx] == '-'
         idx += 1
 
     result = 0
-    while idx < len(s) and s[idx].isdigit():
-        result = result * 10 + (ord(s[idx]) - ord('0'))
+    while idx < len(s) and '0' <= s[idx] <= '9':
+        digit = ord(s[idx]) - ord('0')
+        if neg:
+            if (result < _IMIN_DIV10
+                    or (result == _IMIN_DIV10 and digit > _IMIN_MOD10_NEG)):
+                return _M_IMIN      # overflow_neg
+            result = result * 10 - digit
+        else:
+            if (result > _IMAX_DIV10
+                    or (result == _IMAX_DIV10 and digit > _IMAX_MOD10)):
+                return _M_IMAX      # overflow_pos
+            result = result * 10 + digit
         idx += 1
 
-    return _wrap_bint(sign * result)
+    return result
 
 
 def _f32(x):

@@ -66,6 +66,16 @@ else:
     M_IMAX = 2**63 - 1   # long long
     M_IMIN = -(2**63)
 
+# C '/' and '%' truncate toward zero, Python '//' and '%' floor. They agree
+# for the positive M_IMAX but not for M_IMIN, so precompute the C values
+# used by be_str2int's overflow guard:
+#   M_IMAX / 10       -> _IMAX_DIV10       M_IMAX % 10   -> _IMAX_MOD10
+#   M_IMIN / 10       -> _IMIN_DIV10       -(M_IMIN % 10) -> _IMIN_MOD10_NEG
+_IMAX_DIV10 = M_IMAX // 10
+_IMAX_MOD10 = M_IMAX % 10
+_IMIN_DIV10 = -((-M_IMIN) // 10)
+_IMIN_MOD10_NEG = (-M_IMIN) % 10
+
 # #if BE_USE_SINGLE_FLOAT == 0
 #     #define BREAL_MAX DBL_MAX
 #     #define BREAL_MIN DBL_MIN
@@ -586,13 +596,15 @@ def be_char2hex(c):
 #         if (c == '+' || c == '-') { c = *str++; }
 #         while (is_digit(c)) {
 #             if (sign == '-') {
-#                 if (sum < M_IMIN / 10) goto overflow_neg;
+#                 if (sum < M_IMIN / 10
+#                     || (sum == M_IMIN / 10 && (c - '0') > -(M_IMIN % 10)))
+#                     goto overflow_neg;
 #                 sum = sum * 10 - (c - '0');
-#                 if (sum > 0) goto overflow_neg;
 #             } else {
-#                 if (sum > M_IMAX / 10) goto overflow_pos;
+#                 if (sum > M_IMAX / 10
+#                     || (sum == M_IMAX / 10 && (c - '0') > M_IMAX % 10))
+#                     goto overflow_pos;
 #                 sum = sum * 10 + (c - '0');
-#                 if (sum < 0) goto overflow_pos;
 #             }
 #             c = *str++;
 #         }
@@ -642,27 +654,24 @@ def be_str2int(s, return_end=False):
 
         while c_char != '\0' and _is_digit(c_char):
             digit = ord(c_char) - ord('0')
+            # Reject before the multiply (berry-lang/berry#559): Python ints
+            # never wrap, so a post-hoc sign test cannot detect overflow.
             if sign_char == '-':
-                if total < M_IMIN // 10:
+                if (total < _IMIN_DIV10
+                        or (total == _IMIN_DIV10 and digit > _IMIN_MOD10_NEG)):
                     # overflow_neg
                     if return_end:
                         return (M_IMIN, pos - 1)
                     return M_IMIN
                 total = total * 10 - digit
-                if total > 0:
-                    if return_end:
-                        return (M_IMIN, pos - 1)
-                    return M_IMIN
             else:
-                if total > M_IMAX // 10:
+                if (total > _IMAX_DIV10
+                        or (total == _IMAX_DIV10 and digit > _IMAX_MOD10)):
+                    # overflow_pos
                     if return_end:
                         return (M_IMAX, pos - 1)
                     return M_IMAX
                 total = total * 10 + digit
-                if total < 0:
-                    if return_end:
-                        return (M_IMAX, pos - 1)
-                    return M_IMAX
             c_char = s[pos] if pos < len(s) else '\0'
             if pos < len(s):
                 pos += 1
