@@ -1691,12 +1691,11 @@ void Every250mSeconds(void)
 #ifdef USE_WEBSERVER
         if (Settings->webserver) {
 
-#ifdef ESP8266
-          if (!WifiIsInManagerMode()) { StartWebserver(Settings->webserver); }
-#endif  // ESP8266
-#ifdef ESP32
-          StartWebserver(Settings->webserver);
-#endif  // ESP32
+          bool start_webserver = !WifiIsInManagerMode();  // Keep WifiManager pages while active
+#if defined(ESP32) && defined(USE_ETHERNET)
+          if (EthernetHasIP()) { start_webserver = true; }  // Unless Ethernet is up and needs the normal pages
+#endif  // ESP32 and USE_ETHERNET
+          if (start_webserver) { StartWebserver(Settings->webserver); }
 
 #ifdef USE_DISCOVERY
 #ifdef WEBSERVER_ADVERTISE
