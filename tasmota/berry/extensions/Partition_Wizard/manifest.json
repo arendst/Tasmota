@@ -1,6 +1,6 @@
 {
   "name": "Partition Wizard",
-  "version": "0x19090100",
+  "version": "0x1A0B0800",
   "description": "Wizard for resizing partitions and converting to safeboot layout",
   "author": "Stephan Hadinger",
   "min_tasmota": "0x0F000100",
