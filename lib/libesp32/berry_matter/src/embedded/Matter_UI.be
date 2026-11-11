@@ -559,6 +559,8 @@ class Matter_UI
       webserver.content_send("<label for='comm'><b>Commissioning open</b></label></p>")
       var disable_bridge_mode_checked = self.device.disable_bridge_mode ? " checked" : ""
       webserver.content_send(f"<p><input type='checkbox' name='nobridge'{disable_bridge_mode_checked}><b>Force Static endpoints</b> (non-bridge)</p>")  
+      var lights_delayed_on_checked = self.device.lights_delayed_on ? " checked" : ""
+      webserver.content_send(f"<p><input type='checkbox' name='ldon'{lights_delayed_on_checked}><b>Lights delayed on</b> (wait for brightness)</p>")
     end
 
     webserver.content_send("<p></p><button name='save' class='button bgrn'>Save</button></form></p>"
@@ -1527,6 +1529,11 @@ class Matter_UI
         var matter_disable_bridge_mode_current = self.device.disable_bridge_mode
         # when Matter is disabled, `device.disable_bridge_mode` is `nil` and the checkbox is not displayed
         var matter_bridge_mode_changed = self.matter_enabled && (matter_disable_bridge_mode_current != matter_disable_bridge_mode_requested)
+        var lights_delayed_on_requested = (webserver.arg("ldon") == 'on')
+        if self.matter_enabled && self.device.lights_delayed_on != lights_delayed_on_requested
+          self.device.lights_delayed_on = lights_delayed_on_requested     # applies at once, no restart
+          if !matter_bridge_mode_changed   self.device.save_param()   end
+        end
         if matter_bridge_mode_changed
           # Persist the next-boot topology while keeping the live topology coherent
           # until the restart below rebuilds all fixed Descriptor metadata.
