@@ -715,11 +715,6 @@ char* SettingsText(uint32_t index) {
  * Config Save - Save parameters to Flash ONLY if any parameter has changed
 \*********************************************************************************************/
 
-void UpdateBackwardCompatibility(void) {
-  // Perform updates for backward compatibility
-  strlcpy(Settings->user_template_name, SettingsText(SET_TEMPLATE_NAME), sizeof(Settings->user_template_name));
-}
-
 uint32_t GetSettingsAddress(void) {
   return settings_location * SPI_FLASH_SEC_SIZE;
 }
@@ -735,7 +730,6 @@ void SettingsSave(uint8_t rotate) {
  */
 #ifndef FIRMWARE_MINIMAL
   XsnsXdrvCall(FUNC_SAVE_SETTINGS);
-  UpdateBackwardCompatibility();
   if ((GetSettingsCrc32() != settings_crc32) || rotate) {
     if (1 == rotate) {                                 // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
       TasmotaGlobal.stop_flash_rotate = 1;

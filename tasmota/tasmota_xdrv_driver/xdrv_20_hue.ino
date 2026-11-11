@@ -632,7 +632,7 @@ void HueLightStatus2(uint8_t device, String *response)
     fname[fname_len] = 0x00;
   }
 
-  char* buf = HueLightStatus2Generic(fname, Settings->user_template_name, PSTR("Tasmota"), GetHueDeviceId(device).c_str());
+  char* buf = HueLightStatus2Generic(fname, SettingsText(SET_TEMPLATE_NAME), PSTR("Tasmota"), GetHueDeviceId(device).c_str());
   *response += buf;
   free(buf);
 }

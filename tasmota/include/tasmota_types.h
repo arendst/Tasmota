@@ -536,11 +536,11 @@ typedef struct {
   uint16_t      energy_max_voltage;        // 380 (P4 360)
   uint16_t      energy_min_current;        // 382 (P4 362)
   uint16_t      energy_max_current;        // 384 (P4 364)
-  uint16_t      energy_max_power_limit;                 // 386 (P4 366)  MaxPowerLimit
-  uint16_t      energy_max_power_limit_hold;            // 388 (P4 368)  MaxPowerLimitHold
-  uint16_t      energy_max_power_limit_window;          // 38A (P4 36A)  MaxPowerLimitWindow
+  uint16_t      energy_max_power_limit;        // 386 (P4 366)  MaxPowerLimit
+  uint16_t      energy_max_power_limit_hold;   // 388 (P4 368)  MaxPowerLimitHold
+  uint16_t      energy_max_power_limit_window; // 38A (P4 36A)  MaxPowerLimitWindow
 
-  uint8_t       free_38C[6];
+  uint8_t       free_38C[6];               // 38C (P4 36C)
 
   uint16_t      energy_max_energy;         // 392 (P4 372)  MaxEnergy
   uint16_t      energy_max_energy_start;   // 394 (P4 374)  MaxEnergyStart
@@ -610,9 +610,9 @@ typedef struct {
   uint8_t       seriallog_level;           // 476
   uint8_t       sleep;                     // 477
   uint8_t       ws_color[4][3];            // 478  (+xC)
-
   uint16_t      ldo_mv[2];                 // 484  ESP32-P4 LDO3 and LDO4 voltage
-  uint8_t       free_esp32_488[14];        // 488
+
+  uint8_t       free_esp32p4_488[14];      // 488
                                            // 496
 #elif CONFIG_IDF_TARGET_ESP32S3
   // --------------------------------------------------------------
@@ -775,10 +775,12 @@ typedef struct {
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
   uint8_t       user_template_base;        // 71F
-  char          user_template_name[15];    // 720  15 bytes - Backward compatibility since v8.2.0.3
+
+  uint8_t       free_720[15];              // 720
 #ifdef ESP8266
   uint8_t       free_esp8266_72F[5];       // 72F
 #endif  // ESP8266
+
 #ifdef ESP32
   uint8_t       webcam_clk;                // 72F
   WebCamCfg2    webcam_config2;            // 730
