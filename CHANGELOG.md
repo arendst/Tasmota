@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [16.0.0.3]
 ### Added
-
+ - Wrapper function for esp_sleep_get_wakeup_cause() with mapping to Berry as tasmota.wakeup_cause()
 
 ### Breaking Changed
 
