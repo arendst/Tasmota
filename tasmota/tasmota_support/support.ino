@@ -1242,10 +1242,9 @@ void ShowSource(uint32_t source)
   }
 }
 
-void WebHexCode(uint32_t i, const char* code)
-{
+void WebHexCode(uint32_t i, const char* code) {
+//  if (i >= COL_LAST) { return; }
   char scolor[10];
-
   strlcpy(scolor, code, sizeof(scolor));
   char* p = scolor;
   if ('#' == p[0]) { p++; }  // Skip
@@ -1260,46 +1259,18 @@ void WebHexCode(uint32_t i, const char* code)
   }
 
   uint32_t color = strtol(p, nullptr, 16);
-/*
-  if (3 == strlen(p)) {  // Convert 3 character to 6 character color code
-    uint32_t w = ((color & 0xF00) << 8) | ((color & 0x0F0) << 4) | (color & 0x00F);  // 00010203
-    color = w | (w << 4);                                                            // 00112233
-  }
-*/
-  uint32_t j = sizeof(Settings->web_color) / 3;          // First area contains j = 18 colors
-/*
-  if (i < j) {
-    Settings->web_color[i][0] = (color >> 16) & 0xFF;  // Red
-    Settings->web_color[i][1] = (color >> 8) & 0xFF;   // Green
-    Settings->web_color[i][2] = color & 0xFF;          // Blue
-  } else {
-    Settings->web_color2[i-j][0] = (color >> 16) & 0xFF;  // Red
-    Settings->web_color2[i-j][1] = (color >> 8) & 0xFF;   // Green
-    Settings->web_color2[i-j][2] = color & 0xFF;          // Blue
-  }
-*/
-  if (i >= j) {
-    // Calculate i to index in Settings->web_color2 - Dirty(!) but saves 128 bytes code
-    i += ((((uint8_t*)&Settings->web_color2 - (uint8_t*)&Settings->web_color) / 3) - j);
-  }
-  Settings->web_color[i][0] = (color >> 16) & 0xFF;  // Red
-  Settings->web_color[i][1] = (color >> 8) & 0xFF;   // Green
-  Settings->web_color[i][2] = color & 0xFF;          // Blue
+  uint32_t j = nitems(Settings->web_color);          // First area contains j = 18 colors
+  uint8_t* web_color = (i < j) ? (uint8_t*)Settings->web_color + (i * 3) : (uint8_t*)Settings->web_color2 + ((i - j) * 3);
+  *web_color++ = (color >> 16) & 0xFF;  // Red
+  *web_color++ = (color >> 8) & 0xFF;   // Green
+  *web_color = color & 0xFF;            // Blue
 }
 
-uint32_t WebColor(uint32_t i)
-{
-  uint32_t j = sizeof(Settings->web_color) / 3;          // First area contains j = 18 colors
-/*
-  uint32_t tcolor = (i<j)? (Settings->web_color[i][0] << 16) | (Settings->web_color[i][1] << 8) | Settings->web_color[i][2] :
-                           (Settings->web_color2[i-j][0] << 16) | (Settings->web_color2[i-j][1] << 8) | Settings->web_color2[i-j][2];
-*/
-  if (i >= j) {
-    // Calculate i to index in Settings->web_color2 - Dirty(!) but saves 128 bytes code
-    i += ((((uint8_t*)&Settings->web_color2 - (uint8_t*)&Settings->web_color) / 3) - j);
-  }
-  uint32_t tcolor = (Settings->web_color[i][0] << 16) | (Settings->web_color[i][1] << 8) | Settings->web_color[i][2];
-
+uint32_t WebColor(uint32_t i) {
+//  if (i >= COL_LAST) { return 0; }
+  uint32_t j = nitems(Settings->web_color);          // First area contains j = 18 colors
+  uint8_t* web_color = (i < j) ? (uint8_t*)Settings->web_color + (i * 3) : (uint8_t*)Settings->web_color2 + ((i - j) * 3);
+  uint32_t tcolor = (*web_color++ << 16) | (*web_color++ << 8) | *web_color;
   return tcolor;
 }
 

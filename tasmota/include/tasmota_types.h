@@ -831,7 +831,7 @@ typedef struct {
   uint8_t       shutter_motordelay[MAX_SHUTTERS];    // E9A
   int8_t        temp_comp;                 // E9E
   uint8_t       weight_change;             // E9F
-  uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
+  uint8_t       web_color2[2][3];          // EA0
   uint16_t      zcdimmerset[MAX_PWMS_LEGACY]; // EA6
 
 #if CONFIG_IDF_TARGET_ESP32S31
