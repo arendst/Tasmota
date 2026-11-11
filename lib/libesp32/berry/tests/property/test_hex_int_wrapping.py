@@ -9,7 +9,7 @@ BE_INTGER_TYPE == 0 (32-bit signed int), 0xFFFFFFFF must become -1,
 This covers:
   - _wrap_bint helper correctness
   - _scan_hexadecimal wrapping via the lexer
-  - be_str2int wrapping for hex and decimal paths
+  - be_str2int hex wrapping and decimal saturation
   - End-to-end: solidify output matches C binary for large hex literals
 """
 
@@ -153,8 +153,9 @@ class TestBeStr2IntWrapping:
         assert be_str2int("0x7FFFFFFF") == 2147483647
 
     def test_decimal_large(self):
-        # 4294967295 in decimal also wraps
-        assert be_str2int("4294967295") == -1
+        # Decimal does not wrap: like C, it saturates to INT_MAX
+        # (berry-lang/berry#559)
+        assert be_str2int("4294967295") == 2147483647
 
     def test_decimal_normal(self):
         assert be_str2int("123") == 123
