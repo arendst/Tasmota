@@ -23,6 +23,7 @@
 #include <berry.h>
 #include <Wire.h>
 #include "esp_wifi.h"
+#include "esp_sleep.h"
 
 const uint32_t BERRY_MAX_LOGS = 16;   // max number of print output recorded when outside of REPL, used to avoid infinite grow of logs
 const uint32_t BERRY_MAX_REPL_LOGS = 50;   // max number of print output recorded when inside REPL
@@ -61,11 +62,13 @@ const uint32_t BERRY_MAX_REPL_LOGS = 50;   // max number of print output recorde
  * tasmota.millis([delay:int]) -> int
  * tasmota.time_reached(timer:int) -> bool
  * tasmota.yield() -> nil
+ * tasmota.wakeup_cause() -> int
  *
  * tasmota.get_light([index:int = 0]) -> map
  * tasmota.get_power([index:int = 0]) -> bool
  * tasmota.set_power(idx:int, power:bool) -> bool or nil
  * tasmota.set_light(idx:int, values:map) -> map
+ *
  *
 \*********************************************************************************************/
 extern "C" {
@@ -1141,6 +1144,23 @@ extern "C" {
     }
   }
 }
+
+
+/*********************************************************************************************\
+ * Native functions mapped to Berry functions
+ *
+ * wakeup_cause() -> int
+ *
+\*********************************************************************************************/
+extern "C" {
+  int32_t l_wakeup_cause(struct bvm *vm);
+  int32_t l_wakeup_cause(struct bvm *vm) {
+    be_pushint(vm, (bint) esp_sleep_get_wakeup_cause());
+    be_return(vm);
+  }
+}
+
+
 
 /*********************************************************************************************\
  * Tasmota Log Reader

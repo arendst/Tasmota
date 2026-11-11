@@ -71,6 +71,8 @@ extern int l_i2cenabled(bvm *vm);
 extern int tasm_find_op(bvm *vm);
 extern int tasm_apply_str_op(bvm *vm);
 
+extern int32_t l_wakeup_cause(bvm *vm);
+
 // tasmota.version() -> int
 extern int32_t be_Tasmota_version(void);
 BE_FUNC_CTYPE_DECLARE(be_Tasmota_version, "i", "-");
@@ -218,5 +220,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     set_light, closure(class_Tasmota_set_light_closure)
 
     Rule_Matcher, class(be_class_Rule_Matcher)
+
+    wakeup_cause, func(l_wakeup_cause)
 }
 @const_object_info_end */
