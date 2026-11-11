@@ -705,7 +705,7 @@ void setup(void) {
     // and then expand the string.
     SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
     const char* first_spec = strchr(SettingsText(SET_HOSTNAME), '%');
-    const char* second_spec = strchr(first_spec + 1, '%');
+    const char* second_spec = first_spec ? strchr(first_spec + 1, '%') : nullptr;  // #25189 WIFI_HOSTNAME may be a literal without '%'
     bool use_topic_only = (first_spec && !second_spec && ('s' == *(first_spec +1)));  // #24731 Backward compatibility to undocumented single specifier "%s"
     if (use_topic_only || (first_spec && second_spec)) {
       // Two (or more) specifiers: expands first as mqtt topic and second as chip ID

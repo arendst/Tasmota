@@ -1440,9 +1440,9 @@ void CmndKnxPa(void)
     if (strchr(XdrvMailbox.data, '.') != nullptr) {  // Process parameter entry
       char sub_string[XdrvMailbox.data_len];
 
-      int pa_area = atoi(subStr(sub_string, XdrvMailbox.data, ".", 1));
-      int pa_line = atoi(subStr(sub_string, XdrvMailbox.data, ".", 2));
-      int pa_member = atoi(subStr(sub_string, XdrvMailbox.data, ".", 3));
+      int pa_area = atoi(subStr(sub_string, sizeof(sub_string), XdrvMailbox.data, ".", 1));
+      int pa_line = atoi(subStr(sub_string, sizeof(sub_string), XdrvMailbox.data, ".", 2));
+      int pa_member = atoi(subStr(sub_string, sizeof(sub_string), XdrvMailbox.data, ".", 3));
 
       if ( ((pa_area == 0) && (pa_line == 0) && (pa_member == 0))
             || (pa_area > 15) || (pa_line > 15) || (pa_member > 255) ) {

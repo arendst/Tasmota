@@ -1614,7 +1614,7 @@ typedef struct MYIO {
 
 typedef struct MYCFGIO {
   uint16_t      io[MAX_USER_PINS];
-} mycfgio;                      // ESP8266: 14*2 = 28 bytes / ESP32: 36*2 = 72 bytes / ESP32-C3: 22*2 = 44 bytes / ESP32-S2: 36*2 = 72 bytes / ESP32-S3: 33*2 = 66 bytes
+} mycfgio;                      // ESP8266: 14*2 = 28 bytes / ESP32: 36*2 = 72 bytes / ESP32-C3: 22*2 = 44 bytes / ESP32-S2: 36*2 = 72 bytes / ESP32-S3: 38*2 = 76 bytes
 
 #define GPIO_FLAG_USED       0  // Currently no flags used
 

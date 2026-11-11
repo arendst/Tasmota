@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "조도"
 #define D_IMMEDIATE "immediate"      // Button immediate
 #define D_INDEX "인덱스"
+#define D_AIRQUALITY "공기질"
+#define D_IAQ_CALIBRATING "(기준선 보정, 깨끗한 공기 유지)"
 #define D_INFO "정보"
 #define D_INFRARED "적외선"
 #define D_INITIALIZED "초기화됨"

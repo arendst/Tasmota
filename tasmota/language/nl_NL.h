@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "Verlichtingssterkte"
 #define D_IMMEDIATE "onmiddellijk"      // Button immediate
 #define D_INDEX "Index"
+#define D_AIRQUALITY "Luchtkwaliteit"
+#define D_IAQ_CALIBRATING "(basislijn kalibratie, houd de lucht schoon)"
 #define D_INFO "Info"
 #define D_INFRARED "Infrarood"
 #define D_INITIALIZED "Geinitialiseerd"

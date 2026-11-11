@@ -200,8 +200,8 @@ void CmndWifiTest(void)
       if (pos != nullptr) {
         char ssid_test[XdrvMailbox.data_len];
         char pswd_test[XdrvMailbox.data_len];
-        subStr(ssid_test, XdrvMailbox.data, "+", 1);
-        subStr(pswd_test, XdrvMailbox.data, "+", 2);
+        subStr(ssid_test, sizeof(ssid_test), XdrvMailbox.data, "+", 1);
+        subStr(pswd_test, sizeof(pswd_test), XdrvMailbox.data, "+", 2);
         ResponseCmndIdxChar(D_JSON_TESTING);
         //Response_P(PSTR("{\"%s%d\":{\"Network\":\"%s,\"PASS\":\"%s\"}}"), XdrvMailbox.command, XdrvMailbox.index, ssid_test, pswd_test);
 
@@ -1041,6 +1041,9 @@ void CmndStatus(void)
 #else   // ESP32
     ResponseAppend_P(PSTR(",\"" D_JSON_STACKLOWMARK "\":%d,\"" D_JSON_PSRMAXMEMORY "\":%d,\"" D_JSON_PSRFREEMEMORY "\":%d"),
                           uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024);
+#ifdef D_TASMOTA_PSRAMMODE
+    ResponseAppend_P(PSTR(",\"PsrMode\":\"" D_TASMOTA_PSRAMMODE "\""));
+#endif  // D_TASMOTA_PSRAMMODE
 #endif  // ESP8266 or ESP32
 
     ResponseAppend_P(PSTR(",\"" D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d"

@@ -140,6 +140,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   var tasmota_relay_index                             # Relay number in Tasmota (1 based), may be nil for Lights 1/2/3 internal
   var light_index                                   # index number when using `light.get()` and `light.set()`
   var shadow_onoff                                    # (bool) status of the light power on/off
+  var on_hold                                         # (int or nil) "Lights delayed on": millis when an On was held, see Light1 `hold_on()`
 
   #############################################################
   # Constructor
@@ -206,6 +207,15 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   end
 
   #############################################################
+  # hold_on
+  #
+  # Returns true if a received On is held instead of sent (see Light1)
+  # Light0 has no Level Control, so an On is never held
+  def hold_on()
+    return false
+  end
+
+  #############################################################
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
@@ -244,7 +254,13 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
     # ====================================================================================================
     if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
       if !self.mqtt_command_ready(ctx)   return nil   end
-      self.update_shadow_lazy()
+      if command == 0x0001 && (self.on_hold != nil || self.hold_on())
+        ctx.log = "delayed"             # sent with a following level command, or when the delay expires
+        return true
+      end
+      var held = (self.on_hold != nil)  # any other On/Off command sets the state itself,
+      self.on_hold = nil                # relative to the On already reported for a held On
+      if !held   self.update_shadow_lazy()   end
       if   command == 0x0000            # ---------- Off ----------
         self.set_onoff(false)
         self.publish_command('Power', 0)
@@ -280,7 +296,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   # Update internal state for virtual devices
   def update_virtual(payload)
     var val_onoff = payload.find("Power")
-    if val_onoff != nil
+    if val_onoff != nil && (self.on_hold == nil || bool(val_onoff))    # delayed On: not switched on yet
       self.set_onoff(bool(val_onoff))
     end
     super(self).update_virtual(payload)
@@ -336,6 +352,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
       end
       if !data.contains(power_key)   return   end
       var state = (data.find(power_key) == "ON")
+      if self.on_hold != nil && !state   return   end      # delayed On: the remote is not switched on yet
 
       if self.shadow_onoff != bool(state)
         self.attribute_updated(0x0006, 0x0000)

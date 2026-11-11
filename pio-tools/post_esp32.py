@@ -83,7 +83,11 @@ def esp32_detect_flashsize():
         return "4MB",False
     else:
         esptool_flags = ["flash-id"]
-        esptool_cmd = [env.subst("$OBJCOPY")] + esptool_flags
+        esptool_cmd = [env.subst("$OBJCOPY")]
+        upload_port = env.get("UPLOAD_PORT", "")
+        if upload_port and str(upload_port).lower() not in ("none", "auto"):
+            esptool_cmd += ["--port", env.subst("$UPLOAD_PORT")]
+        esptool_cmd += esptool_flags
         try:
             output = subprocess.run(esptool_cmd, capture_output=True).stdout.splitlines()
             for l in output:

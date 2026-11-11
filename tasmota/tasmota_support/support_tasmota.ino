@@ -2083,10 +2083,6 @@ void GpioInit(void)
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
 
-#ifdef ESP8266
-  ConvertGpios();
-#endif  // ESP8266
-
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
     if ((Settings->user_template.gp.io[i] >= AGPIO(GPIO_SENSOR_END)) && (Settings->user_template.gp.io[i] < AGPIO(GPIO_USER))) {
       Settings->user_template.gp.io[i] = AGPIO(GPIO_USER);  // Fix not supported sensor ids in template

@@ -51,6 +51,7 @@ class TestTasmota
   def wifi() return self.wifi_info end
   def rtc_utc() return self.utc_time end
   def rtc(mode) return self.local_time end
+  def rtc_utc_ms(b) var v = int64(self.local_time) * int64(1000) if b == nil return v end b.clear() b.add(v.low32(), 4) b.add(v.high32(), 4) return b end
   def millis() return self.now end
   def time_reached(deadline) return self.now >= deadline end
   def loglevel(level) return false end

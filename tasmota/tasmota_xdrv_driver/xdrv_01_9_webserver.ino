@@ -516,6 +516,8 @@ static void WebGetArg(const char* arg, char* out, size_t max) {
 
 /*-------------------------------------------------------------------------------------------*/
 
+void ExecuteWebCommand(char* svalue, uint32_t source = SRC_WEBGUI);
+
 String AddWebCommand(const char* command, const char* arg, const char* dflt) {
 /*
   // OK but fixed max argument
@@ -556,6 +558,13 @@ String AddWebCommand(const char* command, const char* arg, const char* dflt) {
     result += FPSTR(dflt);
   }
   else if (!(StrCaseStr_P(command, PSTR("Password")) && (len < 5))) {
+    if (strpbrk(param.c_str(), ";{}")) {
+      // Backlog would end this command at a ';' or join it to the next at an unpaired '{', so run it now
+      result.remove(0, 1);                       // Skip leading ';'
+      result += param;
+      ExecuteWebCommand((char*)result.c_str());
+      return String();
+    }
     result += param;
   }
   return result;
@@ -578,7 +587,6 @@ void ShowWebSource(uint32_t source) {
 
 /*-------------------------------------------------------------------------------------------*/
 
-void ExecuteWebCommand(char* svalue, uint32_t source = SRC_WEBGUI);
 void ExecuteWebCommand(char* svalue, uint32_t source) {
   ShowWebSource(source);
   TasmotaGlobal.last_source = source;
@@ -792,16 +800,21 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true) {
       referer.toUpperCase();
       String hostname = TasmotaGlobal.hostname;
       hostname.toUpperCase();
+      hostname += "/";   // Fix GHSA-v6w4-vfv4-g4jr
+      String localip = WiFi.localIP().toString();
+      localip += "/";    // Fix GHSA-v6w4-vfv4-g4jr
       // TODO rework if IPv6
-      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(WiFi.localIP().toString()) == 7)) {
+      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(localip) == 7)) {
         return true;
       }
-//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
 #if defined(ESP32) && defined(USE_ETHERNET)
       hostname = EthernetHostname();
       hostname.toUpperCase();
+      hostname += "/";   // Fix GHSA-v6w4-vfv4-g4jr
+      localip = EthernetLocalIP().toString();
+      localip += "/";    // Fix GHSA-v6w4-vfv4-g4jr
       // TODO rework if IPv6
-      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(EthernetLocalIP().toString()) == 7)) {
+      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(localip) == 7)) {
         return true;
       }
 #endif  // USE_ETHERNET
@@ -3288,9 +3301,18 @@ void HandleInformation(void) {
     ESP_getHeapFragmentation());
 #endif // USE_GT911
   if (UsePSRAM()) {
+#ifdef D_TASMOTA_PSRAMMODE
+    WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%d KB (" D_TASMOTA_PSRAMMODE ")"), ESP.getPsramSize() / 1024);
+#else
     WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%d KB"), ESP.getPsramSize() / 1024);
+#endif  // D_TASMOTA_PSRAMMODE
     WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%d KB"), ESP.getFreePsram() / 1024);
   }
+#ifdef D_TASMOTA_PSRAMMODE
+  else {
+    WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2" "0 KB (" D_TASMOTA_PSRAMMODE ")"));
+  }
+#endif  // D_TASMOTA_PSRAMMODE
   WSContentSeparatorIFat();
   uint32_t cur_part = ESP_PARTITION_SUBTYPE_APP_FACTORY;   // 0
   const esp_partition_t *running_ota = esp_ota_get_running_partition();
@@ -3549,6 +3571,7 @@ void HandleUploadLoop(void) {
   static uint32_t upload_size;
   static bool upload_error_signalled;
 
+  if (!WebAuthenticate()) { return; }
   if (!HttpCheckPriviledgedAccess(false)) { return; }
   if (UPL_NONE == Web.upload_file_type) { return; }  // Invalid or no file type so bail out
 

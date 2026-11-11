@@ -928,6 +928,51 @@ class Matter_SubscribeRequestMessage : Matter_IM_Message_base
   var fabric_filtered             # bool
   var data_version_filters        # array of DataVersionFilterIB
 
+  # Parse a raw SubscribeRequest without keeping DataVersionFilters in the TLV tree,
+  # they are not used for reports: each filter is parsed and dropped, tag 8 stays
+  # an empty array (so `data_version_filters` is empty, and a duplicate tag 8 is still ignored)
+  # Returns [val, raw offset of filters] for `validate_raw_filters()` after the ACK
+  static def parse_raw(raw, idx)
+    var TLV = matter.TLV
+    if idx == nil   idx = 0 end
+    if raw[idx] != 0x15 #-TLV.STRUCT, anonymous-#
+      return [TLV.parse(raw, idx), nil]
+    end
+    var val = TLV.Matter_TLV_struct()
+    var versions_idx = nil
+    idx += 1
+    while raw[idx] != 0x18 #-TLV.EOC-#
+      if raw.get(idx, -2) == 0x3608 && val.findsub(8) == nil
+        var versions = val.add_array(8)
+        idx += 2
+        versions_idx = idx
+        while raw[idx] != 0x18 #-TLV.EOC-#
+          var filter = TLV.parse(raw, idx)
+          idx = filter.next_idx
+          filter = nil
+        end
+        idx += 1
+        versions.next_idx = idx
+      else
+        var item = TLV.parse(raw, idx, val)
+        idx = item.next_idx
+        val.val.push(item)
+      end
+    end
+    val.next_idx = idx + 1
+    return [val, versions_idx]
+  end
+
+  # Decode the DataVersionFilters skipped by `parse_raw()` one at a time, raises on invalid filter
+  static def validate_raw_filters(raw, idx)
+    while raw[idx] != 0x18 #-TLV.EOC-#
+      var filter = matter.TLV.parse(raw, idx)
+      idx = filter.next_idx
+      matter.DataVersionFilterIB().from_TLV(filter)
+      filter = nil
+    end
+  end
+
   # decode from TLV
   def from_TLV(val)
     if val == nil     return nil end

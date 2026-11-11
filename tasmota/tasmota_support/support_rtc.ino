@@ -45,6 +45,9 @@ struct RTC {
   uint32_t restart_time = 0;
   uint32_t nanos = 0;
   uint32_t millis = 0;
+#ifdef ESP32
+  int64_t utc_ms_offset = 0;                  // UTC ms minus esp_timer ms, set at time sync
+#endif
 //  uint32_t last_sync = 0;
   int32_t time_timezone = 0;
   bool time_synced = false;
@@ -257,6 +260,52 @@ uint32_t RtcMillis(void) {
   return (millis() - Rtc.millis) % 1000;
 }
 
+/*********************************************************************************************\
+ * RtcUtcMillis() - monotonic UTC time in milliseconds since 1970-01-01 (ESP32 only)
+ *
+ * Used by Berry `tasmota.rtc_utc_ms()`, e.g. for Matter event EpochTimestamp (posix-ms).
+ * The goal is that values never go backwards and that the difference between two calls
+ * is the real elapsed time. Accuracy against true UTC is secondary.
+ *
+ * Why not `Rtc.utc_time * 1000 + (millis() - Rtc.millis)`:
+ * - `Rtc.utc_time` is incremented by exactly 1s at each TickerRtc callback, but
+ *   `Rtc.millis` is sampled when the callback actually runs. Callback latency makes
+ *   the value step back by a few ms at each tick (e.g. x.005 just before, x.000 after).
+ * - RtcSecond() runs from a Ticker (esp_timer task). A read between `Rtc.utc_time++`
+ *   and `Rtc.millis = millis()` is off by about 1s.
+ * - `millis()` is 32 bits and wraps after 49.7 days.
+ *
+ * How it works:
+ * - At each time sync (NTP, Time command, GPS, RTC chip, Mesh... all go through
+ *   RtcSync() and the `time_synced` branch of RtcSecond()), `Rtc.utc_ms_offset` is set
+ *   to UTC ms minus esp_timer ms. `Rtc.nanos` is only used there, to start from the
+ *   NTP sub-second phase. It is stale after non-NTP syncs, which only affects accuracy.
+ * - Between syncs the value is `Rtc.utc_ms_offset + esp_timer_get_time() / 1000`.
+ *   esp_timer is a 64-bit microsecond counter that doesn't wrap and doesn't depend on the
+ *   1s tick, so gaps between calls are exact.
+ * - A resync (hourly for NTP) can move the clock back because of crystal drift
+ *   (tens of ppm, i.e. ~0.1s per hour). If the new value is behind the last returned
+ *   value by less than 10s, the last value is returned until the clock catches up.
+ *   Calls during this short hold get the same value: non-decreasing, not strictly increasing.
+ * - A backward step of 10s or more is accepted as a real time correction (e.g. a wrong
+ *   time fixed with the Time command), otherwise the value would freeze for as long as
+ *   the error. This is the only case where the value goes backwards.
+ * - Before the first sync `Rtc.utc_ms_offset` is 0 and the value is the uptime in ms.
+ *   Callers should check that `Rtc.utc_time` is valid first.
+ * - The `utc_ms_last` state is not protected; call it from the main loop only.
+\*********************************************************************************************/
+#ifdef ESP32
+uint64_t RtcUtcMillis(void) {
+  static uint64_t utc_ms_last = 0;
+  uint64_t utc_ms = Rtc.utc_ms_offset + esp_timer_get_time() / 1000;
+  if ((utc_ms < utc_ms_last) && (utc_ms_last - utc_ms < 10000)) {
+    utc_ms = utc_ms_last;
+  }
+  utc_ms_last = utc_ms;
+  return utc_ms;
+}
+#endif  // ESP32
+
 void BreakNanoTime(uint32_t time_input, uint32_t time_nanos, TIME_T &tm) {
 // break the given time_input into time components
 // this is a more compact version of the C library localtime function
@@ -434,6 +483,10 @@ void RtcSecond(void) {
     Rtc.time_synced = false;
     Rtc.last_synced = true;
     last_sync = Rtc.utc_time;
+#ifdef ESP32
+    // Reference for RtcUtcMillis(), only taken at time sync (see RtcUtcMillis() comments)
+    Rtc.utc_ms_offset = (int64_t)Rtc.utc_time * 1000 + Rtc.nanos / 1000000 - esp_timer_get_time() / 1000;
+#endif
 
     if (Rtc.restart_time == 0) {
       Rtc.restart_time = Rtc.utc_time - TasmotaGlobal.uptime;  // save first synced time as restart time

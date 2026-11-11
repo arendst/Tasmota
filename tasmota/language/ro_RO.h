@@ -131,6 +131,8 @@
 #define D_ILLUMINANCE "Iluminare"
 #define D_IMMEDIATE "imediat"      // Button immediate
 #define D_INDEX "Index"
+#define D_AIRQUALITY "Calitatea aerului"
+#define D_IAQ_CALIBRATING "(calibrare linie de bază, mențineți aerul curat)"
 #define D_INFO "Info"
 #define D_INFRARED "Infraroșu"
 #define D_INITIALIZED "Inițializat"
