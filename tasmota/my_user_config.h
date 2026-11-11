@@ -1296,6 +1296,9 @@
   #define USE_BERRY_PYTHON_COMPAT                // Enable by default `import python_compat`
   #define USE_BERRY_TIMEOUT             4000     // Timeout in ms, will raise an exception if running time exceeds this timeout
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
+  #ifndef BERRY_MAX_BYTES_SIZE_PSRAM
+    #define BERRY_MAX_BYTES_SIZE_PSRAM  (1024 * 1024) // Max size in bytes for Berry bytes() objects when PSRAM is available
+  #endif
   #define USE_BERRY_IRAM                         // Allocate some data structures in IRAM (which is usually unused) when possible and if no PSRAM is available
   #define USE_BERRY_FAST_LOOP_SLEEP_MS  5        // Minimum time in milliseconds to before calling again `tasmota.fast_loop()`, a smaller value will consume more CPU (min 1ms)
   // #define USE_BERRY_DEBUG                        // Compile Berry bytecode with line number information, makes exceptions easier to debug. Adds +8% of memory consumption for compiled code
