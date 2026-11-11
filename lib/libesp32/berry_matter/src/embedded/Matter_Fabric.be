@@ -74,6 +74,9 @@ class Matter_Fabric : Matter_Expirable
   var group_key_map
   var group_table
   var group_key_sets
+  # Fabric-scoped Binding cluster tables: map "endpoint" -> list of TargetStruct
+  # maps ({node:int64, endpoint} or {group}, optional cluster)
+  var bindings
 
   #############################################################
   def init(store)
@@ -91,6 +94,7 @@ class Matter_Fabric : Matter_Expirable
     self.group_key_map = []
     self.group_table = []
     self.group_key_sets = []
+    self.bindings = {}
   end
 
   def get_noc()               return self.noc               end
@@ -187,6 +191,24 @@ class Matter_Fabric : Matter_Expirable
     if self.group_key_map == nil       self.group_key_map = []       end
     if self.group_table == nil         self.group_table = []         end
     if self.group_key_sets == nil      self.group_key_sets = []      end
+    if self.bindings == nil            self.bindings = {}            end
+    # Binding Node ids are uint64 persisted as decimal strings. Drop any
+    # entry whose Node cannot be restored rather than targeting a wrong node.
+    for entries : self.bindings
+      var entry_idx = size(entries) - 1
+      while entry_idx >= 0
+        var node = entries[entry_idx].find("node")
+        if node != nil && !isinstance(node, int64)
+          node = self.uint64_from_json(node)
+          if node == nil
+            entries.remove(entry_idx)
+          else
+            entries[entry_idx]["node"] = node
+          end
+        end
+        entry_idx -= 1
+      end
+    end
     # Berry's JSON encoder serializes int64 values as decimal strings.
     # Restore GroupKeySet epoch fields, which are Matter uint64 values.
     for key_set : self.group_key_sets
@@ -252,6 +274,39 @@ class Matter_Fabric : Matter_Expirable
   # Atomically replace and persist GroupKeyMap after a validated list write.
   def replace_group_key_map(entries)
     self.group_key_map = entries
+    self.save()
+  end
+
+  #############################################################
+  # Binding cluster helpers.
+  # Return this fabric's Binding entries for `endpoint` (empty list if none).
+  def get_bindings(endpoint)
+    return self.bindings.find(str(endpoint), [])
+  end
+
+  # Atomically replace and persist the Binding list of `endpoint` after a
+  # validated list write. Empty lists are not stored.
+  def replace_bindings(endpoint, entries)
+    var ep_str = str(endpoint)
+    if size(entries) > 0
+      self.bindings[ep_str] = entries
+    else
+      self.bindings.remove(ep_str)
+    end
+    self.save()
+  end
+
+  # Drop Binding lists of endpoints not in `endpoints` (list of int), so an
+  # endpoint number reused later does not inherit stale targets.
+  def keep_bindings_for(endpoints)
+    var stale = []
+    for ep_str : self.bindings.keys()
+      if endpoints.find(int(ep_str)) == nil   stale.push(ep_str) end
+    end
+    if size(stale) == 0   return end
+    for ep_str : stale
+      self.bindings.remove(ep_str)
+    end
     self.save()
   end
 
