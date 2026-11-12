@@ -633,11 +633,11 @@ void ShdGetSettings(void)
 #ifdef SHELLY_DIMMER_DEBUG
         AddLog(LOG_LEVEL_INFO, PSTR(SHD_LOGNAME "Loading params: %s"), SettingsText(SET_SHD_PARAM));
 #endif  // SHELLY_DIMMER_DEBUG
-        // Shd.req_brightness      = atoi(subStr(parameters, SettingsText(SET_SHD_PARAM), ",", 1));
-        Shd.leading_edge        = atoi(subStr(parameters, SettingsText(SET_SHD_PARAM), ",", 2));
-        // Shd.req_fade_rate       = atoi(subStr(parameters, SettingsText(SET_SHD_PARAM), ",", 3));
-        Shd.warmup_brightness   = atoi(subStr(parameters, SettingsText(SET_SHD_PARAM), ",", 4));
-        Shd.warmup_time         = atoi(subStr(parameters, SettingsText(SET_SHD_PARAM), ",", 5));
+        // Shd.req_brightness      = atoi(subStr(parameters, sizeof(parameters), SettingsText(SET_SHD_PARAM), ",", 1));
+        Shd.leading_edge        = atoi(subStr(parameters, sizeof(parameters), SettingsText(SET_SHD_PARAM), ",", 2));
+        // Shd.req_fade_rate       = atoi(subStr(parameters, sizeof(parameters), SettingsText(SET_SHD_PARAM), ",", 3));
+        Shd.warmup_brightness   = atoi(subStr(parameters, sizeof(parameters), SettingsText(SET_SHD_PARAM), ",", 4));
+        Shd.warmup_time         = atoi(subStr(parameters, sizeof(parameters), SettingsText(SET_SHD_PARAM), ",", 5));
     }
 }
 

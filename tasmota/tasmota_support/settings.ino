@@ -45,8 +45,6 @@ void RtcSettingsSave(void) {
     if (RTC_MEM_VALID != RtcSettings.valid) {
       memset(&RtcSettings, 0, sizeof(RtcSettings));
       RtcSettings.valid = RTC_MEM_VALID;
-//      RtcSettings.ex_energy_kWhtoday = Settings->energy_power_calibration2;  // = ex_energy_kWhtoday
-//      RtcSettings.ex_energy_kWhtotal = Settings->power_lock;
       for (uint32_t i = 0; i < 3; i++) {
         RtcSettings.energy_kWhtoday_ph[i] = Settings->energy_kWhtoday_ph[i];
         RtcSettings.energy_kWhtotal_ph[i] = Settings->energy_kWhtotal_ph[i];
@@ -661,7 +659,7 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("TST: start %d, end %d, len %d, current %d, replace %d, diff %d"),
 //    start_pos, end_pos, char_len, current_len, replace_len, diff);
 
-  int too_long = (char_len + diff) - settings_text_size;
+  int too_long = (char_len + diff) - sizeof(Settings->text_pool);
   if (too_long > 0) {
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Text overflow by %d char(s)"), too_long);
     return false;  // Replace text too long
@@ -679,15 +677,15 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me) {
     // Replace text
     memmove(Settings->text_pool + start_pos, replace, replace_len);
     // Fill for future use
-    memset(Settings->text_pool + char_len + diff, 0x00, settings_text_size - char_len - diff);
+    memset(Settings->text_pool + char_len + diff, 0x00, sizeof(Settings->text_pool) - char_len - diff);
 
     settings_text_mutex = false;
   }
 
 #ifdef DEBUG_FUNC_SETTINGSUPDATETEXT
-  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d, Id%02d '%s'"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count, index_save, replace);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d, Id%02d '%s'"), GetSettingsTextLen(), sizeof(Settings->text_pool), settings_text_busy_count, index_save, replace);
 #else
-  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d"), GetSettingsTextLen(), settings_text_size, settings_text_busy_count);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d, Busy %d"), GetSettingsTextLen(), sizeof(Settings->text_pool), settings_text_busy_count);
 #endif
 
   return true;
@@ -703,7 +701,7 @@ char* SettingsText(uint32_t index) {
       return (char*)GetWebButton(index-SET_BUTTON17+16);
 #endif  // not FIRMWARE_MINIMAL
 #endif  // USE_WEBSERVER
-    position += settings_text_size -1;  // Setting not supported - internal error - return empty string
+    position += sizeof(Settings->text_pool) -1;  // Setting not supported - internal error - return empty string
   } else {
     SettingsUpdateFinished();
     for (;index > 0; index--) {
@@ -716,11 +714,6 @@ char* SettingsText(uint32_t index) {
 /*********************************************************************************************\
  * Config Save - Save parameters to Flash ONLY if any parameter has changed
 \*********************************************************************************************/
-
-void UpdateBackwardCompatibility(void) {
-  // Perform updates for backward compatibility
-  strlcpy(Settings->user_template_name, SettingsText(SET_TEMPLATE_NAME), sizeof(Settings->user_template_name));
-}
 
 uint32_t GetSettingsAddress(void) {
   return settings_location * SPI_FLASH_SEC_SIZE;
@@ -737,7 +730,6 @@ void SettingsSave(uint8_t rotate) {
  */
 #ifndef FIRMWARE_MINIMAL
   XsnsXdrvCall(FUNC_SAVE_SETTINGS);
-  UpdateBackwardCompatibility();
   if ((GetSettingsCrc32() != settings_crc32) || rotate) {
     if (1 == rotate) {                                 // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
       TasmotaGlobal.stop_flash_rotate = 1;
@@ -983,7 +975,6 @@ void SettingsDefaultSet2(void) {
   SysMBitfield2  mbflag2 = { 0 };
 
 #ifdef ESP8266
-  Settings->gpio16_converted = 0xF5A0;
 //  Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
@@ -1241,9 +1232,6 @@ void SettingsDefaultSet2(void) {
 //  Settings->energy_max_power_limit = 0;                            // MaxPowerLimit
   Settings->energy_max_power_limit_hold = MAX_POWER_HOLD;
   Settings->energy_max_power_limit_window = MAX_POWER_WINDOW;
-//  Settings->ex_energy_max_power_safe_limit = 0;                    // MaxSafePowerLimit
-//  Settings->ex_energy_max_power_safe_limit_hold = SAFE_POWER_HOLD;
-//  Settings->ex_energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
 //  Settings->energy_max_energy = 0;                                 // MaxEnergy
 //  Settings->energy_max_energy_start = 0;                           // MaxEnergyStart
 //  Settings->energy_kWhtotal_ph[0] = 0;
@@ -1547,212 +1535,6 @@ void SettingsEnableAllI2cDrivers(void) {
 
 void SettingsDelta(void) {
   if (Settings->version != TASMOTA_VERSION) {  // Fix version dependent changes
-
-#ifdef ESP8266
-#ifndef UPGRADE_V8_MIN
-    // Although no direct upgrade is supported try to make a viable environment
-    if (Settings->version < 0x08000000) {
-      // Save SSIDs and Passwords
-      char temp31[strlen(Settings->ex_sta_ssid[0]) +1];
-      strncpy(temp31, Settings->ex_sta_ssid[0], sizeof(temp31));
-      char temp32[strlen(Settings->ex_sta_ssid[1]) +1];
-      strncpy(temp32, Settings->ex_sta_ssid[1], sizeof(temp32));
-      char temp41[strlen(Settings->ex_sta_pwd[0]) +1];
-      strncpy(temp41, Settings->ex_sta_pwd[0], sizeof(temp41));
-      char temp42[strlen(Settings->ex_sta_pwd[1]) +1];
-      strncpy(temp42, Settings->ex_sta_pwd[1], sizeof(temp42));
-
-      char temp7[strlen(Settings->ex_mqtt_host) +1];
-      strncpy(temp7, Settings->ex_mqtt_host, sizeof(temp7));
-      char temp9[strlen(Settings->ex_mqtt_user) +1];
-      strncpy(temp9, Settings->ex_mqtt_user, sizeof(temp9));
-      char temp10[strlen(Settings->ex_mqtt_pwd) +1];
-      strncpy(temp10, Settings->ex_mqtt_pwd, sizeof(temp10));
-      char temp11[strlen(Settings->ex_mqtt_topic) +1];
-      strncpy(temp11, Settings->ex_mqtt_topic, sizeof(temp11));
-
-      SettingsDefault();
-
-      // Restore current SSIDs and Passwords
-      SettingsUpdateText(SET_STASSID1, temp31);
-      SettingsUpdateText(SET_STASSID2, temp32);
-      SettingsUpdateText(SET_STAPWD1, temp41);
-      SettingsUpdateText(SET_STAPWD2, temp42);
-
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_CLIENT_CERT)
-      if (!strlen(Settings->ex_mqtt_user)) {
-        SettingsUpdateText(SET_MQTT_HOST, temp7);
-        SettingsUpdateText(SET_MQTT_USER, temp9);
-      } else {
-        char aws_mqtt_host[66];
-        snprintf_P(aws_mqtt_host, sizeof(aws_mqtt_host), PSTR("%s%s"), temp9, temp7);
-        SettingsUpdateText(SET_MQTT_HOST, aws_mqtt_host);
-        SettingsUpdateText(SET_MQTT_USER, "");
-      }
-#else  // No USE_MQTT_TLS and USE_MQTT_CLIENT_CERT
-      SettingsUpdateText(SET_MQTT_HOST, temp7);
-      SettingsUpdateText(SET_MQTT_USER, temp9);
-#endif  // USE_MQTT_TLS and USE_MQTT_CLIENT_CERT
-      SettingsUpdateText(SET_MQTT_PWD, temp10);
-      SettingsUpdateText(SET_MQTT_TOPIC, temp11);
-    }
-#endif  // UPGRADE_V8_MIN
-
-    if (Settings->version < 0x08020003) {
-      SettingsUpdateText(SET_TEMPLATE_NAME, Settings->user_template_name);
-      Settings->zb_channel = 0;      // set channel to zero to force reinit of zigbee parameters
-    }
-#endif  // ESP8266
-
-    if (Settings->version < 0x08020004) {
-      Settings->flag3.mqtt_buttons = 0;  // SetOption73 (0) - Decouple button from relay and send just mqtt topic
-#ifdef ESP8266
-      Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
-#endif  // ESP8266
-#ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32S3
-      Settings->config_version = 2;  // ESP32S3
-#elif CONFIG_IDF_TARGET_ESP32S2
-      Settings->config_version = 3;  // ESP32S2
-#elif CONFIG_IDF_TARGET_ESP32C3
-      Settings->config_version = 4;  // ESP32C3
-#elif CONFIG_IDF_TARGET_ESP32C2
-      Settings->config_version = 5;  // ESP32C2
-#elif CONFIG_IDF_TARGET_ESP32C6
-      Settings->config_version = 6;  // ESP32C6
-#elif CONFIG_IDF_TARGET_ESP32P4
-      Settings->config_version = 7;  // ESP32P4
-#elif CONFIG_IDF_TARGET_ESP32C5
-      Settings->config_version = 8;  // ESP32C5
-#elif CONFIG_IDF_TARGET_ESP32S31
-      Settings->config_version = 9;  // ESP32S31
-#elif CONFIG_IDF_TARGET_ESP32C61
-      Settings->config_version = 10; // ESP32C61
-#else
-      Settings->config_version = 1;  // ESP32
-#endif  // CONFIG_IDF_TARGET_ESP32S3
-#endif  // ESP32
-    }
-    if (Settings->version < 0x08020006) {
-#ifdef ESP32
-      Settings->module = WEMOS;
-      ModuleDefault(WEMOS);
-#endif  // ESP32
-      // make sure the empty rules have two consecutive NULLs, to be compatible with compressed rules
-      if (Settings->rules[0][0] == 0) { Settings->rules[0][1] = 0; }
-      if (Settings->rules[1][0] == 0) { Settings->rules[1][1] = 0; }
-      if (Settings->rules[2][0] == 0) { Settings->rules[2][1] = 0; }
-    }
-    if (Settings->version < 0x08030002) {
-      SettingsUpdateText(SET_DEVICENAME, SettingsText(SET_FRIENDLYNAME1));
-      Settings->ledpwm_off = 0;
-      Settings->ledpwm_on = 255;
-      Settings->ledpwm_mask = 0;
-    }
-    if (Settings->version < 0x08030104) {
-      Settings->flag4.network_wifi = 1;
-      Settings->flag4.network_ethernet = 1;
-    }
-#ifdef ESP32
-    if (Settings->version < 0x08030105) {
-      Settings->eth_type = ETH_TYPE;
-      Settings->eth_clk_mode = ETH_CLKMODE;
-      Settings->eth_address = ETH_ADDRESS;
-    }
-#endif  // ESP32
-    if (Settings->version < 0x08030106) {
-      Settings->fallback_module = FALLBACK_MODULE;
-    }
-    if (Settings->version < 0x08040003) {
-      Settings->energy_power_delta[0] = Settings->hass_new_discovery; // replaced ex2_energy_power_delta on 8.5.0.1
-      Settings->energy_power_delta[1] = 0;
-      Settings->energy_power_delta[2] = 0;
-    }
-#ifdef ESP8266
-    if (Settings->version < 0x09000002) {
-      char parameters[32];
-      snprintf_P(parameters, sizeof(parameters), PSTR("%d,%d,%d,%d,%d"),
-        Settings->influxdb_version, Settings->sensors[0][0], Settings->sensors[0][1], (int)Settings->sensors[0][2], Settings->mbflag2.data);
-      SettingsUpdateText(SET_ADC_PARAM1, parameters);
-    }
-#endif  // ESP8266
-    if (Settings->version < 0x09010000) {
-      Settings->dimmer_step = DEFAULT_DIMMER_STEP;
-    }
-    if (Settings->version < 0x09020003) {
-      Settings->flag3.use_wifi_rescan = true;  // As a result of #10395
-    }
-    if (Settings->version < 0x09020006) {
-      for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
-        Settings->switchmode[i] = SWITCH_MODE;
-      }
-      for (uint32_t i = 0; i < MAX_INTERLOCKS_SET; i++) {
-        Settings->interlock[i] = (i < 4) ? Settings->ds3502_state[i] : 0;
-      }
-    }
-    if (Settings->version < 0x09020007) {
-      *(uint32_t *)&Settings->device_group_tie = 0x04030201;
-    }
-    if (Settings->version < 0x09030102) {
-      Settings->mqtt_keepalive = MQTT_KEEPALIVE;
-      Settings->mqtt_socket_timeout = MQTT_SOCKET_TIMEOUT;
-    }
-    if (Settings->version < 0x09030104) {
-      Settings->mbflag2.data = 0;
-    }
-    if (Settings->version < 0x09040002) {
-      Settings->sbflag1.data = 0;
-    }
-    if (Settings->version < 0x09040006) {
-      Settings->mqtt_wifi_timeout = MQTT_WIFI_CLIENT_TIMEOUT / 100;
-    }
-#ifdef CONFIG_IDF_TARGET_ESP32C3
-    if (Settings->version < 0x09050002) {
-      if (Settings->cfg_size != sizeof(TSettings)) {
-        // Fix onetime Settings layout due to changed ESP32-C3 myio and mytmplt types sizes
-        memmove((uint8_t*)&Settings->user_template, (uint8_t*)&Settings->free_esp32c3_3D8, sizeof(TSettings) - 0x3FC);
-        memmove((uint8_t*)&Settings->eth_type, (uint8_t*)&Settings->free_esp32c3_42A, sizeof(TSettings) - 0x446);
-        // Reset for future use
-        memset(&Settings->free_esp32c3_3D8, 0x00, sizeof(Settings->free_esp32c3_3D8));
-        memset(&Settings->free_esp32c3_42A, 0x00, sizeof(Settings->free_esp32c3_42A));
-      }
-    }
-#endif
-    if (Settings->version < 0x09050003) {
-      memset(&Settings->sensors, 0xFF, 16);  // Enable all possible sensors
-    }
-    if (Settings->version < 0x09050004) {
-      Settings->power_lock = Settings->ipv4_address[4];
-      ParseIPv4(&Settings->ipv4_address[4], PSTR(WIFI_DNS2));
-    }
-    if (Settings->version < 0x09050005) {
-      Settings->sbflag1.range_extender = WIFI_RGX_STATE;
-      Settings->sbflag1.range_extender_napt = WIFI_RGX_NAPT;
-      ParseIPv4(&Settings->ipv4_rgx_address, PSTR(WIFI_RGX_IP_ADDRESS));
-      ParseIPv4(&Settings->ipv4_rgx_subnetmask, PSTR(WIFI_RGX_SUBNETMASK));
-      SettingsUpdateText(SET_RGX_SSID, PSTR(WIFI_RGX_SSID));
-      SettingsUpdateText(SET_RGX_PASSWORD, PSTR(WIFI_RGX_PASSWORD));
-      if ((8883 == Settings->mqtt_port) || (8884 == Settings->mqtt_port) || (443 == Settings->mqtt_port)) {
-        // Turn on TLS for port 8883 (TLS), 8884 (TLS, client certificate), 443 (TLS, user/password)
-        Settings->flag4.mqtt_tls = true;
-      }
-    }
-    if (Settings->version < 0x09050007) {
-#ifdef DISABLE_REFERER_CHK
-      Settings->flag5.disable_referer_chk = 1;
-#else
-      Settings->flag5.disable_referer_chk = 0;
-#endif
-    }
-    if (Settings->version < 0x09050009) {  // 9.5.0.9
-      memset(&Settings->energy_kWhtoday_ph, 0, 36);
-      memset(&RtcSettings.energy_kWhtoday_ph, 0, 24);
-      Settings->energy_kWhtotal_ph[0] = Settings->power_lock;
-      Settings->energy_kWhtoday_ph[0] = Settings->energy_power_calibration2;  // = ex_energy_kWhtoday
-      Settings->energy_kWhyesterday_ph[0] = Settings->energy_voltage_calibration2;  // = ex_energy_kWhyesterday
-      RtcSettings.energy_kWhtoday_ph[0] = RtcSettings.ex_energy_kWhtoday;
-      RtcSettings.energy_kWhtotal_ph[0] = RtcSettings.ex_energy_kWhtotal;
-    }
     if (Settings->version < 0x0A000003) {  // 10.0.0.3
       if (0 == Settings->param[P_ARP_GRATUITOUS]) {
         Settings->param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;

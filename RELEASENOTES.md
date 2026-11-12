@@ -114,7 +114,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v16.0.0.2
+## Changelog v16.0.0.3
 ### Added
 - Heap Map optional feature fur detailed memory usage at boot [#25186](https://github.com/arendst/Tasmota/issues/25186)
 - BME680 IAQ (air quality index) to BMP sensor driver [#25175](https://github.com/arendst/Tasmota/issues/25175)
@@ -124,14 +124,15 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support MAC OUI wildcard for command MI32Keys in case multiple devices use same bindkey like IoTorero: `mi32keys 0C3D5EFFFFFF=48656c6c6f204254486f6d65210d0a00`
 - LVGL add logging before crash when heap allocation fails [#25170](https://github.com/arendst/Tasmota/issues/25170)
 - LVGL/HASPmota visual touch pointer (dot under finger) [#25158](https://github.com/arendst/Tasmota/issues/25158)
+- Matter Doorbell (0x0148) device type mapped to a Button, with fabric-scoped Binding storage (Chime client not yet implemented) [#25187](https://github.com/arendst/Tasmota/issues/25187)
 
 ### Breaking Changed
 - BTHome un-reverse MAC address usage for command `MI32Keys` to make it consistent
 - Reduce max number of ZCDimmer PWM channels to 5 due to allocated persistent data size [#25222](https://github.com/arendst/Tasmota/issues/25222)
 
 ### Changed
-- ESP8266 platform update from 2026.09.00 to 2026.10.00 [#25196](https://github.com/arendst/Tasmota/issues/25196)
-- ESP32 Platform from 2026.09.50 to 2026.10.50, Framework (Arduino Core) from v3.3.12 to v3.3.12-1 and IDF v5.5.5 [#25196](https://github.com/arendst/Tasmota/issues/25196)
+- ESP8266 platform update from 2026.09.00 to 2026.11.00 [#25097](https://github.com/arendst/Tasmota/issues/25097)
+- ESP32 Platform from 2026.09.50 to 2026.11.50, Framework (Arduino Core) from v3.3.12 to v3.3.12-2 and IDF v5.5.5 [#25097](https://github.com/arendst/Tasmota/issues/25097)
 - OTA give up on a stalled OTA after 30s, not 300 reads [#25177](https://github.com/arendst/Tasmota/issues/25177)
 - HttpClientLight keep read timeouts longer than 65s [#25180](https://github.com/arendst/Tasmota/issues/25180)
 - GUI allow `;` or `{` in a password saved from the settings page [#25184](https://github.com/arendst/Tasmota/issues/25184)
@@ -142,6 +143,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Fixed
 - Security issues caused by buffer overflows
 - OTA and file upload security issue
+- Function `subStr()` possible buffer overflow
 - TuyaV1 and TuyaV2 out-of-bounds accessing `tuya_fnid_map[]` [#25222](https://github.com/arendst/Tasmota/issues/25222)
 - Boot loop when using a literal WIFI_DEFAULT_HOSTNAME [#25205](https://github.com/arendst/Tasmota/issues/25205)
 - WifiManager name the setup AP as it is turned on [#25169](https://github.com/arendst/Tasmota/issues/25169)
@@ -161,8 +163,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Wireguard reconnect when a dynamic DNS `Endpoint` changes IP [#25204](https://github.com/arendst/Tasmota/issues/25204)
 - WebAsync rare crash and race conditions [#25209](https://github.com/arendst/Tasmota/issues/25209)
 - Berry `lv.start()` raises an error instead of crashing when the display can't start [#25193](https://github.com/arendst/Tasmota/issues/25193)
+- Matter event EpochTimestamp sent as seconds instead of milliseconds, using new Berry `tasmota.rtc_utc_ms()` [#25234](https://github.com/arendst/Tasmota/issues/25234)
 - LVGL Panel extension crash [#25165](https://github.com/arendst/Tasmota/issues/25165)
 - LVGL Panel improved click handling [#25171](https://github.com/arendst/Tasmota/issues/25171)
 - LVGL touch more responsive [#25172](https://github.com/arendst/Tasmota/issues/25172)
 
 ### Removed
+- Support for migration from versions below v9.1

@@ -1315,7 +1315,7 @@ void EnergyCommandSetCal(uint32_t cal_type) {
       // Calibrate current and power using calibrated voltage and known resistive load voltage and power
       // PowerSet 60.0,230
       // CurrentSet 60.0,230
-      char argument[32];
+      char argument[XdrvMailbox.data_len];
       float Pgoal = CharToFloat(ArgV(argument, 1));    // 60.0    W
       float Ugoal = CharToFloat(ArgV(argument, 2));    // 230     V
       float Igoal = Pgoal / Ugoal;                     // 0.26087 A

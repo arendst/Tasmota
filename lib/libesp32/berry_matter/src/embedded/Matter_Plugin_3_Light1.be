@@ -180,6 +180,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   })
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Bri")
   static var TYPES = { 0x0101: 3 }                  # Dimmable Light - Matter 1.4.1 Device Library Rev 3
+  static var DELAYED_ON_MS = 600                    # "Lights delayed on": max wait for a level command after an On while off
 
   static var CC_FEAT = 0                            # Color Control FeatureMap/ColorCapabilities: 0 = none (Light1), HS 0x01, XY 0x08, CT 0x10
   # Color Control command fields, one char per field tag 0..n-1; uppercase = optional (absent or NULL -> 0)
@@ -263,7 +264,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
       var light_status = light.get(self.light_index)
       if light_status != nil
         var pow = light_status.find('power', nil)
-        if pow != self.shadow_onoff
+        if pow != self.shadow_onoff && self.on_hold == nil      # delayed On: not switched on yet
           self.attribute_updated(0x0006, 0x0000)
           self.shadow_onoff = pow
         end
@@ -315,6 +316,79 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
       end
       self.update_shadow()
     end
+  end
+
+  #############################################################
+  # "Lights delayed on" (global option, off by default)
+  #
+  # Controllers such as Apple Home send On and then MoveToLevelWithOnOff as separate commands.
+  # A light switched on by On first restores its previous brightness, which flashes until the
+  # level command arrives. With the option, an On received while off is reported at once but
+  # sent only when a level command arrives within DELAYED_ON_MS (the light then switches on
+  # at that level), or when the delay expires. Returns true if the On is delayed.
+  def hold_on()
+    if !self.device.lights_delayed_on   return false   end
+    if !self.BRIDGE   self.update_shadow_lazy()   end   # local light: current state (bridges: no extra poll)
+    if self.shadow_onoff   return false   end
+    var started = tasmota.millis()
+    self.on_hold = started
+    self.shadow_onoff = true                    # report On now, the light follows within DELAYED_ON_MS
+    self.attribute_updated(0x0006, 0x0000)
+    tasmota.set_timer(self.DELAYED_ON_MS, / -> self.release_on(started))
+    return true
+  end
+
+  # Delay expired without a level command: send the On
+  def release_on(started)
+    if self.on_hold == started
+      self.on_hold = nil
+      self.set_onoff(true)
+      self.publish_command('Power', 1)
+      log(f"MTR: [{self.endpoint:02X}] delayed On sent after {tasmota.millis() - started} ms, no level command", 3)
+    end
+  end
+
+  # Another command arrived while an On is delayed. If `merge` (it sets a level), drops the delay and
+  # returns the wait in ms; otherwise sends the On first and returns nil. Nil if nothing delayed.
+  def take_on(merge)
+    var started = self.on_hold
+    if started == nil   return nil   end
+    self.on_hold = nil
+    if merge   return tasmota.millis() - started   end
+    self.set_onoff(true)
+    self.publish_command('Power', 1)
+    log(f"MTR: [{self.endpoint:02X}] delayed On sent after {tasmota.millis() - started} ms, before another command", 3)
+    return nil
+  end
+
+  # A delayed On merged into MoveToLevel(WithOnOff): switch on directly at the new level
+  def level_on(bri_254, waited)
+    if (bri_254 < 0)    bri_254 = 0     end
+    if (bri_254 > 254)  bri_254 = 254   end
+    var on = bri_254 > 0
+    if self.BRIDGE
+      self.set_bri(bri_254)                     # remote Tasmota: `Dimmer N` switches on at N
+      if on && (self.mqtt_remote || !self.shadow_onoff)   self.set_onoff(true)   end   # `SetOption20 1` stays off; MQTT has no reply
+    elif self.VIRTUAL
+      self.set_bri(bri_254, on)                 # virtual and Zigbee: shadows, the command is published below
+    else
+      import light                              # local light: level first while still off, then power,
+      light.set({'bri': tasmota.scale_uint(bri_254, 0, 254, 0, 255)}, self.light_index)
+      if on   light.set({'power': true}, self.light_index)   end   # so the previous level is never shown
+      self.update_shadow()
+    end
+    if !on && self.shadow_onoff                 # level 0: stays off (MQTT has no reply to confirm)
+      self.attribute_updated(0x0006, 0x0000)
+      self.shadow_onoff = false
+    end
+    var dimmer = tasmota.scale_uint(bri_254, 0, 254, 0, 100)
+    if self.ZIGBEE                              # `ZbSend Dimmer` is MoveToLevelWithOnOff: no separate On
+      self.publish_command('Bri', bri_254, 'Dimmer', dimmer)
+    else
+      self.publish_command('Power', on ? 1 : 0, 'Bri', bri_254, 'Dimmer', dimmer)
+    end
+    log(f"MTR: [{self.endpoint:02X}] delayed On merged into level {bri_254} after {waited} ms", 3)
+    return true
   end
 
   #############################################################
@@ -569,11 +643,13 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     # ====================================================================================================
     if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
       if !self.mqtt_command_ready(ctx)   return nil   end
-      self.update_shadow_lazy()
+      var held = self.take_on(command == 0x0000 || command == 0x0004)   # wait in ms if a delayed On is merged
+      if held == nil   self.update_shadow_lazy()   end
       if   command == 0x0000            # ---------- MoveToLevel ----------
         var bri_254 = val.findsubval(0)  # Hue 0..254
-        self.set_bri(bri_254)
         ctx.log = "bri:"+str(bri_254)
+        if held != nil   return self.level_on(bri_254, held)   end
+        self.set_bri(bri_254)
         self.publish_command('Bri', bri_254, 'Dimmer', tasmota.scale_uint(bri_254, 0, 254, 0, 100))
         return true
       elif command == 0x0001            # ---------- Move ----------
@@ -587,9 +663,10 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
         return true
       elif command == 0x0004            # ---------- MoveToLevelWithOnOff ----------
         var bri_254 = val.findsubval(0)  # Hue 0..254
+        ctx.log = "bri:"+str(bri_254)
+        if held != nil   return self.level_on(bri_254, held)   end
         var onoff = bri_254 > 0
         self.set_bri(bri_254, onoff)
-        ctx.log = "bri:"+str(bri_254)
         self.publish_command('Power', onoff ? 1 : 0, 'Bri', bri_254, 'Dimmer', tasmota.scale_uint(bri_254, 0, 254, 0, 100))
         return true
       elif command == 0x0005            # ---------- MoveWithOnOff ----------
@@ -606,6 +683,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     # ====================================================================================================
     elif cluster == 0x0300 && self.CC_FEAT    # ========== Color Control 3.2 p.111 (Light2/3/5 only) ==========
       if !self.mqtt_command_ready(ctx)   return nil   end
+      self.take_on(false)                                       # a delayed On goes first, as without the option
       self.update_shadow_lazy()                                 # current values for Step*
       var a = self.cc_args(val, ctx)                            # field types and limits, sets ctx.status on error
       if a == nil   return nil   end
@@ -687,6 +765,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
       if val_ct != nil   self.set_ct(val_ct)   end
     end
     var val_onoff = payload.find("Power")
+    if self.on_hold != nil && val_onoff != nil && !bool(val_onoff)   val_onoff = nil   end   # delayed On: not switched on yet
     var val_bri = payload.find("Bri")
     if val_bri != nil
       self.set_bri(int(val_bri), val_onoff)

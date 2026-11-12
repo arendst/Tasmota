@@ -77,37 +77,163 @@
  *              as soon as it runs again.  Snapshot older than 30 s -> exception 04
  *
  *   Addresses below are the raw 0-based protocol offset used on the wire, with the
- *   5-digit Modicon / PLC address in ().
+ *   5-digit Modicon / PLC address in ().  Every register is 16-bit.  Temperatures are
+ *   signed degC x10 (two's complement), so 215 = 21.5 C and 0xFFF6 = -1.0 C.  "raw" means
+ *   the code byte the unit itself uses, it is passed through untranslated.  Settings and
+ *   sensor registers read 0 until the unit has reported that block for the first time.
  *
- *   Input registers (FC04, 3xxxx), 16-bit, read-only live state:
- *     0x0000..0x0006 (30001..30007)  link / capability / feature flags
- *     0x0010..0x001a (30017..30027)  settings: power, mode, temp x10, fan, vane, widevane,
- *                                    prohibit, air direction, purifier, night mode, econocool
- *     0x0020..0x002a (30033..30043)  room / outdoor / set temperature x10, power W, energy,
- *                                    run time, compressor, remote temperature, clear time
- *     0x0030..0x003a (30049..30059)  timers and operation stage
- *     0x0040..0x0048 (30065..30073)  decoded capabilities and per-mode temperature limits
- *     0x0050..0x0053 (30081..30084)  diagnostics: requests, CRC errors, exceptions, RX overruns
- *     0x0054..0x0055 (30085..30086)  error state: BCD code (8000 = no error), two-char code
+ *   Input registers (FC04, 3xxxx), read-only live state
+ *   -----------------------------------------------------------------------------------
+ *   30001 0x0000  constant 1 (slave is alive)
+ *   30002 0x0001  connected to the unit: 0 no, 1 yes
+ *   30003 0x0002  capabilities read from the unit: 0 no, 1 yes
+ *   30004 0x0003  i-See sensor present: 0 no, 1 yes
+ *   30005 0x0004  energy metering present: 0 no, 1 yes (set once a non-zero power or
+ *                 energy value was seen)
+ *   30006 0x0005  temperature resolution: 0 whole degrees, 1 half degrees
+ *   30007 0x0006  remote temperature override active: 0 no, 1 yes
  *
- *   Holding registers (FC03 / FC06 / FC10, 4xxxx), 16-bit:
- *     0x0000..0x000e (40001..40015)  writable control - power, mode, temp x10, fan, vane,
- *                                    widevane, prohibit, air direction, purifier, night mode,
- *                                    econocool, HA mode, remote temp (0x7fff clears),
- *                                    remote-temp clear time, raw 0x42 byte; reads return
- *                                    the last written value
- *     0x000f..0x0017 (40016..40024)  read-only mirror of selected input registers, for
- *                                    FC03-only masters
- *     0x0018..0x0019 (40025..40026)  error state mirror (same as 0x0054..0x0055)
- *     0x001a         (40027)         total energy kWh x10 (same as 0x0026)
+ *   30017 0x0010  power: 0 off, 1 on
+ *   30018 0x0011  mode: 1 heat, 2 dry, 3 cool, 7 fan, 8 auto, 9 heat (i-See),
+ *                 10 dry (i-See), 11 cool (i-See)
+ *   30019 0x0012  set temperature x10
+ *   30020 0x0013  fan: 0 auto, 1 quiet, 2 speed 1, 3 speed 2, 5 speed 3, 6 speed 4
+ *   30021 0x0014  vane (vertical): 0 auto, 1..5 position, 7 swing
+ *   30022 0x0015  wide vane (horizontal): 1 left, 2 left middle, 3 center, 4 right middle,
+ *                 5 right, 6 left center, 7 right center, 8 split, 12 swing,
+ *                 128 i-See direction mode
+ *   30023 0x0016  remote prohibit: 0 off, 1 power, 2 mode, 3 mode+power, 4 temperature,
+ *                 5 temperature+power, 6 temperature+mode, 7 all
+ *   30024 0x0017  air direction (i-See): 0 even, 1 indirect, 2 direct, 3 off
+ *   30025 0x0018  air purifier: 0 off, 1 on
+ *   30026 0x0019  night mode: 0 off, 1 on
+ *   30027 0x001a  econocool: 0 off, 1 on
  *
- *   Coils (FC01 / FC05 / FC0F, 0xxxx):
- *     0 (00001) power, 1 (00002) purifier, 2 (00003) night mode, 3 (00004) econocool,
- *     4 (00005) clear remote-temp override (write 0)
- *   Discrete inputs (FC02, 1xxxx):
- *     0 (10001) connected, 1 (10002) capabilities valid, 2 (10003) compressor running,
- *     3 (10004) i-See sensor, 4 (10005) energy metering, 5 (10006) remote temp active,
- *     6 (10007) defrost
+ *   30033 0x0020  room temperature x10
+ *   30034 0x0021  outdoor temperature x10, 0x8000 when the unit has no outdoor sensor
+ *   30035 0x0022  set temperature x10 as reported with the room temperature
+ *   30036 0x0023  compressor: 0 off, 1 on
+ *   30037 0x0024  compressor frequency, Hz
+ *   30038 0x0025  instantaneous power, W
+ *   30039 0x0026  total energy, kWh x10 (the unit's 16-bit lifetime counter, wraps to 0
+ *                 after 6553.5 kWh, so keep a running total in the PLC)
+ *   30040 0x0027  operating time, upper 16 bits of the unit's 24-bit counter
+ *   30041 0x0028  operating time, lower 16 bits
+ *   30042 0x0029  remote temperature x10 (the value last written to 40013)
+ *   30043 0x002a  remote temperature auto-clear time, seconds
+ *   30044 0x002b  operating time, whole hours (from the same counter, limited to 65535)
+ *
+ *   30049 0x0030  timer mode: 0 none, 1 off timer, 2 on timer, 3 both
+ *   30050 0x0031  on timer set, minutes
+ *   30051 0x0032  off timer set, minutes
+ *   30052 0x0033  on timer remaining, minutes
+ *   30053 0x0034  off timer remaining, minutes
+ *   30057 0x0038  stage operation: 0 normal, 1 service, 2 defrost, 4 preheat, 8 standby
+ *                 (3, 5, 6, 7 are not identified)
+ *   30058 0x0039  stage fan: 0 off, 1..5 speed, 6 quiet
+ *   30059 0x003a  stage mode: 0 direct, 1 auto fan, 2 auto heat, 3 auto cool, 4 auto leader
+ *
+ *   30065 0x0040  capabilities valid: 0 no, 1 yes (all registers below read 0 until then)
+ *   30066 0x0041  capability bits: bit0 heat, bit1 dry, bit2 fan mode, bit3 vertical vane,
+ *                 bit4 vane swing, bit5 fan auto, bit6 outdoor temperature,
+ *                 bit7 run state, bit8 external (remote) temperature, bit9 installer
+ *   30067 0x0042  number of fan speeds
+ *   30068 0x0043  cool/dry minimum set temperature x10
+ *   30069 0x0044  cool/dry maximum set temperature x10
+ *   30070 0x0045  heat minimum set temperature x10
+ *   30071 0x0046  heat maximum set temperature x10
+ *   30072 0x0047  auto minimum set temperature x10
+ *   30073 0x0048  auto maximum set temperature x10
+ *
+ *   30081 0x0050  Modbus requests received (wraps at 65535)
+ *   30082 0x0051  Modbus CRC errors
+ *   30083 0x0052  Modbus exceptions returned
+ *   30084 0x0053  Modbus RX overruns
+ *   30085 0x0054  error code as BCD-decoded decimal: 8000 no error, 6999 indoor unit
+ *                 communication error, other values are the unit's own spec code
+ *   30086 0x0055  error code as two characters (high byte first), 0 until the unit reported
+ *
+ *   Holding registers (FC03 read, FC06 / FC10 write, 4xxxx)
+ *   -----------------------------------------------------------------------------------
+ *   Control registers 40001..40015.  A read returns the current setting (the intended
+ *   value right after a write), a write is sent to the unit.  Writes use the same
+ *   capability checks as the console commands.  A value outside the table, or one the
+ *   unit does not support (for example heat mode on a cool-only unit), answers with
+ *   exception 03.  Writes before the HVAC link is up are queued.
+ *
+ *   40001 0x0000  power: 0 off, any other value on
+ *   40002 0x0001  mode: 1 heat, 2 dry, 3 cool, 7 fan, 8 auto (the i-See variants 9..11
+ *                 are report-only and rejected)
+ *   40003 0x0002  set temperature x10, 100..310 (10.0..31.0 C) and within the unit's
+ *                 range for the current mode (30068..30073)
+ *   40004 0x0003  fan: 0 auto, 1 quiet, 2 speed 1, 3 speed 2, 5 speed 3, 6 speed 4
+ *                 (0 needs fan auto, 1 needs 5 speeds, 6 needs 4 speeds)
+ *   40005 0x0004  vane (vertical): 0 auto, 1..5 position, 7 swing
+ *   40006 0x0005  wide vane (horizontal): 1 left, 2 left middle, 3 center, 4 right middle,
+ *                 5 right, 6 left center, 7 right center, 8 split, 12 swing,
+ *                 128 i-See direction mode
+ *   40007 0x0006  remote prohibit: 0 off, 1 power, 2 mode, 3 mode+power, 4 temperature,
+ *                 5 temperature+power, 6 temperature+mode, 7 all
+ *   40008 0x0007  air direction (needs vertical vane and i-See): 0 even, 1 indirect,
+ *                 2 direct, 3 off
+ *   40009 0x0008  air purifier: 0 off, any other value on
+ *   40010 0x0009  night mode: 0 off, any other value on
+ *   40011 0x000a  econocool: 0 off, any other value on
+ *   40012 0x000b  home-assistant style mode: write 0 = power off, 1 / 2 / 3 / 7 / 8 = power
+ *                 on and set that mode (codes as 40002).  A read returns the mode
+ *   40013 0x000c  remote temperature x10, limited to -63.0..63.0 C, 32767 (0x7fff)
+ *                 clears the override and the unit goes back to its own sensor
+ *   40014 0x000d  remote temperature auto-clear time, seconds
+ *   40015 0x000e  raw wide vane byte, sent to the unit without any check (a read is 0)
+ *
+ *   Read-only mirror 40016..40031 of input registers, for masters that only speak FC03.
+ *   A write to these answers with exception 02.
+ *
+ *   40016 0x000f  room temperature x10               (= 30033)
+ *   40017 0x0010  compressor: 0 off, 1 on            (= 30036)
+ *   40018 0x0011  instantaneous power, W             (= 30038)
+ *   40019 0x0012  stage operation, codes as 30057    (= 30057)
+ *   40020 0x0013  stage fan, codes as 30058          (= 30058)
+ *   40021 0x0014  stage mode, codes as 30059         (= 30059)
+ *   40022 0x0015  Modbus requests received           (= 30081)
+ *   40023 0x0016  Modbus CRC errors                  (= 30082)
+ *   40024 0x0017  connected to the unit: 0 no, 1 yes (= 30002)
+ *   40025 0x0018  error code, BCD decimal, 8000 none (= 30085)
+ *   40026 0x0019  error code, two characters         (= 30086)
+ *   40027 0x001a  total energy, kWh x10              (= 30039)
+ *   40028 0x001b  compressor frequency, Hz           (= 30037)
+ *   40029 0x001c  operating time, hours              (= 30044)
+ *   40030 0x001d  number of fan speeds               (= 30067)
+ *   40031 0x001e  outdoor temperature x10, 0x8000 if no sensor (= 30034)
+ *
+ *   Coils (FC01 read, FC05 / FC0F write, 0xxxx)
+ *   -----------------------------------------------------------------------------------
+ *   00001 0  power: 0 off, 1 on
+ *   00002 1  air purifier: 0 off, 1 on
+ *   00003 2  night mode: 0 off, 1 on
+ *   00004 3  econocool: 0 off, 1 on
+ *   00005 4  remote temperature override: reads 1 while active, write 0 clears it,
+ *            write 1 is accepted and does nothing (set the value in 40013)
+ *
+ *   Discrete inputs (FC02, 1xxxx), read-only
+ *   -----------------------------------------------------------------------------------
+ *   10001 0  connected to the unit
+ *   10002 1  capabilities valid
+ *   10003 2  compressor running
+ *   10004 3  i-See sensor present
+ *   10005 4  energy metering present
+ *   10006 5  remote temperature override active
+ *   10007 6  defrost running (stage operation = 2)
+ *
+ *   Exceptions: 01 function not supported, 02 address not mapped or read-only, 03 value
+ *   rejected, 04 the register snapshot is older than 30 s (the main loop is stuck),
+ *   06 busy.  Input registers 0x0000..0x00ff that are not listed read 0.
+ *
+ *   Data age: reads are served from a snapshot the main loop rebuilds every 25 ms, so
+ *   values are normally at most 25 ms old and up to 30 s old while the main loop is
+ *   blocked (WiFi / MQTT reconnect).  Past 30 s the slave answers exception 04 instead of
+ *   returning old values, treat it as "no data".  The snapshot age says nothing about the
+ *   link to the unit, check 30002 / 10001 / 40024 (connected) before trusting the values.
  *
  *   Writes reuse the miel_hvac_apply_* setters (same capability gating as the console
  *   commands) and are queued when the HVAC link is not up yet rather than rejected.
@@ -854,7 +980,7 @@ struct miel_hvac_capabilities
 #define MIEL_HVAC_MB_MAX_BAUDRATE     115200
 
 #define MIEL_HVAC_MB_INPUT_COUNT      0x100   /* input registers 0x0000..0x00ff */
-#define MIEL_HVAC_MB_HOLD_COUNT       0x1b    /* holding registers 0x0000..0x001a */
+#define MIEL_HVAC_MB_HOLD_COUNT       0x1f    /* holding registers 0x0000..0x001e */
 #define MIEL_HVAC_MB_DI_COUNT         7       /* discrete inputs 0..6 */
 #define MIEL_HVAC_MB_COIL_COUNT       5       /* coils 0..4 */
 
@@ -3171,6 +3297,17 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 		    | rt->operationtime2) & 0xffff));
 	case 0x0029: return ((uint16_t)(int16_t)(sc->sc_remotetemp_half * 5));
 	case 0x002a: return ((uint16_t)(sc->sc_remotetemp_auto_clear_time / 1000));
+	case 0x002b:
+	{
+		uint32_t hours;
+
+		if (!has_rt) return (0);
+		/* the unit counts minutes, a 16-bit register holds 7.4 years of hours */
+		hours = (((uint32_t)rt->operationtime << 16)
+		    | ((uint32_t)rt->operationtime1 << 8)
+		    | rt->operationtime2) / 60;
+		return (hours > 0xffff ? 0xffff : (uint16_t)hours);
+	}
 
 	case 0x0030: return (has_tm ? tm->mode : 0);
 	case 0x0031: return (has_tm ? (uint16_t)tm->onminutes * 10 : 0);
@@ -3234,6 +3371,9 @@ miel_hvac_mb_reg_input(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
  *                                  master that only speaks FC03 can still reach them
  *   0x0018..0x0019 (40025..40026)  error state mirror (input regs 0x0054..0x0055)
  *   0x001a         (40027)         total energy kWh x10 (input reg 0x0026)
+ *   0x001b..0x001e (40028..40031)  compressor Hz, operating hours, fan speed count,
+ *                                  outdoor temperature x10 (input regs 0x0024, 0x002b,
+ *                                  0x0042, 0x0021)
  */
 #define MIEL_HVAC_MB_HOLD_MIRROR_BASE 0x000f
 static uint16_t
@@ -3256,6 +3396,10 @@ miel_hvac_mb_reg_holding(struct miel_hvac_softc *sc, uint16_t addr, bool *ok)
 		0x0054,   /* 0x0018 (40025) error BCD code (8000 = no error) */
 		0x0055,   /* 0x0019 (40026) error packed two-char code */
 		0x0026,   /* 0x001a (40027) total energy kWh x10 */
+		0x0024,   /* 0x001b (40028) compressor frequency Hz */
+		0x002b,   /* 0x001c (40029) operating time hours */
+		0x0042,   /* 0x001d (40030) number of fan speeds */
+		0x0021,   /* 0x001e (40031) outdoor temperature x10 */
 	};
 
 	*ok = true;

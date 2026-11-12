@@ -26,8 +26,6 @@
 
 static const uint8_t TRIGGER_PERIOD = 75;
 
-#define MAX_ZC_PWMS         5                // Related to reserved 5 Settings->zcdimmerset[5]
-
 #define ZCDIMMERSET_SHOW 1
 //#define ZC_DEBUG 1
 
@@ -37,12 +35,12 @@ struct AC_ZERO_CROSS_DIMMER {
   bool     timer_iterrupt_started = false;   // verification of the interrupt running
   bool     dimmer_in_use = false;            // Check if interrupt has to be run. Is stopped if all lights off
   bool     fallingEdgeDimmer = false;        // Work as a fallwing edge dimmer
-  bool     triggered[MAX_ZC_PWMS];
-  uint32_t enable_time_us[MAX_ZC_PWMS];      // Time since last ZC pulse to enable gate pin. 0 means no disable.
-  uint32_t disable_time_us[MAX_ZC_PWMS];     // 99% of cycle time 
-  uint32_t lastlight[MAX_ZC_PWMS];           // Store the light value. Set 1 if controlled through ZCDimmerSet
-  uint16_t detailpower[MAX_ZC_PWMS];         // replaces dimmer and light controll 0..10000. required savedata 0.
-  uint32_t accurracy[MAX_ZC_PWMS];           // offset of the time to fire the triac and the real time when it fired
+  bool     triggered[MAX_PWMS_LEGACY];
+  uint32_t enable_time_us[MAX_PWMS_LEGACY];  // Time since last ZC pulse to enable gate pin. 0 means no disable.
+  uint32_t disable_time_us[MAX_PWMS_LEGACY]; // 99% of cycle time 
+  uint32_t lastlight[MAX_PWMS_LEGACY];       // Store the light value. Set 1 if controlled through ZCDimmerSet
+  uint16_t detailpower[MAX_PWMS_LEGACY];     // replaces dimmer and light controll 0..10000. required savedata 0.
+  uint32_t accurracy[MAX_PWMS_LEGACY];       // offset of the time to fire the triac and the real time when it fired
   uint32_t intr_counter = 0;                 // counter internally on interrerupt calls
   uint32_t missed_zero_cross;                // count up all missed Zero-cross events.
   uint8_t  actual_tigger_Period = TRIGGER_PERIOD; // copy of tigger period to change during runtime
@@ -67,7 +65,7 @@ extern "C" void IRAM_ATTR ACDimmerZeroCross(uint32_t time) {
   ac_zero_cross_dimmer.dimmer_in_use = false;
   ac_zero_cross_dimmer.cycle_time_us = time - ac_zero_cross_dimmer.crossed_zero_at;
   ac_zero_cross_dimmer.crossed_zero_at = time;
-  for (uint8_t i=0; i < MAX_ZC_PWMS; i++) {
+  for (uint8_t i=0; i < MAX_PWMS_LEGACY; i++) {
     if (Pin(GPIO_PWM1, i) == -1) continue;
     digitalWrite(Pin(GPIO_PWM1, i), LOW ^ ac_zero_cross_dimmer.fallingEdgeDimmer);
     ac_zero_cross_dimmer.dimmer_in_use |= ac_zero_cross_dimmer.lastlight[i] > 0;
@@ -77,7 +75,7 @@ extern "C" void IRAM_ATTR ACDimmerZeroCross(uint32_t time) {
 
 void ACDimmerInit()
 {
-  for (uint8_t i = 0 ; i < 5; i++) {
+  for (uint8_t i = 0 ; i < MAX_PWMS_LEGACY; i++) {
     ac_zero_cross_dimmer.detailpower[i] = Settings->zcdimmerset[i];
     ac_zero_cross_dimmer.fallingEdgeDimmer = Settings->flag6.zcfallingedge;
   }
@@ -99,7 +97,7 @@ extern "C" void IRAM_ATTR ACDimmerTimer_intr() {
   }
 #endif  
   ac_zero_cross_dimmer.actual_tigger_Period = TRIGGER_PERIOD;
-  for (uint8_t i = 0 ; i < MAX_ZC_PWMS; i++ ) {
+  for (uint8_t i = 0 ; i < MAX_PWMS_LEGACY; i++ ) {
     if (Pin(GPIO_PWM1, i) == -1) continue;
 
     if (time_since_zc + TRIGGER_PERIOD + 30 >= ac_zero_cross_dimmer.enable_time_us[i]){
@@ -148,7 +146,7 @@ void ACDimmerInterruptDisable(bool disable)
     }
 #endif  
   } else {
-    for (uint8_t i = 0 ; i < MAX_ZC_PWMS; i++) {
+    for (uint8_t i = 0 ; i < MAX_PWMS_LEGACY; i++) {
       if (Pin(GPIO_PWM1, i) != -1) {
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
         AddLog(LOG_LEVEL_INFO, PSTR("ZCD: Zero-CrossDimmer Pin %d set"),Pin(GPIO_PWM1, i));
@@ -188,7 +186,7 @@ void ACDimmerControllTrigger(void) {
     ACDimmerInterruptDisable(!ac_zero_cross_dimmer.dimmer_in_use);
   }
 #endif  
-  for (uint8_t i = 0; i < MAX_ZC_PWMS; i++){
+  for (uint8_t i = 0; i < MAX_PWMS_LEGACY; i++){
     if (Pin(GPIO_PWM1, i) == -1) continue;
     ac_zero_cross_dimmer.disable_time_us[i] = (ac_zero_cross_dimmer.cycle_time_us * 99) / 100;
     if (ac_zero_cross_dimmer.detailpower[i]){
@@ -236,7 +234,7 @@ void ACDimmerLogging(void)
       ac_zero_cross_dimmer.dimmer_in_use, ac_zero_cross_dimmer.timer_iterrupt_started, alarmEnabled, timercounter, 
       ac_zero_cross_dimmer.cycle_time_us, ac_zero_cross_dimmer.missed_zero_cross
       );
-    for (uint8_t i = 0; i < MAX_ZC_PWMS; i++){
+    for (uint8_t i = 0; i < MAX_PWMS_LEGACY; i++){
       if (Pin(GPIO_PWM1, i) == -1) continue;
       
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ZCD: PWM[%d] en: %ld µs, dis: %ld µs, fade: %d, cur: %d, end: %d, lastlight: %d, acc: %ld"), 
@@ -253,7 +251,7 @@ void ACDimmerLogging(void)
 void ACDimmerShow(void)
 {
   char c_ZCDimmerSetBuffer[8];
-  for (uint8_t i = 0; i < MAX_ZC_PWMS; i++){
+  for (uint8_t i = 0; i < MAX_PWMS_LEGACY; i++){
     if (Pin(GPIO_PWM1, i) == -1) continue;
     if (ac_zero_cross_dimmer.detailpower[i]){
       dtostrfd(ac_zero_cross_dimmer.detailpower[i]/100.0, 2, c_ZCDimmerSetBuffer);
@@ -270,7 +268,7 @@ void ACDimmerShow(void)
 
 void CmndZCDimmerSet(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_ZC_PWMS)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_PWMS_LEGACY)) {
     if (XdrvMailbox.data_len > 0) {
       Settings->zcdimmerset[XdrvMailbox.index-1] = ac_zero_cross_dimmer.detailpower[XdrvMailbox.index-1] = (uint16_t)(100 * CharToFloat(XdrvMailbox.data));
     }

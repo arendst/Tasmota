@@ -1786,7 +1786,7 @@ String GetStatistics(void) {
   char data[40];
   // CR: Character Usage Ratio - used characters / total settings text size
   snprintf_P(data, sizeof(data), PSTR(",\"CR\":\"%d/%d\""), 
-             GetSettingsTextLen(), settings_text_size);
+             GetSettingsTextLen(), sizeof(Settings->text_pool));
   return String(data);
 }
 

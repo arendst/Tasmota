@@ -185,11 +185,11 @@ void HMC5883L_Show(uint8_t json) {
 // Process configuration commands
 bool HMC5883L_Command() {
   bool commandKnown = false;
-  char cmd[20];
-  char ss2[20];
+  char cmd[XdrvMailbox.data_len];
+  char ss2[XdrvMailbox.data_len];
 
-  subStr(cmd, XdrvMailbox.data, ",", 1);
-  int8_t value = atoi(subStr(ss2, XdrvMailbox.data, ",", 2));
+  ArgV(cmd, 1);
+  int8_t value = atoi(ArgV(ss2, 2));
 
   if (strcmp(cmd,"GAIN")) {
     HMC5883L->gain = value;

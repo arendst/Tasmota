@@ -106,12 +106,59 @@ class Partition_wizard_UI
     return nil
   end
 
+  # ----------------------------------------------------------------------
+  # Partition that can be removed when it is after last fs
+  #
+  # `coredump` (data, subtype 0x03), found after the FS in Arduino's
+  # default layout, always can. Any other non-app partition may hold
+  # user data, and is removed only if the user chose to (`wipe`).
+  # ----------------------------------------------------------------------
+  static def is_removable(slot, wipe)
+    if wipe   return slot.type != 0 end
+    return slot.type == 1 && slot.subtype == 0x03
+  end
+
+  # ----------------------------------------------------------------------
+  # Get partitions after last fs that are kept
+  #
+  # Return the list of slots after last fs that `is_removable()` keeps
+  # ----------------------------------------------------------------------
+  def get_kept_after_last_fs(p, wipe)
+    var kept = []
+    var last_fs = self.get_last_fs(p)
+    if last_fs == nil   return kept end
+    var idx = size(p.slots) - 1
+    while p.slots[idx] != last_fs
+      var slot = p.slots[idx]
+      if !self.is_removable(slot, wipe)   kept.insert(0, slot) end
+      idx -= 1
+    end
+    return kept
+  end
+
+  # ----------------------------------------------------------------------
+  # Partitions named in HTML: `the <b>a</b> partition`,
+  # `the <b>a</b> and <b>b</b> partitions`, `the <b>a</b>, <b>b</b> and <b>c</b> partitions`
+  # ----------------------------------------------------------------------
+  static def html_partitions(slots)
+    import webserver
+    var labels = []
+    for slot: slots
+      labels.push("<b>" + webserver.html_escape(slot.label) + "</b>")
+    end
+    if size(labels) == 1    return "the " + labels[0] + " partition" end
+    return "the " + labels[0..-2].concat(", ") + " and " + labels[-1] + " partitions"
+  end
+
   #- ---------------------------------------------------------------------- -#
   #- Get fs unallocated size
+  #
+  #  `wipe`: count the space of partitions after last fs the user chose
+  #  to remove
   #- ---------------------------------------------------------------------- -#
-  def get_unallocated_k(p)
+  def get_unallocated_k(p, wipe)
     var last_fs = self.get_last_fs(p)
-    if last_fs != nil
+    if last_fs != nil && size(self.get_kept_after_last_fs(p, wipe)) == 0
       # verify that last slot is filesystem
       var flash_size_k = self.get_max_flash_size_k(p)
       var partition_end_k = (last_fs.start + last_fs.sz) / 1024   # last kb used for fs
@@ -153,17 +200,17 @@ class Partition_wizard_UI
   end
 
   # ----------------------------------------------------------------------
-  # Remove any non wanted partion after last FS
+  # Remove any removable partion after last FS
   # ----------------------------------------------------------------------
-  def remove_partition_after_last_fs(p)
-    # remove any partition after last fs
+  def remove_partition_after_last_fs(p, wipe)
+    # remove any removable partition after last fs
     do
       var last_fs = self.get_last_fs(p)
       var changed = false
       if last_fs != nil
         while true
           var last_slot = p.slots[-1]
-          if !last_slot.is_spiffs() && (last_slot.type != 0)
+          if !last_slot.is_spiffs() && self.is_removable(last_slot, wipe)
             p.slots.remove(size(p.slots) - 1)     # remove last slot
             changed = true
           else
@@ -178,8 +225,8 @@ class Partition_wizard_UI
   #- ---------------------------------------------------------------------- -#
   #- Resize flash definition if needed
   #- ---------------------------------------------------------------------- -#
-  def resize_max_flash_size_k(p)
-    self.remove_partition_after_last_fs(p)
+  def resize_max_flash_size_k(p, wipe)
+    self.remove_partition_after_last_fs(p, wipe)
     var flash_size_k = tasmota.memory()['flash']
     var flash_size_real_k = tasmota.memory().find("flash_real", flash_size_k)
     var flash_definition_sector = self.get_flash_definition_sector(p)
@@ -250,19 +297,32 @@ class Partition_wizard_UI
   def show_resize_fs(p)
     import webserver
     import string
-    var unallocated = self.get_unallocated_k(p)
+    # partitions after the fs are kept, unless the user chooses to remove them
+    var kept = self.get_kept_after_last_fs(p, false)
+    var wipe = size(kept) > 0
+    var unallocated = self.get_unallocated_k(p, wipe)
 
     # if there is unallocated space, propose only to claim it
     if unallocated > 0
       webserver.content_send("<fieldset><legend><b>&nbsp;Resize FS to max&nbsp;</b></legend><p></p>")
 
-      webserver.content_send(string.format("<p>You can expand the file system by %i KB.<br>Its content will be lost.</p>", unallocated))
+      if wipe
+        webserver.content_send(string.format("<p>You can expand the file system by %i KB<br>by deleting %s after it.<br>%s content will be lost.</p>", unallocated, self.html_partitions(kept), size(kept) == 1 ? "Its" : "Their"))
+      else
+        webserver.content_send(string.format("<p>You can expand the file system by %i KB.<br>Its content will be lost.</p>", unallocated))
+      end
 
       webserver.content_send("<form action='/part_wiz' method='post' ")
-      if !self.support_grow_on_mount()
+      if wipe
+        webserver.content_send(string.format("onsubmit='return confirm(\"This will DELETE the %s after the file system and cause a restart.\");'", size(kept) == 1 ? "partition" : "partitions"))
+      elif !self.support_grow_on_mount()
         webserver.content_send("onsubmit='return confirm(\"This will DELETE the content of the file system and cause a restart.\");'")
       end
-      webserver.content_send("><p></p><button name='max_fs' class='button bred'>Resize FS to max</button></form></p>")
+      webserver.content_send(">")
+      if wipe
+        webserver.content_send("<input type='hidden' name='wipe' value='1'>")
+      end
+      webserver.content_send("<p></p><button name='max_fs' class='button bred'>Resize FS to max</button></form></p>")
       
       webserver.content_send("<p></p></fieldset><p></p>")
     elif self.has_factory_layout(p)
@@ -396,14 +456,18 @@ class Partition_wizard_UI
   #     `app0` changed subtype to `factory`
   #     `app1` moved to right after `factory` and resized
   #     `app1` changed subtype to `app0` and renamed `app0`
-  #     remove any partition past the last fs
+  #     remove any removable partition past the last fs
+  #
+  # `wipe`: the user chose to remove the partitions after last fs
   #
   # Returns:
   # - false if READY
   # - true if DONE
   # - string if ERROR, indicating the error
-  def test_step_3(p)
+  def test_step_3(p, wipe)
     if !self.factory_migrate_eligible(p)    return "not eligible to migration" end
+    var kept = self.get_kept_after_last_fs(p, wipe)
+    if size(kept) > 0    return "partition `" + kept[0].label + "` after file system" end
 
     return false
     # var app0 = p.get_ota_slot(0)
@@ -497,15 +561,15 @@ class Partition_wizard_UI
   end
 
 
-  def do_step_3(p)
+  def do_step_3(p, wipe)
     import flash
 
-    var step3_state = self.test_step_3(p)
+    var step3_state = self.test_step_3(p, wipe)
     if step3_state == true return true end
     if type(step3_state) == 'string'   raise "internal_error", step3_state end
 
     # remove any partition after last fs
-    self.remove_partition_after_last_fs(p)
+    self.remove_partition_after_last_fs(p, wipe)
 
     var app0 = p.get_ota_slot(0)
     var app1 = p.get_ota_slot(1)
@@ -543,6 +607,10 @@ class Partition_wizard_UI
     # swicth partitions
     p.set_active(0)
     p.save()
+
+    import persist
+    persist.remove("factory_wipe")
+    persist.save()
 
     p.switch_factory(true)
     tasmota.cmd("Restart 1")
@@ -583,11 +651,21 @@ class Partition_wizard_UI
 
     webserver.content_send(string.format("<p>Step 1: %s</p>", self.display_step_state(self.test_step_1(p), "boot on `app1`")))
     webserver.content_send(string.format("<p>Step 2: %s</p>", self.display_step_state(self.test_step_2(p), "flash `safeboot` to `app0`")))
-    webserver.content_send(string.format("<p>Step 3: %s</p>", self.display_step_state(self.test_step_3(p), "change partition map")))
+    # partitions after the fs are kept, unless the user chooses to remove them
+    var kept = self.get_kept_after_last_fs(p, false)
+    var wipe = size(kept) > 0
+    var step3_msg = "change partition map"
+    if wipe   step3_msg += ",<br>deleting " + self.html_partitions(kept) + " after the file system" end
+    webserver.content_send(string.format("<p>Step 3: %s</p>", self.display_step_state(self.test_step_3(p, wipe), step3_msg)))
     webserver.content_send(string.format("<p>Step 4: %s</p>", self.display_step_state(self.test_step_4(p), "flash final firmware")))
 
     webserver.content_send("<form action='/part_wiz' method='post' ")
-    webserver.content_send("onsubmit='return confirm(\"This will cause multiple restarts.\");'>")
+    if wipe
+      webserver.content_send(string.format("onsubmit='return confirm(\"This will cause multiple restarts and DELETE the %s after the file system.\");'>", size(kept) == 1 ? "partition" : "partitions"))
+      webserver.content_send("<input type='hidden' name='wipe' value='1'>")
+    else
+      webserver.content_send("onsubmit='return confirm(\"This will cause multiple restarts.\");'>")
+    end
     var ota_url = tasmota.cmd("OtaUrl").find("OtaUrl", "")
     webserver.content_send(string.format("<br><b>OTA Url</b><br><input id='o1' placeholder='OTA_URL' value='%s'><br>",
                                          ota_url))
@@ -644,11 +722,17 @@ class Partition_wizard_UI
       end
     end
 
-    var unallocated = self.get_unallocated_k(p)
+    # partitions after the fs that are kept
+    for slot: self.get_kept_after_last_fs(p, false)
+      var title = string.format("type:%s subtype:%s offset:0x%06X size:0x%06X", slot.type_to_string(), slot.subtype_to_string(), slot.start, slot.sz)
+      webserver.content_send(string.format("<tr><td title='%s'><b>%s</b>:&nbsp;</td><td align='right'> %i KB</td></tr>", title, webserver.html_escape(slot.label), slot.sz / 1024))
+    end
+
+    var unallocated = self.get_unallocated_k(p, false)
     if unallocated > 0
-      var last_slot = p.slots[-1]
-      # verify that last slot is file-system
-      var partition_end_k = (last_slot.start + last_slot.sz) / 1024   # last kb used for fs
+      var last_fs = self.get_last_fs(p)
+      # unallocated space starts at the end of last fs
+      var partition_end_k = (last_fs.start + last_fs.sz) / 1024   # last kb used for fs
       webserver.content_send(string.format("<tr><td title='offset:0x%06X size:0x%06X'>&lt;free&gt;:&nbsp;</td><td align='right'> %i KB</td></tr>",
                                             partition_end_k * 1024, unallocated * 1024, unallocated))
     end
@@ -728,10 +812,11 @@ class Partition_wizard_UI
       # Resize FS to max
       #---------------------------------------------------------------------#
       if webserver.has_arg("max_fs")
-        var unallocated = self.get_unallocated_k(p)
+        var wipe = webserver.has_arg("wipe")    # remove partitions after fs
+        var unallocated = self.get_unallocated_k(p, wipe)
         if unallocated <= 0     raise "value_error", "FS already at max size" end
 
-        self.resize_max_flash_size_k(p)   # resize if needed
+        self.resize_max_flash_size_k(p, wipe)   # resize if needed
 
         # since unallocated succeeded, we know the last slot is FS
         var fs_slot = p.slots[-1]
@@ -782,11 +867,20 @@ class Partition_wizard_UI
       elif webserver.has_arg("factory")
         var ota_url = webserver.arg("o1")
         var safeboot_url = webserver.arg("o2")
-        
+        var wipe = webserver.has_arg("wipe")    # remove partitions after fs
+
+        var kept = self.get_kept_after_last_fs(p, wipe)
+        if size(kept) > 0   raise "value_error", "partition `" + kept[0].label + "` after file system" end
+
         if safeboot_url != nil && safeboot_url != ""
           persist.safeboot_url = safeboot_url
-          persist.save()
         end
+        if wipe
+          persist.factory_wipe = true
+        else
+          persist.remove("factory_wipe")
+        end
+        persist.save()
 
         if ota_url != nil && ota_url != ""
           tasmota.cmd("OtaUrl "+ota_url)
@@ -830,6 +924,16 @@ class Partition_wizard_UI
     self.patch_partition_core(p)
     if !self.factory_migrate_eligible(p) return true end
 
+    import persist
+    var wipe = persist.find("factory_wipe", false)    # user chose to remove partitions after fs
+
+    # check step 3 can be done before starting
+    var step3_check = self.test_step_3(p, wipe)
+    if type(step3_check) == 'string'
+      tasmota.log("UPL: can't migrate, " + step3_check, 2)
+      return step3_check
+    end
+
     # STEP 1
     var step1_state = self.test_step_1(p)
     if type(step1_state) == 'string'  return step1_state end
@@ -850,7 +954,6 @@ class Partition_wizard_UI
     if type(step2_state) == 'string'  return step2_state end
     if step2_state == false
       tasmota.log("UPL: Starting step 2", 2)
-      import persist
       var safeboot_url = persist.find("safeboot_url")
       try
         self.do_step_2(p, safeboot_url)
@@ -862,12 +965,12 @@ class Partition_wizard_UI
     tasmota.log("UPL: Step 2 Done", 2)
 
     # STEP 3
-    var step3_state = self.test_step_3(p)
+    var step3_state = self.test_step_3(p, wipe)
     if type(step3_state) == 'string'  return step3_state end
     if step3_state == false
       tasmota.log("UPL: Starting step 3", 2)
       try
-        self.do_step_3(p)
+        self.do_step_3(p, wipe)
       except .. as e, m
         tasmota.log(string.format("UPL: error (%s) %s", e, m), 2)
         return m

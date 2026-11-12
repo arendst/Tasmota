@@ -41,7 +41,10 @@ void yield(void) {
 // patching delay(uint32_t ms)
 extern "C" void __real_delay(uint32_t ms);  // original function from Arduino Core
 
-extern "C" void __wrap_delay(uint32_t ms) {
+// Keep the linker-wrapped delay entry independent of neighboring LTO code.
+// With Xtensa GCC 15.3, LTO can otherwise place this symbol inside the tail
+// of SettingsText(), so calls to delay() enter the wrong instruction stream.
+extern "C" __attribute__((noipa, used, aligned(16))) void __wrap_delay(uint32_t ms) {
 #ifdef USE_ESP32_WDT
   if (ms) { feedLoopWDT(); }
   __real_delay(ms);
@@ -304,18 +307,22 @@ uint32_t ArgC(void) {
 }
 
 // Function to return a substring defined by a delimiter at an index
-char* subStr(char* dest, char* str, const char *delim, int index) {
+char* subStr(char* dest, int dest_len, char* str, const char *delim, int index) {
   char* write = dest;
   char* read = str;
   char ch = '.';
 
-  while (index && (ch != '\0')) {
+  while (index && dest_len && (ch != '\0')) {
     ch = *read++;
     if (strchr(delim, ch)) {
       index--;
-      if (index) { write = dest; }
+      if (index) { 
+        write = dest;
+        dest_len--;    // Prep for 0
+      }
     } else {
       *write++ = ch;
+      dest_len--;
     }
   }
   *write = '\0';
@@ -324,7 +331,7 @@ char* subStr(char* dest, char* str, const char *delim, int index) {
 }
 
 char* ArgV(char* dest, int index) {
-  return subStr(dest, XdrvMailbox.data, ",", index);
+  return subStr(dest, XdrvMailbox.data_len, XdrvMailbox.data, ",", index);
 }
 
 uint32_t ArgVul(uint32_t *args, uint32_t count) {
@@ -1235,10 +1242,9 @@ void ShowSource(uint32_t source)
   }
 }
 
-void WebHexCode(uint32_t i, const char* code)
-{
+void WebHexCode(uint32_t i, const char* code) {
+//  if (i >= COL_LAST) { return; }
   char scolor[10];
-
   strlcpy(scolor, code, sizeof(scolor));
   char* p = scolor;
   if ('#' == p[0]) { p++; }  // Skip
@@ -1253,46 +1259,18 @@ void WebHexCode(uint32_t i, const char* code)
   }
 
   uint32_t color = strtol(p, nullptr, 16);
-/*
-  if (3 == strlen(p)) {  // Convert 3 character to 6 character color code
-    uint32_t w = ((color & 0xF00) << 8) | ((color & 0x0F0) << 4) | (color & 0x00F);  // 00010203
-    color = w | (w << 4);                                                            // 00112233
-  }
-*/
-  uint32_t j = sizeof(Settings->web_color) / 3;          // First area contains j = 18 colors
-/*
-  if (i < j) {
-    Settings->web_color[i][0] = (color >> 16) & 0xFF;  // Red
-    Settings->web_color[i][1] = (color >> 8) & 0xFF;   // Green
-    Settings->web_color[i][2] = color & 0xFF;          // Blue
-  } else {
-    Settings->web_color2[i-j][0] = (color >> 16) & 0xFF;  // Red
-    Settings->web_color2[i-j][1] = (color >> 8) & 0xFF;   // Green
-    Settings->web_color2[i-j][2] = color & 0xFF;          // Blue
-  }
-*/
-  if (i >= j) {
-    // Calculate i to index in Settings->web_color2 - Dirty(!) but saves 128 bytes code
-    i += ((((uint8_t*)&Settings->web_color2 - (uint8_t*)&Settings->web_color) / 3) - j);
-  }
-  Settings->web_color[i][0] = (color >> 16) & 0xFF;  // Red
-  Settings->web_color[i][1] = (color >> 8) & 0xFF;   // Green
-  Settings->web_color[i][2] = color & 0xFF;          // Blue
+  uint32_t j = nitems(Settings->web_color);          // First area contains j = 18 colors
+  uint8_t* web_color = (i < j) ? (uint8_t*)Settings->web_color + (i * 3) : (uint8_t*)Settings->web_color2 + ((i - j) * 3);
+  *web_color++ = (color >> 16) & 0xFF;  // Red
+  *web_color++ = (color >> 8) & 0xFF;   // Green
+  *web_color = color & 0xFF;            // Blue
 }
 
-uint32_t WebColor(uint32_t i)
-{
-  uint32_t j = sizeof(Settings->web_color) / 3;          // First area contains j = 18 colors
-/*
-  uint32_t tcolor = (i<j)? (Settings->web_color[i][0] << 16) | (Settings->web_color[i][1] << 8) | Settings->web_color[i][2] :
-                           (Settings->web_color2[i-j][0] << 16) | (Settings->web_color2[i-j][1] << 8) | Settings->web_color2[i-j][2];
-*/
-  if (i >= j) {
-    // Calculate i to index in Settings->web_color2 - Dirty(!) but saves 128 bytes code
-    i += ((((uint8_t*)&Settings->web_color2 - (uint8_t*)&Settings->web_color) / 3) - j);
-  }
-  uint32_t tcolor = (Settings->web_color[i][0] << 16) | (Settings->web_color[i][1] << 8) | Settings->web_color[i][2];
-
+uint32_t WebColor(uint32_t i) {
+//  if (i >= COL_LAST) { return 0; }
+  uint32_t j = nitems(Settings->web_color);          // First area contains j = 18 colors
+  uint8_t* web_color = (i < j) ? (uint8_t*)Settings->web_color + (i * 3) : (uint8_t*)Settings->web_color2 + ((i - j) * 3);
+  uint32_t tcolor = (*web_color++ << 16) | (*web_color++ << 8) | *web_color;
   return tcolor;
 }
 
@@ -1519,19 +1497,6 @@ void TemplateConvert(uint8_t template8[], uint16_t template16[]) {
     template16[i] = GpioConvert(template8[i]);
   }
   template16[(sizeof(mytmplt) / 2) -2] = Adc0Convert(template8[sizeof(mytmplt8285) -1]);
-}
-
-void ConvertGpios(void) {
-  if (Settings->gpio16_converted != 0xF5A0) {
-    // Convert 8-bit user template
-    TemplateConvert((uint8_t*)&Settings->ex_user_template8, (uint16_t*)&Settings->user_template);
-
-    for (uint32_t i = 0; i < sizeof(Settings->ex_my_gp8.io); i++) {
-      Settings->my_gp.io[i] = GpioConvert(Settings->ex_my_gp8.io[i]);
-    }
-    Settings->my_gp.io[(sizeof(myio) / 2) -1] = Adc0Convert(Settings->ex_my_adc0);
-    Settings->gpio16_converted = 0xF5A0;
-  }
 }
 #endif  // ESP8266
 
@@ -2586,8 +2551,8 @@ void SyslogAsync(bool refresh) {
          :programname, isequal, "tasmota" stop                       # Do not log in syslog
       */
       char timestamp[mxtime];
-      subStr(timestamp, line, " ", 1);                        // 00:00:02.096-026
-      subStr(timestamp, timestamp, "-", 1);                   // 00:00:02.096
+      subStr(timestamp, sizeof(timestamp), line, " ", 1);                        // 00:00:02.096-026
+      subStr(timestamp, sizeof(timestamp), timestamp, "-", 1);                   // 00:00:02.096
 
       snprintf_P(header, sizeof(header), PSTR("<%d>1 %s%s000%s %s tasmota - - - "),
         128 + min(loglevel * 3, 7),                           // Error (1) = 131, Info (2) = 134, Debug (3) = 135, DebugMore = (4) 135
@@ -2598,7 +2563,7 @@ void SyslogAsync(bool refresh) {
       char msgid[5];
       char* line_msgid = strchr(msg_start, ' ');
       if (line_msgid && (line_msgid - msg_start < sizeof(msgid))) {  // Only 3 character message ids supported
-        subStr(msgid, msg_start, " ", 1);                     // HTP:
+        subStr(msgid, sizeof(msgid), msg_start, " ", 1);                     // HTP:
         uint32_t strlen_msgid = strlen(msgid) +1;
         msg_start += strlen_msgid;
         msg_len -= strlen_msgid;

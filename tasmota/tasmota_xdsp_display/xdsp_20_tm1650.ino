@@ -401,10 +401,7 @@ void TM1650DisplayRaw (char *text)  // Text shall match regex (([^.]?\.?){0,4}\0
 
 bool CmndTM1650Number(bool clear)
 {
-  char sNum[CMD_MAX_LEN];
-  char sLeadingzeros[CMD_MAX_LEN];
-  char sPosition[CMD_MAX_LEN];
-  char sLength[CMD_MAX_LEN];
+  char argument[XdrvMailbox.data_len];
   uint8_t length = 0;
   bool leadingzeros = false;
   uint8_t position = 0;
@@ -414,17 +411,13 @@ bool CmndTM1650Number(bool clear)
   switch (ArgC())
   {
   case 4:
-    subStr(sLength, XdrvMailbox.data, ",", 4);
-    length = atoi(sLength);
+    length = atoi(ArgV(argument, 4));
   case 3:
-    subStr(sLeadingzeros, XdrvMailbox.data, ",", 3);
-    leadingzeros = atoi(sLeadingzeros);
+    leadingzeros = atoi(ArgV(argument, 3));
   case 2:
-    subStr(sPosition, XdrvMailbox.data, ",", 2);
-    position = atoi(sPosition);
+    position = atoi(ArgV(argument, 2));
   case 1:
-    subStr(sNum, XdrvMailbox.data, ",", 1);
-    num = TextToInt(sNum);
+    num = TextToInt(ArgV(argument, 1));
   }
 
   if ((position < 0) || (position > (Settings->display_width - 1)))
@@ -493,11 +486,7 @@ bool CmndTM1650Number(bool clear)
 
 bool CmndTM1650Float(bool clear)
 {
-
-  char sNum[CMD_MAX_LEN];
-  char sPrecision[CMD_MAX_LEN];
-  char sPosition[CMD_MAX_LEN];
-  char sLength[CMD_MAX_LEN];
+  char argument[XdrvMailbox.data_len];
   uint8_t length = 0;
   uint8_t precision = Settings->display_width-1;
   uint8_t position = 0;
@@ -507,17 +496,13 @@ bool CmndTM1650Float(bool clear)
   switch (ArgC())
   {
   case 4:
-    subStr(sLength, XdrvMailbox.data, ",", 4);
-    length = atoi(sLength);
+    length = atoi(ArgV(argument, 4));
   case 3:
-    subStr(sPrecision, XdrvMailbox.data, ",", 3);
-    precision = atoi(sPrecision);
+    precision = atoi(ArgV(argument, 3));
   case 2:
-    subStr(sPosition, XdrvMailbox.data, ",", 2);
-    position = atoi(sPosition);
+    position = atoi(ArgV(argument, 2));
   case 1:
-    subStr(sNum, XdrvMailbox.data, ",", 1);
-    fnum = CharToFloat(sNum);
+    fnum = CharToFloat(ArgV(argument, 1));
   }
 
   if ((position < 0) || (position > (Settings->display_width)))
@@ -623,18 +608,16 @@ void TM1650ClearDisplay (void)
 \*********************************************************************************************/
 bool CmndTM1650ScrollText(void)
 {
-
-  char sString[SCROLL_MAX_LEN + 1];
-  char sMaxLoopCount[CMD_MAX_LEN];
+  char argument[XdrvMailbox.data_len];
+  char sString[XdrvMailbox.data_len];
   uint8_t maxLoopCount = 0;
 
   switch (ArgC())
   {
   case 2:
-    subStr(sMaxLoopCount, XdrvMailbox.data, ",", 2);
-    maxLoopCount = atoi(sMaxLoopCount);
+    maxLoopCount = atoi(ArgV(argument, 2));
   case 1:
-    subStr(sString, XdrvMailbox.data, ",", 1);
+    ArgV(sString, 1);
   }
 
   if (maxLoopCount < 0)
@@ -786,6 +769,8 @@ bool CmndTM1650Level(void)
 \*********************************************************************************************/
 bool CmndTM1650Raw(void)
 {
+  char argument[XdrvMailbox.data_len];
+
   char text[TM1650_DIGITS + 1];
   for (uint32_t i = 0; i < TM1650_DIGITS; i++)
   {
@@ -793,39 +778,23 @@ bool CmndTM1650Raw(void)
   }
 
   uint8_t DATA[4] = {0, 0, 0, 0};
-
-  char as[CMD_MAX_LEN];
-  char bs[CMD_MAX_LEN];
-  char cs[CMD_MAX_LEN];
-  char ds[CMD_MAX_LEN];
-
-
-  char sLength[CMD_MAX_LEN];
-  char sPos[CMD_MAX_LEN];
-
   uint32_t position = 0;
   uint32_t length = 0;
 
   switch (ArgC())
   {
   case 6:
-    subStr(ds, XdrvMailbox.data, ",", 6);
-    DATA[3] = atoi(ds);
+    DATA[3] = atoi(ArgV(argument, 6));
   case 5:
-    subStr(cs, XdrvMailbox.data, ",", 5);
-    DATA[2] = atoi(cs);
+    DATA[2] = atoi(ArgV(argument, 5));
   case 4:
-    subStr(bs, XdrvMailbox.data, ",", 4);
-    DATA[1] = atoi(bs);
+    DATA[1] = atoi(ArgV(argument, 4));
   case 3:
-    subStr(as, XdrvMailbox.data, ",", 3);
-    DATA[0] = atoi(as);
+    DATA[0] = atoi(ArgV(argument, 3));
   case 2:
-    subStr(sLength, XdrvMailbox.data, ",", 2);
-    length = atoi(sLength);
+    length = atoi(ArgV(argument, 2));
   case 1:
-    subStr(sPos, XdrvMailbox.data, ",", 1);
-    position = atoi(sPos);
+    position = atoi(ArgV(argument, 1));
   }
 
   if (!length)
@@ -858,10 +827,9 @@ bool CmndTM1650Raw(void)
 \*********************************************************************************************/
 bool CmndTM1650Text(bool clear)
 {
-  char text[CMD_MAX_LEN + 2 + 1];
-  char sString[CMD_MAX_LEN + 2 + 1];
-  char sPosition[CMD_MAX_LEN];
-  char sLength[CMD_MAX_LEN];
+  char text[XdrvMailbox.data_len];
+  char argument[XdrvMailbox.data_len];
+  char sString[XdrvMailbox.data_len];
   uint8_t length = 0;
   uint8_t position = 0;
   uint8_t dots = 0;
@@ -870,13 +838,11 @@ bool CmndTM1650Text(bool clear)
   switch (ArgC())
   {
   case 3:
-    subStr(sLength, XdrvMailbox.data, ",", 3);
-    length = atoi(sLength);
+    length = atoi(ArgV(argument, 3));
   case 2:
-    subStr(sPosition, XdrvMailbox.data, ",", 2);
-    position = atoi(sPosition);
+    position = atoi(ArgV(argument, 2));
   case 1:
-    subStr(sString, XdrvMailbox.data, ",", 1);
+    ArgV(sString, 1);
   }
 
   if ((position < 0) || (position > (Settings->display_width - 1)))

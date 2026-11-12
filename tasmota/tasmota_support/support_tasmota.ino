@@ -1691,12 +1691,11 @@ void Every250mSeconds(void)
 #ifdef USE_WEBSERVER
         if (Settings->webserver) {
 
-#ifdef ESP8266
-          if (!WifiIsInManagerMode()) { StartWebserver(Settings->webserver); }
-#endif  // ESP8266
-#ifdef ESP32
-          StartWebserver(Settings->webserver);
-#endif  // ESP32
+          bool start_webserver = !WifiIsInManagerMode();  // Keep WifiManager pages while active
+#if defined(ESP32) && defined(USE_ETHERNET)
+          if (EthernetHasIP()) { start_webserver = true; }  // Unless Ethernet is up and needs the normal pages
+#endif  // ESP32 and USE_ETHERNET
+          if (start_webserver) { StartWebserver(Settings->webserver); }
 
 #ifdef USE_DISCOVERY
 #ifdef WEBSERVER_ADVERTISE
@@ -2082,10 +2081,6 @@ void GpioInit(void)
   SetModuleType();
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Used GPIOs %d"), GPIO_SENSOR_END);
-
-#ifdef ESP8266
-  ConvertGpios();
-#endif  // ESP8266
 
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
     if ((Settings->user_template.gp.io[i] >= AGPIO(GPIO_SENSOR_END)) && (Settings->user_template.gp.io[i] < AGPIO(GPIO_USER))) {

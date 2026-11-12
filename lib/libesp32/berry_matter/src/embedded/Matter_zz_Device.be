@@ -60,6 +60,7 @@ class Matter_Device
   var root_passcode                   # as `int`
   var ipv4only                        # advertize only IPv4 addresses (no IPv6)
   var disable_bridge_mode             # expose application endpoints as native static endpoints
+  var lights_delayed_on               # (bool) dimmable lights wait briefly after On for a level command, see Light1 `hold_on()`
   var next_ep                         # next endpoint to be allocated for bridge, start at 1
   var debug                           # debug mode, output all values when responding to read request with wildcard
   var configuration_version           # persistent Basic Information configuration version
@@ -89,6 +90,7 @@ class Matter_Device
     self.configuration_version = 1
     self.ipv4only = false
     self.disable_bridge_mode = false
+    self.lights_delayed_on = false
     self.commissioning = matter.Commissioning(self)
     self.load_param()
 
@@ -471,6 +473,9 @@ class Matter_Device
     self.update_remotes_info()    # update self.plugins_config_remotes
 
     var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"disable_bridge_mode":%s,"nextep":%i,"configuration_version":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.disable_bridge_mode ? 'true':'false', self.next_ep, self.configuration_version)
+    if self.lights_delayed_on
+      j += ',"lights_delayed_on":true'
+    end
     if self.debug
       j += ',"debug":true'
     end
@@ -558,6 +563,7 @@ class Matter_Device
       self.root_passcode = j.find("passcode", self.root_passcode)
       self.ipv4only = bool(j.find("ipv4only", false))
       self.disable_bridge_mode = bool(j.find("disable_bridge_mode", false))
+      self.lights_delayed_on = bool(j.find("lights_delayed_on", false))
       self.next_ep = j.find("nextep", self.next_ep)
       self.configuration_version = j.find("configuration_version", self.configuration_version)
       self.plugins_config = j.find("config", nil)
@@ -786,6 +792,22 @@ class Matter_Device
     var eps = self.get_active_endpoints(true)
     for ep: eps
       self.attribute_updated(ep, 0x001D, 0x0003, false)
+    end
+    self.prune_bindings()
+  end
+
+  #############################################################
+  # Drop fabric-scoped Binding tables of endpoints that no longer expose
+  # the Binding cluster (endpoint removed or type changed)
+  #
+  def prune_bindings()
+    if self.sessions == nil   return end
+    var keep = []
+    for pi: self.plugins
+      if pi.contains_cluster(0x001E)   keep.push(pi.get_endpoint()) end
+    end
+    for fabric: self.sessions.active_fabrics()
+      fabric.keep_bindings_for(keep)
     end
   end
 
