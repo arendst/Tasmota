@@ -62,7 +62,17 @@ class Matter_IM_Subscription
     var max_interval = req.max_interval_ceiling
     if max_interval < 60                    max_interval = 60 end
     if max_interval > 3600                  max_interval = 3600 end
-    max_interval = 60
+    # Ensure the heartbeat never fires before the min_interval window opens.
+    # The heartbeat is sent at (max_interval - MAX_INTERVAL_MARGIN), and data reports
+    # wait until min_interval has elapsed. If the heartbeat came first, it would clear
+    # pending updates and re-arm both timers, so data would never be reported
+    # (e.g. min=60, max=60 -> heartbeat at 55s, data window at 60s).
+    # Raising max_interval is allowed: the spec only requires MaxInterval >= MinIntervalFloor
+    # and <= max(60 minutes, MaxIntervalCeiling).
+    # See https://github.com/arendst/Tasmota/discussions/25252
+    if max_interval < min_interval + self.MAX_INTERVAL_MARGIN
+      max_interval = min_interval + self.MAX_INTERVAL_MARGIN
+    end
     self.max_interval = max_interval
     self.wait_status = false
     
@@ -211,6 +221,7 @@ class Matter_IM_Subscription
         res[idx] = self.event_generators[idx]
         idx += 1
       end
+      return res
     end
   end
 
@@ -320,9 +331,23 @@ class Matter_IM_Subscription_Shop
     while idx < size(self.subs)
       var sub = self.subs[idx]
       if !sub.wait_status && tasmota.time_reached(sub.expiration)
-        self.im.send_subscribe_heartbeat(sub)
-        sub.clear_before_arm()
-        sub.re_arm()                 # signal that we can proceed to next sub report
+        # Safety net: never drop pending data on heartbeat.
+        # `clear_before_arm()` empties `updates` and resets `update_event_no`, so sending an
+        # empty keep-alive while data is pending would silently discard those changes.
+        # Normally the loop above already sent them once `not_before` was reached, because
+        # `init()` ensures max_interval >= min_interval + MAX_INTERVAL_MARGIN, so `re_arm()`
+        # always sets `expiration` >= `not_before`. If that invariant is ever broken
+        # (timing drift, future change of min/max computation), we send the pending data as
+        # the max_interval report instead. This does not increase report frequency,
+        # since a report is due at `expiration` anyway.
+        if (size(sub.updates) > 0) || (sub.update_event_no != nil)
+          self.im.send_subscribe_update(sub)
+          sub.clear_before_arm()        # re_arm() is called when the final StatusResponse is received
+        else
+          self.im.send_subscribe_heartbeat(sub)
+          sub.clear_before_arm()
+          sub.re_arm()                 # signal that we can proceed to next sub report
+        end
       end
       idx += 1
     end
