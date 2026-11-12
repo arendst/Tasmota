@@ -24,9 +24,12 @@
 #ifndef OpenTherm_h
 #define OpenTherm_h
 
-// Enable RMT on ESP32 (Arduino + ESP-IDF Core)
+// Enable RMT on ESP32 chips that have it (not ESP32-C2/C61: they use the interrupt implementation)
 #ifdef ESP32
-    #define OPENTHERM_USE_RMT
+    #include <soc/soc_caps.h>
+    #if SOC_RMT_SUPPORTED
+        #define OPENTHERM_USE_RMT
+    #endif
 #endif  // ESP32
 
 #include <stdint.h>
