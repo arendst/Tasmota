@@ -5,7 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ## [16.0.0.3]
 ### Added
- - Wrapper function for esp_sleep_get_wakeup_cause() with mapping to Berry as tasmota.wakeup_cause()
+- Wrapper function for esp_sleep_get_wakeup_cause() with mapping to Berry as tasmota.wakeup_cause()
+- Matter Doorbell (0x0148) device type mapped to a Button, with fabric-scoped Binding storage (Chime client not yet implemented) (#25187)
 
 ### Breaking Changed
 
@@ -55,7 +56,6 @@ All notable changes to this project will be documented in this file.
 - BLE timeout and eQ3 TRV enhancements (#25173)
 - TuyaMCU pace outgoing frames so the MCU is never written to back-to-back (#25151)
 - Heap Map optional feature fur detailed memory usage at boot (#25186)
-- Matter Doorbell (0x0148) device type mapped to a Button, with fabric-scoped Binding storage (Chime client not yet implemented)
 
 ### Breaking Changed
 - BTHome un-reverse MAC address usage for command `MI32Keys` to make it consistent
