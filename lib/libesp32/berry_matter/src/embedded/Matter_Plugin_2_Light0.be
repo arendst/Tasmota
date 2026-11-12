@@ -323,7 +323,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
         update_list['Power'] = int(entry.val)
       end
       if (entry.key == "Dimmer")
-        update_list['Dimmer'] = int(entry.val)
+        update_list['Bri'] = int(entry.val)   # Zigbee Dimmer is 0..254, same scale as Matter `Bri` read by `update_virtual()`
       end
       if (entry.key == "CT")
         update_list['CT'] = int(entry.val)

@@ -61,6 +61,12 @@ class Matter_Zigbee_Mapper
   def parse_configuration(config)
     import zigbee
     import string
+    # reset cached resolution, `parse_configuration()` is also called when the config is edited in place
+    # otherwise `resolve_zb_device()` keeps the previous device and endpoint
+    self.zigbee_device = nil
+    self.shortaddr = nil
+    self.endpoint = nil
+    self.device_arg_str = nil
     self.device_arg = config.find('zigbee_device', nil)
     # parse optional ":<endpoint>" explicit suffix
     if (type(self.device_arg) == 'string')

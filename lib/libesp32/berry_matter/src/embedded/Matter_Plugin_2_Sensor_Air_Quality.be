@@ -455,8 +455,9 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
     self.shadow_pm2_5 = self._parse_update_virtual(payload, "PM2.5", self.shadow_pm2_5, number, 0x042A, 0x0000)
     self.shadow_pm10 = self._parse_update_virtual(payload, "PM10", self.shadow_pm10, number, 0x042D, 0x0000)
     self.shadow_tvoc = self._parse_update_virtual(payload, "TVOC", self.shadow_tvoc, number, 0x042E, 0x0000)
+    self.shadow_no2 = self._parse_update_virtual(payload, "NO2", self.shadow_no2, number, 0x0413, 0x0000)
     if payload.contains("AirQuality")
-      self.shadow_air_quality = self._parse_update_virtual(payload, "AirQuality", number, self.shadow_air_quality, 0x005B, 0x0000)
+      self.shadow_air_quality = self._parse_update_virtual(payload, "AirQuality", self.shadow_air_quality, number, 0x005B, 0x0000)
     else
       # try to compute from available values
       self.compute_air_quality()
@@ -473,7 +474,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   # This call is synnchronous and blocking.
   def parse_status(data, index)
     if index == 10                             # Status 10
-      var values = data.find(self.prefix_airquality)
+      self.parse_sensors(data)                 # StatusSNS has the same layout as local sensor JSON
     end
   end
 

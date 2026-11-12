@@ -181,10 +181,11 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   def update_inverted()
     # get the min/max tilt values
     if (self.shadow_shutter_inverted == -1)
-      var r_st13 = tasmota.cmd("Status 13", true)     # issue `Status 13`
-      if r_st13.contains('StatusSHT')
+      var r_st13 = tasmota.cmd("Status 13", true)     # issue `Status 13`, returns nil when SetOption80 is off
+      if isinstance(r_st13, map) && isinstance(r_st13.find('StatusSHT'), map)
         r_st13 = r_st13['StatusSHT']        # skip root
-        var d = r_st13.find("SHT"+str(self.tasmota_shutter_index), {}).find('Opt')
+        var sht = r_st13.find("SHT"+str(self.tasmota_shutter_index))
+        var d = isinstance(sht, map) ? sht.find('Opt') : nil
         # log("MTR: opt: "+str(d))
         if d != nil
           self.shadow_shutter_inverted = int(d[size(d)-1])  # inverted is at the most right character

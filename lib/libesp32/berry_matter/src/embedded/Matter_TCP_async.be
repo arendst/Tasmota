@@ -153,9 +153,11 @@ class Matter_TCP_async
 
     if (tasmota.millis() - self.time_start) > self.timeout
       # connection timeout (either while connecting or after established)
-      self.close()
+      # mark as failed and not connected BEFORE `close()`, otherwise `close()` fires
+      # `event_closed()` which subclasses (HTTP) report as a successful completion
       self.status = -3
       self.tcp_connected = false        # force to false
+      self.close()
       self.event_timeout()
       return
     end
