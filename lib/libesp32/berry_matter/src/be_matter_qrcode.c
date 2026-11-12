@@ -46,7 +46,7 @@ int qr_encode_str(bvm *vm) {
     uint8_t * qr0 = (uint8_t *) be_os_malloc(qrcodegen_BUFFER_LEN_FOR_VERSION(qr_version));
     if (!qr0) { be_throw(vm, BE_MALLOC_FAIL); }
     uint8_t * data_tmp = (uint8_t *) be_os_malloc(qrcodegen_BUFFER_LEN_FOR_VERSION(qr_version));
-    if (!qr0) { be_os_free(qr0); be_throw(vm, BE_MALLOC_FAIL); }
+    if (!data_tmp) { be_os_free(qr0); be_throw(vm, BE_MALLOC_FAIL); }
 
     bool ok = qrcodegen_encodeText(data_str, data_tmp, qr0, qrcodegen_Ecc_MEDIUM, qr_version, qr_version, qrcodegen_Mask_AUTO, true);
 

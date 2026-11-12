@@ -1111,8 +1111,8 @@ class Matter_Plugin_Root : Matter_Plugin
         var nocl = TLV.Matter_TLV_array() # NOCs, p.711
         var fabs = ctx.fabric_filtered ? [session.get_fabric()] : self.device.sessions.active_fabrics()
         for loc_fabric: fabs
-          if loc_fabric.is_marked_for_deletion()    continue end    # fabric is scheduled for deletion
           if loc_fabric == nil    continue  end
+          if loc_fabric.is_marked_for_deletion()    continue end    # fabric is scheduled for deletion
           var nocs = nocl.add_struct(nil)
           nocs.add_TLV(1, 0x11 #-TLV.B2-#, loc_fabric.get_noc())      # NOC
           nocs.add_TLV(2, 0x11 #-TLV.B2-#, loc_fabric.get_icac())     # ICAC
@@ -1143,7 +1143,7 @@ class Matter_Plugin_Root : Matter_Plugin
       elif attribute == 0x0004          #  ---------- TrustedRootCertificates / list[octstr] ----------
         # TODO
       elif attribute == 0x0005          #  ---------- Current FabricIndex / u1 ----------
-        var fab_index = session._fabric.get_fabric_index()
+        var fab_index = session.get_fabric_index()    # returns nil if no fabric (PASE session)
         if fab_index == nil   fab_index = 0   end     # if PASE session, then the fabric index should be zero
         return tlv_solo.set(0x06 #-TLV.U4-#, fab_index)      # number of active sessions
       end
@@ -1544,7 +1544,12 @@ class Matter_Plugin_Root : Matter_Plugin
 
         if !fabric_id || !deviceid
           log("MTR: Error: no fabricid nor deviceid in NOC certificate", 2)
-          return false
+          # respond with NOCResponse StatusCode=InvalidNOC (NodeOperationalCertStatusEnum 0x03)
+          # previously returned `false`, which the IM layer treated as a response object and failed to encode
+          var nocr = TLV.Matter_TLV_struct()
+          nocr.add_TLV(0, 0x06 #-TLV.U4-#, 0x03 #-InvalidNOC-#)   # Status
+          ctx.command = 0x08              # NOCResponse
+          return nocr
         end
         # convert fo bytes(8)
         if type(fabric_id) == 'int' fabric_id = int64.fromu32(fabric_id).tobytes()  else fabric_id = fabric_id.tobytes() end

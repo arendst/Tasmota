@@ -110,6 +110,7 @@ class Matter_Plugin_Sensor_Temp : Matter_Plugin_Sensor
   # This must be overriden.
   # This allows to convert the raw sensor value to the target one, typically int
   def pre_value(val)
+    if val == nil   return nil  end            # missing reading, avoid arithmetic on nil
     # TODO simplify
     if self.BRIDGE || self.mqtt_remote
       if self.temp_unit == self.TEMP_F          # Fahrenheit

@@ -1210,7 +1210,6 @@ class Matter_IM
           ctx.list_write_final = write_counts[write_key] == 0 && !query.more_chunked_messages
           ctx.write_tlv = q.data_tlv
           if ctx.status != nil              # no match, return error because it was direct
-            ctx.status = nil                # remove status to silence output
             self.write_single_attribute_status_to_bytes(ret, ctx, write_data)
 
           else                              #  ctx.status is nil, it exists
