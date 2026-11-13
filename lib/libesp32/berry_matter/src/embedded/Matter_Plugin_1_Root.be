@@ -1508,7 +1508,7 @@ class Matter_Plugin_Root : Matter_Plugin
         return nil                      # trigger a standalone ack
 
       elif command == 0x0006            # ---------- AddNOC ----------
-        log("MTR: AddNoc Args=" + str(val), 4)
+        # do not log `val`: it contains IpkValue, the fabric's operational group key
         var NOCValue = val.findsubval(0)        # octstr max 400
         var ICACValue = val.findsubval(1)       # octstr max 400
         # Apple sends an empty ICAC instead of a missing attribute, fix this
@@ -1650,8 +1650,9 @@ class Matter_Plugin_Root : Matter_Plugin
         var iterations = val.findsubval(3)          # Iterations u4
         var salt = val.findsubval(4)                # Salt octstr
 
-        log(format("MTR: OpenCommissioningWindow(timeout=%i, passcode=%s, discriminator=%i, iterations=%i, salt=%s)",
-                                  timeout, passcode_verifier.tohex(), discriminator, iterations, salt.tohex()), 4)
+        # do not log the PAKE verifier nor the salt, they allow offline guessing of the passcode
+        log(format("MTR: OpenCommissioningWindow(timeout=%i, discriminator=%i, iterations=%i)",
+                                  timeout, discriminator, iterations), 4)
 
         # check values
         if timeout == nil || passcode_verifier == nil || discriminator == nil || iterations == nil || salt == nil
