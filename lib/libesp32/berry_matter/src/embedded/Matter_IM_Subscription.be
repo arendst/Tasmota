@@ -58,18 +58,27 @@ class Matter_IM_Subscription
     if min_interval < 0                     min_interval = 0 end
     if min_interval > 60                    min_interval = 60 end
     self.min_interval = min_interval
-    # check values for max_interval
-    var max_interval = req.max_interval_ceiling
-    if max_interval < 60                    max_interval = 60 end
-    if max_interval > 3600                  max_interval = 3600 end
+    # choose max_interval
+    #
+    # Tasmota deliberately uses a short max_interval of 60 s instead of the controller's
+    # MaxIntervalCeiling (`req.max_interval_ceiling`, often 3600 s):
+    # - subscriptions are not persisted, after a Tasmota reboot they are lost and the
+    #   controller only re-subscribes when its liveness timer, based on the MaxInterval
+    #   we return in SubscribeResponse, expires. With 3600 s the controller would show
+    #   stale values for up to an hour.
+    # - a lost controller is also detected within about a minute on our side, which frees
+    #   the subscription.
+    # The publisher may choose any MaxInterval >= MinIntervalFloor and
+    # <= max(60 minutes, MaxIntervalCeiling), so 60 s is always allowed.
+
+    var max_interval = 60
+
     # Ensure the heartbeat never fires before the min_interval window opens.
     # The heartbeat is sent at (max_interval - MAX_INTERVAL_MARGIN), and data reports
     # wait until min_interval has elapsed. If the heartbeat came first, it would clear
     # pending updates and re-arm both timers, so data would never be reported
     # (e.g. min=60, max=60 -> heartbeat at 55s, data window at 60s).
-    # Raising max_interval is allowed: the spec only requires MaxInterval >= MinIntervalFloor
-    # and <= max(60 minutes, MaxIntervalCeiling).
-    # See https://github.com/arendst/Tasmota/discussions/25252
+
     if max_interval < min_interval + self.MAX_INTERVAL_MARGIN
       max_interval = min_interval + self.MAX_INTERVAL_MARGIN
     end
@@ -317,7 +326,11 @@ class Matter_IM_Subscription_Shop
     var idx = 0
     while idx < size(self.subs)
       var sub = self.subs[idx]
-      if (!sub.wait_status && tasmota.time_reached(sub.not_before))           # is the update window open (not in progress and minimum time has passed)
+      # The update window opens when min_interval has passed, or at the latest when
+      # max_interval expires: pending data is then sent as the max_interval report instead
+      # of being discarded by an empty heartbeat (`clear_before_arm()` empties `updates`).
+      # `init()` already ensures `expiration` >= `not_before`, this is only a safety net.
+      if !sub.wait_status && (tasmota.time_reached(sub.not_before) || tasmota.time_reached(sub.expiration))
         if (size(sub.updates) > 0) || (sub.update_event_no != nil)            # we have updated attributes, or an event was published since last update
           self.im.send_subscribe_update(sub)
           sub.clear_before_arm()
@@ -330,24 +343,12 @@ class Matter_IM_Subscription_Shop
     idx = 0
     while idx < size(self.subs)
       var sub = self.subs[idx]
+      # pending data was already sent by the loop above (which sets `wait_status`),
+      # so here we only send an empty keep-alive
       if !sub.wait_status && tasmota.time_reached(sub.expiration)
-        # Safety net: never drop pending data on heartbeat.
-        # `clear_before_arm()` empties `updates` and resets `update_event_no`, so sending an
-        # empty keep-alive while data is pending would silently discard those changes.
-        # Normally the loop above already sent them once `not_before` was reached, because
-        # `init()` ensures max_interval >= min_interval + MAX_INTERVAL_MARGIN, so `re_arm()`
-        # always sets `expiration` >= `not_before`. If that invariant is ever broken
-        # (timing drift, future change of min/max computation), we send the pending data as
-        # the max_interval report instead. This does not increase report frequency,
-        # since a report is due at `expiration` anyway.
-        if (size(sub.updates) > 0) || (sub.update_event_no != nil)
-          self.im.send_subscribe_update(sub)
-          sub.clear_before_arm()        # re_arm() is called when the final StatusResponse is received
-        else
-          self.im.send_subscribe_heartbeat(sub)
-          sub.clear_before_arm()
-          sub.re_arm()                 # signal that we can proceed to next sub report
-        end
+        self.im.send_subscribe_heartbeat(sub)
+        sub.clear_before_arm()
+        sub.re_arm()                 # signal that we can proceed to next sub report
       end
       idx += 1
     end
