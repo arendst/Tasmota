@@ -24,7 +24,7 @@ import matter
 class Matter_Base38
 
   static def encode(raw)
-    # encodes b38 (mutates `b`)
+    # encodes raw (bytes) as a Base38 string; raw is not modified
     def b38_enc(v, l)
       var ENCODE = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-."
       var i = 0

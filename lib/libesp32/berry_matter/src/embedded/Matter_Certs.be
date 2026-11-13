@@ -300,7 +300,7 @@ class Matter_Certs
     "CCCF9DC7050EF5D90BE45707B90E1F875D59BE1FA942E8ED2E427203F6C2EE3D"
   )
 
-  # CertificationDeclaration */
+  # CertificationDeclaration
   # -> format_version = 1
   # -> vendor_id = 0xFFF1
   # -> product_id_array = [ 0x8000, 0x8001, 0x8002, 0x8003, 0x8004, 0x8005, 0x8006, 0x8007, 0x8008, 0x8009, 0x800A, 0x800B,

@@ -1,5 +1,5 @@
 #
-# Matter_TLV.be - implements the encoding and decoding of Matter TLV structures (Tag/Lenght/Value) Appendix A.
+# Matter_zzz_TLV_test.be - TLV encode/decode test cases for Matter_TLV.be
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

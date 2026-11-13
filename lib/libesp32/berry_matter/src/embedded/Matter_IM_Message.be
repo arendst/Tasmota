@@ -163,7 +163,7 @@ matter.IM_Status = Matter_IM_Status
 #################################################################################
 # Matter_IM_InvokeResponse
 #
-# Send a simple Status Message
+# Send an Invoke Response, data is an InvokeResponseMessage
 #################################################################################
 class Matter_IM_InvokeResponse : Matter_IM_Message
 
@@ -178,7 +178,7 @@ matter.IM_InvokeResponse = Matter_IM_InvokeResponse
 #################################################################################
 # Matter_IM_WriteResponse
 #
-# Send a simple Status Message
+# Send a Write Response, data is a WriteResponseMessage
 #################################################################################
 class Matter_IM_WriteResponse : Matter_IM_Message
 
@@ -276,7 +276,7 @@ class Matter_IM_ReportData_Pull : Matter_IM_Message
       while not_full && (ctx := current_generator.next_attribute())   # 'not_full' must be first to avoid removing an item when we don't want
         # log(f">>>: ReportData_Pull {ctx=}", 3)
         var force_log = current_generator.is_direct() || debug
-        var elt_bytes = responder.im.read_single_attribute_to_bytes(current_generator.get_pi(), ctx, resp.session, force_log)   # TODO adapt no_log
+        var elt_bytes = responder.im.read_single_attribute_to_bytes(current_generator.get_pi(), ctx, resp.session, force_log)   
         if (elt_bytes == nil)   continue    end         # silently ignored, iterate to next
         # check if we overflow
         if (size(data) + size(elt_bytes) > self.MAX_MESSAGE)
@@ -474,7 +474,7 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
   end
 
   #################################################################################
-  # ack received, confirm the heartbeat
+  # ack received for a ReportData: re-arm the subscription if it was a keep-alive report
   def ack_received(msg)
     # log(f"MTR: IM_ReportDataSubscribed_Pull ack_received sub={self.sub.subscription_id}", 3)
     super(self).ack_received(msg)
@@ -512,7 +512,7 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
   end
 
   #################################################################################
-  # returns true if transaction is complete (remove object from queue)
+  # send the next packet of this report; the queue removes the message once finished is set
   # default responder for data
   def send_im(responder)
     # log(format("MTR: IM_ReportDataSubscribed_Pull send sub=%i exch=%i ready=%i", self.sub.subscription_id, self.resp.exchange_id, self.ready ? 1 : 0), 3)
@@ -563,7 +563,7 @@ matter.IM_ReportDataSubscribed_Pull = Matter_IM_ReportDataSubscribed_Pull
 #################################################################################
 # Matter_IM_SubscribedHeartbeat
 #
-# Send a subscription heartbeat, which is an empty DataReport with no SuppressResponse
+# Send a subscription heartbeat: an empty DataReport with SuppressResponse set to true
 #
 # Main difference is that we are the spontaneous initiator
 #################################################################################
@@ -629,7 +629,7 @@ matter.IM_SubscribedHeartbeat = Matter_IM_SubscribedHeartbeat
 #################################################################################
 # Matter_IM_SubscribeResponse_Pull
 #
-# Report Data for a Read Request - pull (lazy) mode
+# Subscribe response, pull (lazy) mode: ReportData for the subscription, then SubscribeResponse
 #################################################################################
 class Matter_IM_SubscribeResponse_Pull : Matter_IM_ReportData_Pull
   # inherited

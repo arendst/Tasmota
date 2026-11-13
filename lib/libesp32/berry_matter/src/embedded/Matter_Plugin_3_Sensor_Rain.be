@@ -110,7 +110,6 @@ class Matter_Plugin_Sensor_Rain : Matter_Plugin_Sensor_Boolean
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0045: [0],                                    # Boolean State p.70 - no writable
   })
-  # MATTER_WATER_LEAK_DETECTOR_DEVICE_TYPE_ID 0x0043
   static var TYPES = { 0x0044: 1 }                  # Rain Sensor, rev 1
 
   # var tasmota_switch_index                          # Switch number in Tasmota (one based)

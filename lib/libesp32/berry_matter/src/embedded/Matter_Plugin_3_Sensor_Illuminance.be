@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Light.be - implements the behavior for a Light Sensor
+# Matter_Plugin_3_Sensor_Illuminance.be - implements the behavior for a Light Sensor (Illuminance)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -149,11 +149,11 @@ class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
 
     # ====================================================================================================
     if   cluster == 0x0400              # ========== Illuminance Measurement 2.2 p.95 ==========
-      if   attribute == 0x0000          #  ---------- MeasuredValue / i16 ----------
+      if   attribute == 0x0000          #  ---------- MeasuredValue / u16 ----------
         return tlv_solo.set_or_nil(0x06 #-TLV.U4-#, int(self.shadow_value))
-      elif attribute == 0x0001          #  ---------- MinMeasuredValue / i16 ----------
+      elif attribute == 0x0001          #  ---------- MinMeasuredValue / u16 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 1)  # 1 lux
-      elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 ----------
+      elif attribute == 0x0002          #  ---------- MaxMeasuredValue / u16 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 0xFFFE)
       end
 

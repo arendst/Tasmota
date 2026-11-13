@@ -101,7 +101,7 @@ class Matter_Plugin_OnOff_Power : Matter_Plugin_OnOff
   })
   # Composed endpoint: On/Off Plug-in Unit (control) + Electrical Sensor (measurement)
   static var TYPES = { 0x010A: 3, 0x0510: 1 }
-  # Accepted keys for virtual devices via `MtrUpdate {"Name":"...", "Voltage":230, "ActiveCurrent":..}`
+  # Accepted keys for virtual devices via `MtrUpdate {"Name":"...", "Voltage":230, "ActivePower":..}`
   # Note: `Power` is already used (inherited) for the On/Off boolean state, so the
   # wattage key is named `ActivePower` to avoid any ambiguity.
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Voltage", "Current", "ActivePower", "ApparentPower", "ReactivePower", "Factor", "Frequency")
@@ -188,7 +188,7 @@ class Matter_Plugin_OnOff_Power : Matter_Plugin_OnOff
   # For Bridge devices
   #############################################################
   #############################################################
-  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  # Update shadow values from remote Status 10 (bridge mode)
   #
   # Reads the (non-indexed) `ENERGY` object from the remote `Status 10` response
   def parse_status(data, index)

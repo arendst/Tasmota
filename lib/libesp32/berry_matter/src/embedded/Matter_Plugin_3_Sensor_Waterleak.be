@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_2_Sensor_Waterleak.be - implements the behavior for a Water leak Sensor
+# Matter_Plugin_3_Sensor_Waterleak.be - implements the behavior for a Water leak Sensor
 #
 # Copyright (C) 2024  Stephan Hadinger & Theo Arends
 #
@@ -118,7 +118,6 @@ class Matter_Plugin_Sensor_Waterleak : Matter_Plugin_Sensor_Boolean
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0045: [0],                                    # Boolean State p.70 - no writable
   })
-  # MATTER_WATER_LEAK_DETECTOR_DEVICE_TYPE_ID 0x0043
   static var TYPES = { 0x0043: 1 }                  # Waterleak Sensor, rev 1
 
   # var tasmota_switch_index                          # Switch number in Tasmota (one based)

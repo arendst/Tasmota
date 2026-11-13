@@ -177,10 +177,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   var prefix_tvoc                                   # TVOC filter prefix
   var prefix_airquality                             # AirQuality device key (e.g., "SCD40")
   var clusters_derived                              # dynamically computed cluster map based on config
-  var shadow_air_quality                            # Human readable air quality index
-                                                    # 0: Unknown
-                                                    # 1: Good
-                                                    # 4: Poor
+  var shadow_air_quality                            # AirQualityEnum: 0 Unknown, 1 Good, 2 Fair, 3 Moderate, 4 Poor, 5 VeryPoor, 6 ExtremelyPoor
   # var shadow_pb0_3
   # var shadow_pb0_5
   # var shadow_pb1
@@ -264,8 +261,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   #############################################################
   # parse sensor
   #
-  # parse the output from `ShutterPosition`
-  # Ex: `{"Shutter1":{"Position":50,"Direction":0,"Target":50,"Tilt":30}}`
+  # Read one value from a sensor entry. Returns the new value, or old_val if the key is absent.
   def _parse_sensor_entry(v, key, old_val, func, cluster, attribute)
     var val = v.find(key)
     if (val != nil)
@@ -339,7 +335,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   #############################################################
   # compute_air_quality
   #
-  # If self.shadow_air_quality is unknown, try to compute from other attributes
+  # Compute the air quality index from the CO2 value. Used when the device does not report AirQuality.
   def compute_air_quality()
     # try to compute from available values
     var new_air_quality
@@ -392,9 +388,9 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
         return tlv_solo.set(0x14 #-TLV.NULL-#, nil)
       elif attribute == 0x0002          #  ---------- MaxMeasured Value / float ----------
         return tlv_solo.set(0x14 #-TLV.NULL-#, nil)
-      elif attribute == 0x0008          #  ---------- MeasurementUnit / u8 ----------
+      elif attribute == 0x0008          #  ---------- MeasurementUnit / enum8 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, unit)
-      elif attribute == 0x0009          #  ---------- MeasurementMedium / u8 ----------
+      elif attribute == 0x0009          #  ---------- MeasurementMedium / enum8 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 0)  # 0 = Air
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 1)  # MEA = NumericMeasurement
@@ -404,7 +400,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
 
     # ====================================================================================================
     if   cluster == 0x005B              # ========== Air Quality ==========
-      if   attribute == 0x0000          #  ---------- AirQuality / U8 ----------
+      if   attribute == 0x0000          #  ---------- AirQuality / enum8 ----------
         return tlv_solo.set_or_nil(0x06 #-TLV.U4-#, self.shadow_air_quality)
       # elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
       #   return tlv_solo.set(0x06 #-TLV.U4-#, 0)  #
@@ -469,9 +465,9 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   # For Bridge devices
   #############################################################
   #############################################################
-  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  # Update shadow values from Status 10 (local copies of what we published to the Matter gateway)
   #
-  # This call is synnchronous and blocking.
+  # This call is synchronous and blocking.
   def parse_status(data, index)
     if index == 10                             # Status 10
       self.parse_sensors(data)                 # StatusSNS has the same layout as local sensor JSON

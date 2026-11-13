@@ -89,7 +89,7 @@ class Matter_UDPServer
 
   #############################################################
   # Starts the server.
-  # Registers as device handler to Tasmota
+  # Registers the loop with tasmota.add_fast_loop()
   #
   # `cb(packet, from_addr, from_port)`: callback to call when a message is received.
   # Raises an exception if something is wrong.

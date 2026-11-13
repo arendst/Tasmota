@@ -107,23 +107,23 @@
 # POSITION ENCODING:
 # - Matter uses 0-10000 (0.00% to 100.00% in hundredths)
 # - Tasmota uses 0-100 (0% to 100%)
-# - Conversion: Matter = Tasmota × 100
+# - Conversion: Matter = Tasmota × 100 when the inversion flag is 1; Matter = (100 - Tasmota) × 100 when it is 0.
 #
 # POSITION SEMANTICS:
 # - 0% = Fully open (top position)
 # - 100% = Fully closed (bottom position)
-# - Tasmota may invert this based on SetOption80
+# - Tasmota may invert this through ShutterInvert
 #
 # TASMOTA IMPLEMENTATION:
 # - Reads position from ShutterPosition<x> command
 # - Commands: ShutterStopOpen, ShutterStopClose, ShutterStop, ShutterPosition
-# - Supports inverted mode via SetOption80 (checked in Status 13)
+# - Inversion flag is read from Status 13 SHT<x>.Opt; Status 13 requires SetOption80 (shutter support).
 # - Direction: 0=Stopped, 1=Opening, -1=Closing
 # - Position range: 0-100 (Tasmota) → 0-10000 (Matter)
 #
 # CONFIGURATION:
-# - ARG: "shutter" - Tasmota Shutter number (1-based)
-# - Example: shutter=1 uses Shutter1
+# - SCHEMA: "shutter" - Tasmota Shutter index, zero based
+# - Example: shutter=0 uses Shutter1
 #
 # EXAMPLES:
 # - Fully open: CurrentPositionLiftPercent100ths=0
@@ -160,7 +160,7 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   var tasmota_shutter_index                         # Shutter number in Tasmota (zero based)
   var shadow_shutter_pos
   var shadow_shutter_target
-  var shadow_shutter_direction                      # 1=opening -1=closing 0=not moving TODO
+  var shadow_shutter_direction                      # 1=opening -1=closing 0=not moving
   var shadow_shutter_inverted                       # 1=same as matter 0=matter must invert
 
   #############################################################
@@ -179,7 +179,7 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   #
   # Update "inverted" flag from Status 13
   def update_inverted()
-    # get the min/max tilt values
+    # Read the inversion flag from Status 13 (only while it is unknown)
     if (self.shadow_shutter_inverted == -1)
       var r_st13 = tasmota.cmd("Status 13", true)     # issue `Status 13`, returns nil when SetOption80 is off
       if isinstance(r_st13, map) && isinstance(r_st13.find('StatusSHT'), map)

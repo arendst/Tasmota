@@ -36,7 +36,6 @@
 # - Identify: TriggerEffect cmd M
 # - Scenes Management: CopyScene cmd P, M
 # - On/Off: Lighting feature M
-# - Level Control: OnOff feature M, Lighting feature M, CurrentLevel 1-254, MinLevel 1, MaxLevel 254
 #
 # NOTES:
 # - Generic on/off control for relays, switches, and plugs

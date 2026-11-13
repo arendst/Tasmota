@@ -24,7 +24,7 @@ import matter
 #################################################################################
 # Matter_Profiler
 #
-# Used to store all the elements of the reponse to an attribute or command
+# Records timestamps and allocation counts at named points, printed by dump()
 #################################################################################
 class Matter_Profiler
   static var PREALLOCATED = 50

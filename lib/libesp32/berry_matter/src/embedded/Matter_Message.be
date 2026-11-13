@@ -57,7 +57,6 @@ class Matter_Frame
   var vendor_id                   # (opt)
   var ack_message_counter         # (opt)
   var sec_extensions
-  # var
   var app_payload_idx             # index where the application payload starts
   # for UDP, remote_ip and remote_port to send back to
   var remote_ip, remote_port
@@ -344,8 +343,7 @@ class Matter_Frame
 
 
   #############################################################
-  # decrypt with I2S key
-  # return cleartext or `nil` if failed
+  # decrypt with I2R key
   #
   # frame.raw is decrypted in-place and the MIC is removed
   # returns true if successful
@@ -411,7 +409,6 @@ class Matter_Frame
 
   #############################################################
   # encrypt with R2I key
-  # return true if ok
   # changes the raw buffer in-place
   def encrypt()
     import crypto
@@ -420,7 +417,7 @@ class Matter_Frame
     var payload_idx = self.payload_idx
     var tag_len = 16
 
-    # encrypt the message with `i2r` key
+    # encrypt the message with `r2i` key
     var r2i = session.get_r2i()
 
     # recompute nonce

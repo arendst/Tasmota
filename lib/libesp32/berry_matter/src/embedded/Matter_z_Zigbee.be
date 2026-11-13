@@ -20,9 +20,10 @@
 import matter
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# IMPORTANT: this class is included in build only if `#define USE_ZIGBEE` is defined in `C`
+# IMPORTANT: the class is always compiled, but the `matter_zigbee` module is only registered
+# when `USE_ZIGBEE` is defined (lib/libesp32/berry/default/be_modtab.c, `#ifdef USE_ZIGBEE`).
 #
-# This is managed in matter_module with includes
+# Matter detects it at runtime with `is_zigbee_present()`.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
@@ -255,7 +256,7 @@ class Matter_Zigbee
 
 
   #############################################################
-  # attributes_refined
+  # attributes_final
   #
   # Called by Zigbee mapping whenever a new event is received
   def attributes_final(event_type, frame, attr_list, shortaddr)

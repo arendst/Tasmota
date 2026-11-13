@@ -69,7 +69,7 @@
 #   * 4: Off/High/Auto
 #   * 5: Off/High
 #
-# ATTRIBUTES:
+# ATTRIBUTES (spec; implemented: 0x0000-0x0003 only):
 # ID     | Name            | Type           | Constraint | Quality | Default | Access | Conf
 # -------|-----------------|----------------|------------|---------|---------|--------|-----
 # 0x0000 | FanMode         | FanModeEnum    | desc       | N       | 0       | RW VO  | M
@@ -91,7 +91,7 @@
 # - R: Read, W: Write
 # - V: View privilege, O: Operate privilege
 #
-# COMMANDS:
+# COMMANDS (spec; implemented: none; Step is not implemented):
 # ID   | Name | Dir  | Response | Access | Conf
 # -----|------|------|----------|--------|-----
 # 0x00 | Step | C→S  | Y        | O      | STEP
@@ -233,9 +233,9 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
         return tlv_solo.set(0x06 #-TLV.U4-#, self.shadow_fan_mode)
       elif attribute == 0x0001          #  ---------- FanModeSequence / enum8 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 2)  # Off/Low/Med/High/Auto
-      elif attribute == 0x0002          #  ---------- PercentSetting / enum8 ----------
+      elif attribute == 0x0002          #  ---------- PercentSetting / percent ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, self.shadow_fan_speed_pct)
-      elif attribute == 0x0003          #  ---------- PercentSetting / enum8 ----------
+      elif attribute == 0x0003          #  ---------- PercentCurrent / percent ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, self.shadow_fan_speed_pct)
       end
 
@@ -267,7 +267,7 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
           ctx.status = 0x87 #-matter.CONSTRAINT_ERROR-#
           return false
         end
-      elif attribute == 0x0002          #  ---------- PercentSetting / enum8 ----------
+      elif attribute == 0x0002          #  ---------- PercentSetting / percent ----------
         if type(write_data) == 'int'
           self.set_fan_speed_pct(write_data)
           self.publish_command('FanMode', self.shadow_fan_mode, 'FanSpeed', self.shadow_fan_speed_pct, 'FanSpeed255', tasmota.scale_uint(self.shadow_fan_speed_pct, 0, 100, 0, 255))

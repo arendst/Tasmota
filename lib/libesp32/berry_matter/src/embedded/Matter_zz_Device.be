@@ -43,7 +43,7 @@ class Matter_Device
   var commissioning                   # `matter.Commissioning()` object
   var autoconf                        # `matter.Autoconf()` objects
   var sessions                        # `matter.Session_Store()` objet
-  var zigbee                          # `Mattter_Zigbee()` object, only set if compiled with zigbee, `nil` otherwise
+  var zigbee                          # `Matter_Zigbee()` object, only set if compiled with zigbee, `nil` otherwise
   var ui
   var tick                            # increment at each tick, avoids to repeat too frequently some actions
   # Events
@@ -61,7 +61,7 @@ class Matter_Device
   var ipv4only                        # advertize only IPv4 addresses (no IPv6)
   var disable_bridge_mode             # expose application endpoints as native static endpoints
   var lights_delayed_on               # (bool) dimmable lights wait briefly after On for a level command, see Light1 `hold_on()`
-  var next_ep                         # next endpoint to be allocated for bridge, start at 1
+  var next_ep                         # next endpoint to be allocated for dynamic endpoints, starts at EP (2)
   var debug                           # debug mode, output all values when responding to read request with wildcard
   var configuration_version           # persistent Basic Information configuration version
   # cron equivalent to call `read_sensors()` regularly and dispatch to all entpoints
@@ -167,7 +167,7 @@ class Matter_Device
   # Args:
   #   - button: (int) button number (base 1)
   #   - mode: (int) 0=static report every second, 1=button state changed (immediate), 2=multi-press status (delayed)
-  #   - state: 1=button pressed, 0=button released, 2..5+=multi-press complete
+  #   - state: 1=button pressed, 0=button released (multi-press reports pass 0 and carry the count in press_counter)
   def button_handler(button, mode, state, press_counter)
     # log(f"MTR: button_handler({button=}, {mode=}, {state=})", 3)
     # call all plugins, use a manual loop to avoid creating a new object
@@ -183,7 +183,7 @@ class Matter_Device
   end
 
   #############################################################
-  # dispatch every second click to sub-objects that need it
+  # dispatch every second tick to sub-objects that need it
   def every_second()
     self.sessions.every_second()
     self.message_handler.every_second()
@@ -447,7 +447,7 @@ class Matter_Device
   end
 
   #############################################################
-  # Find plugin by endpoint
+  # Find plugin by friendly name
   def find_plugin_by_friendly_name(name)
     if (name == nil) || (size(name) == 0)   return nil      end     # invalid name
 
@@ -650,7 +650,6 @@ class Matter_Device
   # Autoconfigure device from template
   #
   # Applies only if there are no plugins already configured
-  ## TODO generate map instead
   def autoconf_device()
     import json
 
@@ -812,7 +811,7 @@ class Matter_Device
   end
 
   #############################################################
-  # Check that all ep are valid, i.e. don't collied with root or aggregator
+  # Check that no endpoint collides with the aggregator endpoint (0x0001)
   #
   # return `true` if configuration was adjusted and needs to be saved
   def check_config_ep()

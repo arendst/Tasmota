@@ -46,8 +46,7 @@
 # - Units read from Tasmota Status 10 response
 #
 # CONFIGURATION:
-# - ARG: "filter" - Rule-type filter pattern (e.g., "BME280#Temperature")
-# - ARG_HINT: "Filter pattern" - User guidance for configuration
+# - SCHEMA: "filter", label "Filter", hint "Filter pattern" (Rule-type filter, e.g., "BME280#Temperature")
 # - UPDATE_CMD: "Status 10" - Command to request sensor data
 # - UPDATE_TIME: 5000ms - Sensor reading interval
 #
@@ -162,9 +161,7 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   # For Bridge devices
   #############################################################
   #############################################################
-  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
-  #
-  # TO BE OVERRIDDEN
+  # Update shadow values from Status 10 (local copies of what we published to the Matter gateway)
   def parse_status(data, index)
     if index == 10                               # Status 10
       if data.contains("TempUnit")

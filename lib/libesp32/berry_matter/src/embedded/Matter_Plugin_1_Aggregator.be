@@ -26,8 +26,8 @@
 #
 # CLUSTERS (Server):
 # - 0x0003: Identify (O) - Device identification
-# - 0x0025: Actions (O) - Action management
-# - 0x0751: Commissioner Control (O) - Fabric synchronization
+# - 0x0025: Actions (O) - not implemented
+# - 0x0751: Commissioner Control (O) - not implemented
 # - 0x001D: Descriptor (M) - Inherited from base class
 #
 # CLUSTERS (Client):
@@ -54,7 +54,7 @@
 
 import matter
 
-# Matter plug-in for root behavior
+# Matter plug-in for the Aggregator endpoint (0x0001)
 
 #@ solidify:Matter_Plugin_Aggregator,weak
 
@@ -123,8 +123,7 @@ class Matter_Plugin_Aggregator : Matter_Plugin
         return true
       elif command == 0x0001            # ---------- IdentifyQuery ----------
         # create IdentifyQueryResponse
-        # ID=1
-        #  0=Certificate (octstr)
+        #  0=Timeout
         var iqr = TLV.Matter_TLV_struct()
         iqr.add_TLV(0, 0x06 #-TLV.U4-#, 0)       # Timeout
         ctx.command = 0x00              # IdentifyQueryResponse

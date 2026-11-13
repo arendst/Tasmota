@@ -246,9 +246,8 @@ class Matter_TLV
     # args:
     #    b: bytes() buffer
     #    idx: starting index in the bytes() buffer
-    #    parent: (optional) the parent object to inherit tag values
     #
-    # returns the next `idx` for the item following or `-1` if error
+    # returns the next `idx` for the item following; unexpected types are only logged
     # The next `idx` is also stored in `self.next_idx`
     def parse(b, idx)
       var item_type = self.typ
@@ -617,7 +616,7 @@ class Matter_TLV
       self.tag_number = int(tag)
       self.tag_sub = nil
     end
-    # set context specific
+    # set anonymous tag
     def set_anonymoustag()
       self.set_fulltag()
     end
@@ -927,7 +926,7 @@ class Matter_TLV
   #    b: bytes() buffer
   #    idx: starting index in the bytes() buffer
   #    parent: (optional) the parent object to inherit tag values
-  # returns the next `idx` for the item following or `-1` if error
+  # returns the decoded Matter_TLV_item (its next index is in item.next_idx)
   static def parse(b, idx, parent)
     var TLV = _class
     if idx == nil   idx = 0 end

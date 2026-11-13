@@ -28,7 +28,7 @@ import matter
 #   - tele/<topic>/STATE             - full state (TelePeriod, default 300s)
 #   - tele/<topic>/SENSOR            - sensor data
 #   - tele/<topic>/LWT               - online/offline status
-#   - stat/<topic>/RESULT            - immediate command feedback
+#   - stat/<topic>/+                 - RESULT, STATUS10/11 and command-specific responses
 #
 # Publishes:
 #   - cmnd/<topic>/<Command>         - send commands to remote device
@@ -50,7 +50,7 @@ class Matter_MQTT_remote
   var cmnd_base                                     # expanded MQTT command topic base
   var stat_base                                     # expanded MQTT status topic base
   var tele_base                                     # expanded MQTT telemetry topic base
-  var confirmed                                     # true after a live command response in the current epoch
+  var confirmed                                     # true once the refresh probe (StatusRetain, then Status 10 and 11) has confirmed the current epoch
   var refresh_pending                               # true while a post-connect refresh is scheduled
   var refresh_phase                                 # 0=idle, 1=StatusRetain probe, 2=Status10/11
   var refresh_status                                # bit 0=Status10, bit 1=Status11 received live
@@ -489,9 +489,9 @@ class Matter_MQTT_remote
   end
 
   #############################################################
-  # dispatch_cb
+  # add_async_cb
   #
-  # Dispatch status response to registered callbacks
+  # Register a callback for a status code (nil = all)
   var async_cb_map
 
   def add_async_cb(cb, cmd)
@@ -499,6 +499,10 @@ class Matter_MQTT_remote
     self.async_cb_map[cb] = cmd
   end
 
+  #############################################################
+  # dispatch_cb
+  #
+  # Dispatch status response to registered callbacks
   def dispatch_cb(status, payload)
     if self.async_cb_map == nil    return    end
     for cb: self.async_cb_map.keys()

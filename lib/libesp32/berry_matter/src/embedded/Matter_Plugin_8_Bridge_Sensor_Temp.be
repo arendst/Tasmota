@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Bridge_Sensor_Temp.be - implements base class for a Temperature Sensor via HTTP to Tasmota
+# Matter_Plugin_Bridge_Sensor_Temp.be - implements a Temperature Sensor via HTTP to Tasmota
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

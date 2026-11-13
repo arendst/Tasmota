@@ -26,7 +26,7 @@ import matter
 #
 # Has the same interface as PathGenerator
 #
-# Returns a Path that reads an event patching the current pattern
+# Returns the events that match the filter (endpoint, cluster, event)
 #################################################################################
 class Matter_EventGenerator
   var device                  # reference of device main object
@@ -35,7 +35,7 @@ class Matter_EventGenerator
   var path_in_event           # input event filter (nil or int)
   var path_in_event_min       # input event filter for minimum event requested (nil or int)
   # current status
-  var event_no                # event number of the last one returned or nil of none returned yet
+  var event_no                # event_no of the last event examined; starts at in_event_min (exclusive)
 
   # reused at each output
   var finished                # finished (no more events matching)
@@ -52,8 +52,8 @@ class Matter_EventGenerator
   #
   # `in_endpoint`: endpoint number filter (int or nil for all)
   # `in_cluster`: cluster number filter (int or nil for all)
-  # `in_attribute`: attribute number filter (int or nil for all)
-  # `in_fabric_filtered`: is the filter fabric-filtered (nil or false or true) - currently stored but ignored
+  # `in_event`: event id filter (int or nil for all)
+  # `in_event_min`: only events with a larger event_no (int or nil)
   def start(in_endpoint, in_cluster, in_event, in_event_min)
     self.reset()
     self.path_in_endpoint = in_endpoint
@@ -91,9 +91,9 @@ class Matter_EventGenerator
   end
 
   ################################################################################
-  # finished
+  # get_pi
   #
-  # not used for events
+  # always nil for events, which have no plugin object
   def get_pi()
     return nil
   end
@@ -103,8 +103,7 @@ class Matter_EventGenerator
   #
   # Generate next concrete path
   # Returns:
-  # - a path object (that is valid until next call)
-  # - if 'direct' (concrete path), ctx.status contains the appropriate error code if the path value is not supported
+  # - an event object (valid until the next call)
   # - `nil` if no more objects
   def next_event()
     if (self.finished)    return nil    end

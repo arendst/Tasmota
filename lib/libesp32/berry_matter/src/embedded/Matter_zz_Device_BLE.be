@@ -36,7 +36,7 @@ import matter
 #   - on_ble_ready()             - called when the BLE stack signals ready (op 229)
 #   - on_ble_disconnected()      - called on BLE disconnect (op 228)
 #   - on_commissioning_success() - called from check_final() on success
-#   - on_commissioning_failure() - called from check_final() on failure
+#   - on_commissioning_failure() - called on failure: from check_final(), handle_disconnect(), or init() when already commissioned
 #   - heart_beat()               - periodic feedback while commissioning is open
 #################################################################################
 class Matter_Device_BLE : Matter_Device

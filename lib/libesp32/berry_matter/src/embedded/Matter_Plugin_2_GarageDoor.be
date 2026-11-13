@@ -97,13 +97,13 @@
 # 0x03 | SecureStateChanged | INFO     | M    | SecureState true <-> false
 #
 # TASMOTA IMPLEMENTATION:
-# - ARG: "shutter" - Tasmota Shutter number (zero based)
+# - SCHEMA: "shutter" - Tasmota Shutter index, zero based
 # - Reads Position/Direction/Target from `ShutterPosition<x>`; honors
 #   ShutterInvert (right-most char of `Status 13` SHT<x>.Opt)
 # - MoveTo FullyOpen / Signature -> ShutterOpen<n>  (Signature = fully open)
 # - MoveTo FullyClosed           -> ShutterClose<n>
 # - Stop                         -> ShutterStop<n>
-# - Position: Tasmota closed% (0=open .. 100=closed) -> Closed/Partial/Open enum
+# - Position: Tasmota position 0..100 is mapped by to_closed_pct(). With inversion flag 1: 0 = open, 100 = closed. With flag 0 (virtual doors): 0 = closed, 100 = open. -> Closed/Partial/Open enum
 # - Target: derived from Tasmota `Target` (reflects local moves too)
 # - SecureState: true when FullyClosed (spec formula for PS without LT)
 #

@@ -40,9 +40,9 @@ class Matter_HTTP_async end
 class Matter_HTTP_remote : Matter_HTTP_async
   var device                                        # reference to matter_device
   var probe_update_time_map                         # number of milliseconds to wait for each async command (map)
-  var probe_next_timestamp_map                      # timestamp for last probe (in millis()) for each `Status <x>`
+  var probe_next_timestamp_map                      # next due time (millis) for each `Status <x>`; 0 = run first
                                                     # if timestamp is `0`, this should be scheduled in priority
-  var async_cb_map                                  # list of callbacks to call with `cb(http_status, payload)`
+  var async_cb_map                                  # map of callback to command filter (nil = all commands); called as cb(status, payload, cmd)
 
   # information about current async command in-flight
   var current_cmd                                   # current async command
@@ -143,7 +143,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
   end
   
   #############################################################
-  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  # Update self.info (name, version, hardware, mac) from a parsed Status response
   #
   # This call is synchronous and blocking.
   def parse_status_http(data, index)
@@ -292,7 +292,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
   end
 
   #############################################################
-  # begin_sync
+  # call_sync
   #
   # Synchronous (blocking version)
   #
@@ -337,7 +337,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
   #############################################################
   # scheduler
   #
-  # check if the timer expired and update_shadow() needs to be called
+  # check which Status <x> command is due and start its async request
   def scheduler()
     var cmd = nil                                 # keep trakck of command
     for k: self.probe_next_timestamp_map.keys()

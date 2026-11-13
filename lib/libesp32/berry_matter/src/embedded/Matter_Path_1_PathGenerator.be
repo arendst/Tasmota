@@ -1,5 +1,5 @@
 #
-# Matter_Path_1_Generator.be - suppport for Matter concrete path generator
+# Matter_Path_1_PathGenerator.be - support for Matter concrete path generator
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -24,9 +24,8 @@ import matter
 #################################################################################
 # Matter_PathGenerator
 #
-# INPUT: Takes a context:
-#   - plugin
-#   - path (abstract or concrete)
+# INPUT: device in the constructor
+#   - endpoint, cluster and attribute filters (nil for all) in start()
 #
 # OUTPUT:
 #   - returns a concrete Path
@@ -209,7 +208,7 @@ class Matter_PathGenerator
     # cluster and attribute are now undefined
     self.cluster = nil
     self.attribute = nil
-    # idx contains the index of current plugin, or `nil` if not started
+    # idx is the index of the current plugin, -1 if not started, nil if the plugin is not in the list
     var idx = -1
     if (self.pi != nil)
       idx = plugins.find(self.pi)     # find index in current list
@@ -262,7 +261,7 @@ class Matter_PathGenerator
   #------------------------------------------------------------------------------#
   # advance to next attribute
   #
-  # self.clusters already contains the sorted list of clusters of pi
+  # attribute list of self.cluster comes from self.pi.get_attribute_list_bytes()
   def _next_attribute()
     if (self.attribute == false)   return false    end       # exhausted all possible values
 

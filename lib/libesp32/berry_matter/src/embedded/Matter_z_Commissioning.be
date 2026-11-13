@@ -24,7 +24,7 @@ import matter
 class Matter_Commissioning
   var device                          # reference to the main Device instance
 
-  static var PBKDF_ITERATIONS = 1000  # I don't see any reason to choose a different number
+  static var PBKDF_ITERATIONS = 1000  # PBKDF2 iteration count for the SPAKE2+ verifier
   static var PASE_TIMEOUT = 10*60     # default open commissioning window (10 minutes)
   # Operational discovery TXT records per Matter 1.4.1 spec §4.3.2
   static var OP_DISCOVERY_TXT = {
@@ -66,7 +66,7 @@ class Matter_Commissioning
   end
 
   #############################################################
-  # dispatch every second click to sub-objects that need it
+  # Close the commissioning window when its timeout is reached
   def every_second()
     if self.commissioning_open != nil && tasmota.time_reached(self.commissioning_open)    # timeout reached, close provisioning
       self.stop_basic_commissioning()   # properly close commissioning and remove mDNS
@@ -191,7 +191,7 @@ class Matter_Commissioning
   #
   # Deferred until next tick.
   def start_operational_discovery_deferred(fabric)
-    # defer to next click
+    # defer to next tick
     tasmota.defer(/-> self.start_operational_discovery(fabric))
   end
 
@@ -200,7 +200,7 @@ class Matter_Commissioning
   #
   # Deferred until next tick.
   def start_commissioning_complete_deferred(session)
-    # defer to next click
+    # defer to next tick
     tasmota.defer(/-> self.start_commissioning_complete(session))
   end
 
@@ -324,8 +324,8 @@ class Matter_Commissioning
       # Since we're a simple SIT device without LITS, we don't advertise ICD key
     }
 
-    self.commissioning_instance_wifi = crypto.random(8).tohex()    # 16 characters random hostname
-    self.commissioning_instance_eth = crypto.random(8).tohex()    # 16 characters random hostname
+    self.commissioning_instance_wifi = crypto.random(8).tohex()    # 16 hex characters, random mDNS service instance name
+    self.commissioning_instance_eth = crypto.random(8).tohex()    # 16 hex characters, random mDNS service instance name
 
     try
       if self.hostname_eth
@@ -405,7 +405,7 @@ class Matter_Commissioning
   end
 
   #############################################################
-  # Start UDP mDNS announcements for commissioning for all persisted sessions
+  # Announce operational discovery for all active fabrics
   def mdns_announce_op_discovery_all_fabrics()
     for fabric: self.device.sessions.active_fabrics()
       if fabric.get_device_id() && fabric.get_fabric_id()
@@ -415,7 +415,7 @@ class Matter_Commissioning
   end
 
   #############################################################
-  # Start UDP mDNS announcements for commissioning
+  # Announce operational discovery (_matter._tcp) for one fabric
   def mdns_announce_op_discovery(fabric)
     import mdns
     try

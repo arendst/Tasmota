@@ -1,5 +1,5 @@
 #
-# Matter_IM_Path_0.be - suppport for Matter simple Path object
+# Matter_Path_0.be - support for Matter simple Path object
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

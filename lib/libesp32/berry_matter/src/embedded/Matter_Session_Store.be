@@ -169,7 +169,7 @@ class Matter_Session_Store
   end
 
   #############################################################
-  # add session 
+  # create a session, replacing any session with the same local_session_id
   def create_session(local_session_id, initiator_session_id)
     var session = self.get_session_by_local_session_id(local_session_id)
     if session != nil     self.remove_session(session) end

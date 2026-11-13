@@ -42,7 +42,7 @@
 # NOTES:
 # - Extends On/Off Light with dimming capability
 # - Level Control cluster is mandatory for this device type
-# - CurrentLevel range is 1-254 (0 and 255 are not allowed for lights)
+# - CurrentLevel range is 1-254 (255 is not allowed for lights); 0 is reported when the light is off
 #################################################################################
 
 #################################################################################
@@ -646,7 +646,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
       var held = self.take_on(command == 0x0000 || command == 0x0004)   # wait in ms if a delayed On is merged
       if held == nil   self.update_shadow_lazy()   end
       if   command == 0x0000            # ---------- MoveToLevel ----------
-        var bri_254 = val.findsubval(0)  # Hue 0..254
+        var bri_254 = val.findsubval(0)  # Level 0..254
         ctx.log = "bri:"+str(bri_254)
         if held != nil   return self.level_on(bri_254, held)   end
         self.set_bri(bri_254)
@@ -662,7 +662,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
         # TODO, we don't really support it
         return true
       elif command == 0x0004            # ---------- MoveToLevelWithOnOff ----------
-        var bri_254 = val.findsubval(0)  # Hue 0..254
+        var bri_254 = val.findsubval(0)  # Level 0..254
         ctx.log = "bri:"+str(bri_254)
         if held != nil   return self.level_on(bri_254, held)   end
         var onoff = bri_254 > 0
@@ -778,9 +778,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   # For Bridge devices
   #############################################################
   #############################################################
-  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
-  #
-  # This call is synnchronous and blocking.
+  # Update shadow values from remote Status 11 (bridge mode)
   def parse_status(data, index)
     super(self).parse_status(data, index)
 
@@ -812,7 +810,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     webserver.content_send(self.web_value_onoff(self.shadow_onoff) + " " + self.web_value_dimmer() + col)
   end
 
-  # Show on/off value as html
+  # Show brightness as html
   def web_value_dimmer()
     var bri_html = ""
     if self.shadow_bri != nil

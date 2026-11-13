@@ -78,9 +78,6 @@
 
 import matter
 
-# Matter modules for extensibility
-# template but not actually used
-
 #@ solidify:Matter_Plugin,weak
 
 class Matter_Plugin
@@ -239,7 +236,7 @@ class Matter_Plugin
   # Stub for updating shadow values (local copies of what we published to the Matter gateway)
   #
   # This method should collect the data from the local or remote device
-  # and call `parse_status(<data>)` when data is available.
+  # and call `parse_status(<data>, <index>)` when data is available.
   #
   # TO BE OVERRIDDEN
   # This call is synnchronous and blocking.
@@ -307,10 +304,10 @@ matter_device.events.dump()
 # EVENT_CRITICAL=2
 
   #############################################################
-  # consolidate_clusters
+  # get_clusters
   #
-  # Build a consolidated map of all the `CLUSTERS` static vars
-  # from the inheritance hierarchy
+  # Return this class's CLUSTERS map.
+  # Subclasses merge their parents with matter.consolidate_clusters().
   def get_clusters()
     return self.CLUSTERS
     # def real_super(o) return super(o) end   # enclose `super()` in a static function to disable special behavior for super in instances
@@ -365,7 +362,7 @@ matter_device.events.dump()
   end
 
   #############################################################
-  # Which endpoints does it handle (list of numbers)
+  # Endpoint number of this plugin (int)
   def get_endpoint()
     return self.endpoint
   end
@@ -463,7 +460,7 @@ matter_device.events.dump()
         acli.add_TLV(nil, 0x06 #-TLV.U4-#, attr_list_bytes.get(idx * 2, -2))
         idx += 1
       end
-      return acli                       # TODO, empty list for now
+      return acli                       # AttributeList (0xFFFB): attribute IDs of this cluster
     elif attribute == 0xFFFA            # EventList
       var el = TLV.Matter_TLV_array()
       return el                         # return empty list
@@ -584,14 +581,13 @@ matter_device.events.dump()
   # append_state_json
   #
   # Output the current state in JSON
-  # Takes the JSON string prefix
-  # New values need to be appended with `,"key":value` (including prefix comma)
+  # Takes no argument. Returns the extra state members as `,"key":value` pairs (including prefix comma), or an empty string
   def append_state_json()
     return ""
   end
 
   # This is to be called by matter_device to get the full state JSON
-  # including "Ep":<ep>,"Name"="<friendly_name"
+  # including "Ep":<ep> and, when set, "Name":"<node label>"
   def state_json()
     import json
     var ep_name = self.node_label ? f',"Name":{json.dump(self.node_label)}' : ""

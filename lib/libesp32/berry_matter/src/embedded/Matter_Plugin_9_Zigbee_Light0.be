@@ -29,7 +29,7 @@
 #
 # ZIGBEE BEHAVIOR:
 # - Bridges Zigbee lights to Matter using zigbee_mapper
-# - Listens for Zigbee attribute reports (ZIGBEE_NAME: "Power")
+# - Listens for Zigbee attribute reports: Power (matched by key in zigbee_received)
 # - Sends Zigbee commands when Matter controller changes state
 # - Automatically converts between Zigbee and Matter formats
 # - Maps Zigbee device to Matter endpoint
@@ -54,7 +54,7 @@ class Matter_Plugin_Zigbee_Light0 : Matter_Plugin_Light0
   static var ZIGBEE = true
   static var TYPE = "z_light0"                      # name of the plug-in in json
   static var DISPLAY_NAME = "Zig Light 0 OnOff"     # display name of the plug-in
-  static var ZIGBEE_NAME = "Power"                  # name of zigbee attribute with sensor reported
+  static var ZIGBEE_NAME = "Power"                  # unused by Light0 zigbee_received, which matches the key "Power" directly
 
   static var SCHEMA = "zigbee_device|"              # arg name
                       "l:Device|"                   # label (display name)

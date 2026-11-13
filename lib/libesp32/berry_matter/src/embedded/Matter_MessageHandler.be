@@ -23,7 +23,7 @@ import matter
 
 class Matter_MessageHandler
   # callback for sending messages
-  var device              # `tansport.msg_send(raw:bytes() [,...]) -> bool` true if succeeded
+  var device              # `device.msg_send(frame)`: sends a matter.Frame through the UDP server
 
   # handlers
   var commissioning       # Commissioning Context instance, handling the PASE/CASE phases
@@ -31,7 +31,7 @@ class Matter_MessageHandler
   var control_message     # Instance of `matter.Control_Message` for MCSP
 
   # cache for decryption bytes
-  var _n_bytes            # size 16 minimal, used by frame_buffer for decryption
+  var _n_bytes            # size 16 minimal, nonce scratch buffer for Matter_Frame.decrypt and encrypt
 
   #############################################################
   def init(device)
@@ -48,7 +48,7 @@ class Matter_MessageHandler
   # reliable: do we send as reliable message
   #
   def send_simple_ack(frame, reliable)
-    if frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
+    if frame.x_flag_r                   # reliable frame (R flag set): send a standalone ack
       var resp = frame.build_standalone_ack(reliable)
       # special case, the local_session_id is not the one from the session
       resp.local_session_id = frame.local_session_id
@@ -68,7 +68,7 @@ class Matter_MessageHandler
   # reliable: do we send as reliable message
   #
   def send_encrypted_ack(frame, reliable)
-    if frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
+    if frame.x_flag_r                   # reliable frame (R flag set): send a standalone ack
       var resp = frame.build_standalone_ack(reliable)
       resp.encode_frame()
       resp.encrypt()
@@ -84,7 +84,7 @@ class Matter_MessageHandler
   #############################################################
   # Called when a message is received
   #
-  # Find or create a session for the message
+  # Find the session of an encrypted message, or create one for an unsecured message
   # and dispacth to appropriate handler
   #
   def msg_received(raw, addr, port)
@@ -215,7 +215,7 @@ class Matter_MessageHandler
         # dispatch according to protocol_id
         var protocol_id = frame.protocol_id
         if protocol_id == 0x0000    # PROTOCOL_ID_SECURE_CHANNEL
-          # it should not be encrypted
+          # secure channel messages (for example the MRP ack) are handled here after decryption
           # log("MTR: PROTOCOL_ID_SECURE_CHANNEL " + matter.inspect(frame), 3)
           if frame.opcode == 0x10                             # MRPStandaloneAcknowledgement
             ret = self.im.process_incoming_ack(frame)
@@ -277,7 +277,7 @@ class Matter_MessageHandler
   end
 
   #############################################################
-  # placeholder, nothing to run for now
+  # call every_second() of the commissioning context and of the IM
   def every_second()
     self.commissioning.every_second()
     self.im.every_second()
