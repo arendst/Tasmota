@@ -101,7 +101,7 @@
 # - Bit 1 (TL): 1 - Tilt supported
 # - Bit 2 (PA_LF): 1 - Position aware lift
 # - Bit 4 (PA_TL): 1 - Position aware tilt
-# - FeatureMap = 0x0013 (bits 0,1,4 = 19 decimal)
+# - FeatureMap = 0x0017 (bits 0,1,2,4 = 23 decimal)
 #
 # CONFIG STATUS:
 # - Bit 0: Operational = 1
@@ -169,7 +169,7 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
   #############################################################
   # Update tilt min/max
   #
-  # Update the min and max tilt values from Status 12
+  # Update the min and max tilt values from Status 13
   def update_tilt_min_max()
     # get the min/max tilt values
     var r_st13 = tasmota.cmd("Status 13", true)     # issue `Status 13`
@@ -196,7 +196,7 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
       if   attribute == 0x0007          #  ---------- ConfigStatus / u8 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 1 + 8 + 16)   # Operational + Lift Position Aware + Tilt Position Aware
 
-      elif attribute == 0x000F          #  ---------- CurrentPositionTiltPercent100ths / u8 ----------
+      elif attribute == 0x000F          #  ---------- CurrentPositionTiltPercent100ths / u16 ----------
         self.update_tilt_min_max()
         if self.tilt_min != nil && self.tilt_max != nil
           var tilt_percentage = tasmota.scale_uint(self.shadow_shutter_tilt - self.tilt_min, 0, self.tilt_max - self.tilt_min, 0, 10000)

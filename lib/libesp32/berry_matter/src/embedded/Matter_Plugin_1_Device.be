@@ -96,14 +96,12 @@
 #################################################################################
 # Matter 1.4.1 Identify Cluster (0x0003)
 #################################################################################
-# See earlier documentation for full Identify cluster specification
 # Provides device identification functionality (visual/audible indication)
 #################################################################################
 
 #################################################################################
 # Matter 1.4.1 Groups Cluster (0x0004)
 #################################################################################
-# See earlier documentation for full Groups cluster specification
 # Enables grouping multiple devices for simultaneous control
 #################################################################################
 
@@ -128,8 +126,8 @@ class Matter_Plugin_Device : Matter_Plugin
   static var ARG_HTTP = "url"                       # domain name
   # static var UPDATE_TIME = 3000                     # update every 3s
   static var UPDATE_CMD = "Status 11"               # command to send for updates
-  static var PROBE_TIMEOUT = 1700                   # timeout of 1800 ms for probing, which gives at least 1s for TCP recovery
-  static var SYNC_TIMEOUT = 500                     # timeout of 700 ms for probing
+  static var PROBE_TIMEOUT = 1700                   # timeout of 1700 ms for probing, which gives at least 1s for TCP recovery
+  static var SYNC_TIMEOUT = 500                     # timeout in ms for synchronous calls to the remote (call_remote_sync)
 
   var http_remote                                   # instance of Matter_HTTP_remote
   var mqtt_remote                                   # instance of Matter_MQTT_remote
@@ -348,8 +346,7 @@ class Matter_Plugin_Device : Matter_Plugin
         return true
       elif command == 0x0001            # ---------- IdentifyQuery ----------
         # create IdentifyQueryResponse
-        # ID=1
-        #  0=Certificate (octstr)
+        #  0=Timeout
         var iqr = TLV.Matter_TLV_struct()
         iqr.add_TLV(0, 0x06 #-TLV.U4-#, 0)       # Timeout
         ctx.command = 0x00              # IdentifyQueryResponse
@@ -757,7 +754,7 @@ class Matter_Plugin_Device : Matter_Plugin
     if (val != nil)
       val = type_func(val)
       if val != old_val
-        self.attribute_updated(cluster, attribute)   # CurrentPositionTiltPercent100ths
+        self.attribute_updated(cluster, attribute)
       end
       return val
     end
@@ -768,7 +765,7 @@ class Matter_Plugin_Device : Matter_Plugin
   # For Zigbee devices
   #############################################################
   #############################################################
-  # attributes_refined
+  # zigbee_received
   #
   # Filtered to only events for this endpoint
   #
@@ -781,7 +778,7 @@ class Matter_Plugin_Device : Matter_Plugin
       var entry = attr_list[idx]
       if (entry.key == self.ZIGBEE_NAME)
         var val = self.pre_value(entry.val)
-        var update_list = { self.JSON_NAME : val }   # Matter temperature is 1/100th of degrees
+        var update_list = { self.JSON_NAME : val }   # Value is already converted to Matter units by pre_value()
         self.update_virtual(update_list)
         log(f"MTR: [{self.endpoint:02X}] {self.JSON_NAME} updated {update_list}", 3)
         return nil

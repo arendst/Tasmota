@@ -1,5 +1,5 @@
 #
-# Matter_inspect.be - implements a generic function to inspect an instance (for debugging only)
+# Matter_0_Inspect.be - implements a generic function to inspect an instance (for debugging only)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -41,7 +41,7 @@ matter.sort = sort
 #
 # compute a random jitter time for an update_time value
 def jitter(update_time)
-  # initialization to a random value within range
+  # random delay in [0, update_time) ms, from now
   import crypto
   var rand31 = crypto.random(4).get(0,4) & 0x7FFFFFFF     # random int over 31 bits
   return tasmota.millis(rand31 % update_time)
@@ -167,9 +167,9 @@ end
 matter.consolidate_clusters = consolidate_clusters
 
 #############################################################
-# consolidate_update_commands_list
+# UC_LIST
 #
-# Build a consolidated list and remove duplicates
+# Concatenate the superclass UPDATE_COMMANDS with the given items
 #@ solidify:matter.UC_LIST,weak
 def UC_LIST(cl, *l)
   var uc_parent = super(cl).UPDATE_COMMANDS

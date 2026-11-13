@@ -1,5 +1,5 @@
 #
-# Matter_HTTP_async.be - implements a generic async non-blocking TCP connection
+# Matter_HTTP_async.be - implements an async non-blocking HTTP GET over TCP
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -112,7 +112,6 @@ class Matter_HTTP_async : Matter_TCP_async
     var payload = nil
     var spinlock = self.SPINLOCK
 
-    # try
     var ret = self.begin(cmd)
     if ret      # true just means that DNS was ok and that nothing went wrong
       while self.http_status == 0
@@ -174,9 +173,9 @@ class Matter_HTTP_async : Matter_TCP_async
   end
 
   #############################################################
-  # parse_http_status_line
+  # parse_http_headers
   #
-  # Parse incoming HTTP status line
+  # Parse incoming HTTP headers
   def parse_http_headers()
     while true
       # print("parse_http_headers", "self.response_offset=", self.response_offset)
@@ -195,7 +194,7 @@ class Matter_HTTP_async : Matter_TCP_async
           self.phase = 2
           self.parse_http_payload()         # continue to parsing payload
         end
-        if size(self.response) > 1024       # we don't accept a single header larger than 1KB
+        if size(self.response) > 1024       # fail if the response buffer exceeds 1 KB
           self.status = -4
           self.http_status = -1             # set before `close()` so `event_closed()` does not report success
           self.close()
@@ -207,9 +206,9 @@ class Matter_HTTP_async : Matter_TCP_async
   end
 
   #############################################################
-  # parse_http_status_line
+  # parse_http_payload
   #
-  # Parse incoming HTTP status line
+  # Parse incoming HTTP payload (chunked or not)
   def parse_http_payload()
     if self.is_chunked
       while true
@@ -412,13 +411,13 @@ class Matter_HTTP_async : Matter_TCP_async
   #############################################################
   # event_http_failed
   #
-  # Transaction finished sucessfully, result in self.payload
+  # HTTP request failed (not a timeout), no payload
   def event_http_failed()     end
   def event_refused()         self.http_status = -1   self.event_http_failed()  end
   #############################################################
   # event_http_timeout
   #
-  # Transaction finished sucessfully, result in self.payload
+  # HTTP request timed out, no payload
   def event_http_timeout()    end
   def event_timeout()         self.http_status = -2   self.event_http_timeout()  end
 
@@ -429,12 +428,12 @@ matter.HTTP_async = Matter_HTTP_async
 
 # Example
 
-tcp = matter.HTTP_async("192.168.2.200", 80, 1000)
+tcp = matter.HTTP_async("192.0.2.200", 80, 1000)
 tcp.begin("/cm?cmnd=Status%208")
 tcp.begin("/")
 
 # Synchronous examples
-tcp = matter.HTTP_async("192.168.2.200", 80, 1000)
+tcp = matter.HTTP_async("192.0.2.200", 80, 1000)
 print(tcp.begin_sync("/cm?cmnd=Status%208", 500))
 print(tcp.begin_sync("/", 500))
 

@@ -40,7 +40,7 @@
 # - 0x003F: Group Key Management (M) - Group communication keys
 #
 # OPTIONAL CLUSTERS (Server):
-# - 0x002A: OTA Software Update Requestor (O) - Firmware updates
+# - 0x002A: OTA Software Update Requestor (O) - Firmware updates (not implemented)
 # - 0x002B: Localization Configuration (O) - Locale settings
 # - 0x002C: Time Format Localization (O) - Time/date formatting
 # - 0x002D: Unit Localization (O) - Unit preferences (Matter 1.3+)
@@ -171,8 +171,7 @@ class Matter_Plugin_Root : Matter_Plugin
 # 0x0003 | ConnectMaxTimeSeconds | uint8  | all        | F       | 30      | R V    | M
 # 0x0004 | InterfaceEnabled      | bool   | all        | N       | true    | RW VA  | M
 #
-# COMMANDS (Wi-Fi):
-# - ScanNetworks, AddOrUpdateWiFiNetwork, RemoveNetwork, ConnectNetwork
+# COMMANDS (Wi-Fi) implemented: AddOrUpdateWiFiNetwork, ConnectNetwork
 #
 # NOTES:
 # - Tasmota implements Wi-Fi variant (WI feature)
@@ -353,7 +352,7 @@ class Matter_Plugin_Root : Matter_Plugin
 # ID     | Name                              | Type         | Constraint | Quality | Default | Access | Conf
 # -------|-----------------------------------|--------------|------------|---------|---------|--------|-----
 # 0x0000 | ACL                               | list[struct] | fixed 1    | NF      | wildcard| R FA   | M
-# 0x0001 | Extension                         | list[struct] | max 4      | NF      | []      | RW FA  | O
+# 0x0001 | Extension                         | list[struct] | max 4      | NF      | []      | RW FA  | O (not implemented)
 # 0x0002 | SubjectsPerAccessControlEntry     | uint16       | min 4      | F       | 4       | R V    | M
 # 0x0003 | TargetsPerAccessControlEntry      | uint16       | min 3      | F       | 3       | R V    | M
 # 0x0004 | AccessControlEntriesPerFabric     | uint16       | fixed 1    | F       | 1       | R V    | M
@@ -585,7 +584,7 @@ class Matter_Plugin_Root : Matter_Plugin
 #
 # Provides software-level diagnostic information.
 #
-# ATTRIBUTES (All Optional):
+# ATTRIBUTES (All Optional, none implemented):
 # ID     | Name                  | Type   | Constraint | Quality | Default | Access | Conf
 # -------|----------------------|--------|------------|---------|---------|--------|-----
 # 0x0000 | ThreadMetrics        | list   | -          | -       | []      | R V    | O
@@ -991,11 +990,11 @@ class Matter_Plugin_Root : Matter_Plugin
         bci.add_TLV(1, 0x06 #-TLV.U4-#, 900)     # MaxCumulativeFailsafeSeconds
         return bci
       elif attribute == 0x0002          # ---------- RegulatoryConfig / RegulatoryLocationType ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 2)    # 2 = IndoorOutdoor | esp-matter = 0
+        return tlv_solo.set(0x06 #-TLV.U4-#, 2)    # 2 = IndoorOutdoor
       elif attribute == 0x0003          # ---------- LocationCapability / RegulatoryLocationType----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 2)    # 2 = IndoorOutdoor
       elif attribute == 0x0004          # ---------- SupportsConcurrentConnection / bool ----------
-        return tlv_solo.set(0x08 #-TLV.BOOL-#, false)    # false - maybe can set to true
+        return tlv_solo.set(0x08 #-TLV.BOOL-#, false)    # false
       end
     # ====================================================================================================
     elif cluster == 0x0032              # ========== Diagnostic Logs Cluster 11.10 p.637 ==========
@@ -1005,7 +1004,7 @@ class Matter_Plugin_Root : Matter_Plugin
     elif cluster == 0x0033              # ========== General Diagnostics Cluster 11.11 p.642 ==========
 
       if   attribute == 0x0000          #  ---------- NetworkInterfaces ----------
-        var nwi = TLV.Matter_TLV_array() # list network interfaces, empty list for now, p.647
+        var nwi = TLV.Matter_TLV_array() # list network interfaces that are up (ethernet, wifi), p.647
 
         var tas_eth = tasmota.eth()
         if (tas_eth['up'])
@@ -1043,11 +1042,11 @@ class Matter_Plugin_Root : Matter_Plugin
         return nwi
       elif attribute == 0x0001          #  ---------- RebootCount u16 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, tasmota.cmd("Status 1", true)['StatusPRM']['BootCount'])
-      elif attribute == 0x0002          #  ---------- UpTime u16 ----------
+      elif attribute == 0x0002          #  ---------- UpTime / uint64 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, tasmota.cmd("Status 11", true)['StatusSTS']['UptimeSec'])
       # TODO add later other attributes
       elif attribute == 0x0008          #  ---------- TestEventTriggersEnabled bool ----------
-        return tlv_solo.set(0x08 #-TLV.BOOL-#, false)    # false - maybe can set to true
+        return tlv_solo.set(0x08 #-TLV.BOOL-#, false)    # false
       end
         
     # ====================================================================================================
@@ -1092,7 +1091,6 @@ class Matter_Plugin_Root : Matter_Plugin
         return tlv_solo.set(0x07 #-TLV.U8-#, epoch_us)
       elif attribute == 0x0001          #  ---------- Granularity / enum ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 3)     # MillisecondsGranularity (NTP every hour, i.e. 36ms max drift)
-      # TODO add some missing args
       elif attribute == 0x0007          #  ---------- LocalTime / epoch_us ----------
         var unix_time = tasmota.rtc('local')
         if unix_time < 946684800 #-self.MATTER_EPOCH_OFFSET-#
@@ -1116,7 +1114,7 @@ class Matter_Plugin_Root : Matter_Plugin
           var nocs = nocl.add_struct(nil)
           nocs.add_TLV(1, 0x11 #-TLV.B2-#, loc_fabric.get_noc())      # NOC
           nocs.add_TLV(2, 0x11 #-TLV.B2-#, loc_fabric.get_icac())     # ICAC
-          nocs.add_TLV(0xFE, 0x06 #-TLV.U4-#, loc_fabric.get_fabric_index())    # Label
+          nocs.add_TLV(0xFE, 0x06 #-TLV.U4-#, loc_fabric.get_fabric_index())    # FabricIndex
         end
         return nocl
       elif attribute == 0x0001          #  ---------- Fabrics / list[FabricDescriptorStruct] ----------
@@ -1145,7 +1143,7 @@ class Matter_Plugin_Root : Matter_Plugin
       elif attribute == 0x0005          #  ---------- Current FabricIndex / u1 ----------
         var fab_index = session.get_fabric_index()    # returns nil if no fabric (PASE session)
         if fab_index == nil   fab_index = 0   end     # if PASE session, then the fabric index should be zero
-        return tlv_solo.set(0x06 #-TLV.U4-#, fab_index)      # number of active sessions
+        return tlv_solo.set(0x06 #-TLV.U4-#, fab_index)      # index of the fabric of the accessing session (0 for PASE)
       end
 
     # ====================================================================================================
@@ -1468,7 +1466,7 @@ class Matter_Plugin_Root : Matter_Plugin
         # 1=AttestationSignature (octstr 64)
         var ar = TLV.Matter_TLV_struct()
         ar.add_TLV(0, 0x11 #-TLV.B2-#, attestation_message)      # AttestationElements
-        ar.add_TLV(1, 0x10 #-TLV.B1-#, attestation_signature)    # AttestationElements
+        ar.add_TLV(1, 0x10 #-TLV.B1-#, attestation_signature)    # AttestationSignature
         ctx.command = 0x01              # AttestationResponse
         return ar
 
@@ -1494,8 +1492,8 @@ class Matter_Plugin_Root : Matter_Plugin
         # 0=NOCSRElements (octstr max 900 bytes)
         # 1=AttestationSignature (octstr 64)
         var csrr = TLV.Matter_TLV_struct()
-        csrr.add_TLV(0, 0x11 #-TLV.B2-#, nocsr_elements_message)   # AttestationElements
-        csrr.add_TLV(1, 0x10 #-TLV.B1-#, attestation_signature)    # AttestationElements
+        csrr.add_TLV(0, 0x11 #-TLV.B2-#, nocsr_elements_message)   # NOCSRElements
+        csrr.add_TLV(1, 0x10 #-TLV.B1-#, attestation_signature)    # AttestationSignature
         ctx.command = 0x05              # CSRResponse
         return csrr
 
@@ -1511,7 +1509,7 @@ class Matter_Plugin_Root : Matter_Plugin
         # do not log `val`: it contains IpkValue, the fabric's operational group key
         var NOCValue = val.findsubval(0)        # octstr max 400
         var ICACValue = val.findsubval(1)       # octstr max 400
-        # Apple sends an empty ICAC instead of a missing attribute, fix this
+        # Apple sends an empty ICAC instead of a missing attribute. It is treated as absent.
         if size(ICACValue) == 0   ICACValue = nil   end
         var IpkValue = val.findsubval(2)        # octstr max 16
         var CaseAdminSubject = val.findsubval(3)
@@ -1545,7 +1543,6 @@ class Matter_Plugin_Root : Matter_Plugin
         if !fabric_id || !deviceid
           log("MTR: Error: no fabricid nor deviceid in NOC certificate", 2)
           # respond with NOCResponse StatusCode=InvalidNOC (NodeOperationalCertStatusEnum 0x03)
-          # previously returned `false`, which the IM layer treated as a response object and failed to encode
           var nocr = TLV.Matter_TLV_struct()
           nocr.add_TLV(0, 0x06 #-TLV.U4-#, 0x03 #-InvalidNOC-#)   # Status
           ctx.command = 0x08              # NOCResponse
@@ -1669,7 +1666,6 @@ class Matter_Plugin_Root : Matter_Plugin
         var L  = passcode_verifier[32..]
 
         self.device.commissioning.start_basic_commissioning(timeout, iterations, discriminator, salt, w0, #-w1,-# L, session.get_fabric())
-        # TODO announce in MDNS
         return true                   # OK
       elif command == 0x0001          #  ---------- OpenBasicCommissioningWindow  ----------
         var commissioning_timeout = val.findsubval(0)     # CommissioningTimeout
@@ -1759,7 +1755,7 @@ class Matter_Plugin_Root : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x002A              # ========== OTA Software Update Requestor Cluster Definition 11.19.7 p.762 ==========
 
-      if   command == 0x0000          #  ---------- DefaultOTAProviders  ----------
+      if   command == 0x0000          #  ---------- AnnounceOTAProvider  ----------
         return true                   # OK
       end
     
@@ -1780,7 +1776,7 @@ class Matter_Plugin_Root : Matter_Plugin
         return ncresp
 
       elif   command == 0x0006          #  ---------- ConnectNetwork  ----------
-        # Defer response - poll_deferred_connect_network() in Matter_BLE_Device handles it
+        # Defer response. Matter_Device_BLE.poll_deferred_connect_network() sends it.
         import global
         log("MTR: ConnectNetwork deferred, waiting for WiFi", 2)
         global.matter_device.deferred_connect_network = ctx.msg

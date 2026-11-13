@@ -24,24 +24,20 @@
 # Device Type Revision: 3 (Matter 1.4.1)
 # Class: Simple | Scope: Endpoint
 #
-# CLUSTERS (Server):
+# CLUSTERS (Server), implemented: 0x0006 On/Off. Inherited: 0x001D, 0x0003, 0x0004, 0x0062.
 # - 0x0003: Identify (M)
 # - 0x0004: Groups (M)
 # - 0x0062: Scenes Management (P, M)
 # - 0x0006: On/Off (M)
-# - 0x0008: Level Control (O)
-# - 0x0406: Occupancy Sensing (C, O)
 #
 # ELEMENT OVERRIDES:
 # - Identify: TriggerEffect cmd M
 # - Scenes Management: CopyScene cmd P, M
 # - On/Off: Lighting feature M
-# - Level Control: OnOff feature M, Lighting feature M, CurrentLevel 1-254, MinLevel 1, MaxLevel 254
 #
 # NOTES:
 # - Base class for all lighting devices
 # - Supports basic on/off control
-# - Can optionally support dimming via Level Control cluster
 #################################################################################
 
 #################################################################################
@@ -156,7 +152,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   # Parse configuration map
   def parse_configuration(config)
     super(self).parse_configuration(config)
-    # with Light0 we always need relay number but we don't for Light1/2/3 so self.tasmota_relay_index may be `nil`
+    # The relay number is optional. When it is nil, set_onoff() and update_shadow() drive the light object at light_index.
     self.tasmota_relay_index = int(config.find('relay', nil))
     if (self.tasmota_relay_index != nil && self.tasmota_relay_index <= 0)    self.tasmota_relay_index = 1    end
   end
@@ -229,9 +225,9 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
         return tlv_solo.set(0x08 #-TLV.BOOL-#, self.shadow_onoff)
       elif attribute == 0x4000          #  ---------- GlobalSceneControl / bool ----------
         return tlv_solo.set(0x08 #-TLV.BOOL-#, true)
-      elif attribute == 0x4001          #  ---------- OnTime / u2 ----------
+      elif attribute == 0x4001          #  ---------- OnTime / uint16 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 0)
-      elif attribute == 0x4002          #  ---------- OffWaitTime / u2 ----------
+      elif attribute == 0x4002          #  ---------- OffWaitTime / uint16 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 0)
       elif attribute == 0x4003          #  ---------- StartUpOnOff / enum8 nullable ----------
         return tlv_solo.set(0x14 #-TLV.NULL-#, nil)
@@ -306,7 +302,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   # For Zigbee devices
   #############################################################
   #############################################################
-  # attributes_refined
+  # zigbee_received
   #
   # Filtered to only events for this endpoint
   # Contains common code for Light 0/1/2/3 to avoid code duplication
@@ -323,7 +319,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
         update_list['Power'] = int(entry.val)
       end
       if (entry.key == "Dimmer")
-        update_list['Bri'] = int(entry.val)   # Zigbee Dimmer is 0..254, same scale as Matter `Bri` read by `update_virtual()`
+        update_list['Bri'] = int(entry.val)   # Zigbee Dimmer is 0..254, same scale as Matter Bri, read by Light1/Light2 update_virtual()
       end
       if (entry.key == "CT")
         update_list['CT'] = int(entry.val)
@@ -340,9 +336,9 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   # For Bridge devices
   #############################################################
   #############################################################
-  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  # Update shadow values from Status 11 (local copies of what we published to the Matter gateway)
   #
-  # This call is synnchronous and blocking.
+  # This call is synchronous and blocking.
   def parse_status(data, index)
     if index == 11                              # Status 11
       var power_key = "POWER" + str(self.tasmota_relay_index)

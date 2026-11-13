@@ -93,7 +93,7 @@ class Matter_BTP
         self.flags = data[offset]
         offset += 1
 
-        # management message (handshake)
+        # management frame (flag F_MGMT), used by the BTP handshake
         if (self.flags & self.F_MGMT)
             self.management_opcode = data[offset]
             self.segment_payload = data[2..]

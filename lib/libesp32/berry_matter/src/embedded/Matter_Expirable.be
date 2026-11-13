@@ -81,7 +81,7 @@ class Matter_Expirable
   end
 
   #############################################################
-  # set absolute time for expiration
+  # remove the expiration time, the object never expires
   def set_no_expiration()
     self._expiration = nil
   end
@@ -101,7 +101,6 @@ class Matter_Expirable
   end
 
   #############################################################
-  # set relative time in the future for expiration (in seconds)
   # returns `true` if expiration date has been reached
   def has_expired(now)
     if now == nil     now = tasmota.rtc_utc()    end

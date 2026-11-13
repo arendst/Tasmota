@@ -179,7 +179,7 @@ matter.ClusterPathIB = Matter_ClusterPathIB
 #################################################################################
 class Matter_DataVersionFilterIB : Matter_IM_base
   var path                        # false if none
-  var data_version                # u64 as bytes
+  var data_version                # u32
 
   # decode from TLV
   def from_TLV(val)
@@ -336,7 +336,7 @@ class Matter_EventDataIB : Matter_IM_base
     if val == nil   return nil end
     self.path = matter.EventPathIB().from_TLV(val.findsub(0))
     self.event_number = val.findsubval(1) # u64
-    self.priority = val.findsubval(2) # u64
+    self.priority = val.findsubval(2) # u8
     self.epoch_timestamp = val.findsubval(3) # u64
     self.system_timestamp = val.findsubval(4) # u64
     self.delta_epoch_timestamp = val.findsubval(5) # u64
@@ -766,7 +766,7 @@ class Matter_InvokeRequestMessage_solo : Matter_Path
 
   def from_raw(raw, idx)
     self.reset()
-    # must start with 15360017
+    # must start with 0x15 (anonymous struct)
     var sz = size(raw)
     var val
 

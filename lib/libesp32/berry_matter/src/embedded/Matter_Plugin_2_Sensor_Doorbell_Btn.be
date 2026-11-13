@@ -103,7 +103,7 @@ class Matter_Plugin_Sensor_Doorbell_Btn : Matter_Plugin_Device
   static var TYPES = { 0x0148: 2 }                  # Doorbell - Matter 1.6.1 Device Library Rev 2
   static var MAX_BINDINGS = 10                      # per fabric, same order of magnitude as GroupKeyMap
 
-  var tasmota_switch_index                          # Switch number in Tasmota (one based)
+  var tasmota_switch_index                          # Button number in Tasmota (one based)
   var shadow_position
   var _bindings_write_staged                        # staged list of the accessing fabric during a write transaction
   var _bindings_write_failed                        # true if any chunk of the current write failed

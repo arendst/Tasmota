@@ -88,8 +88,7 @@ class Matter_Commisioning_Context
   #
   # Usage:
   # # StatusReport(GeneralCode: SUCCESS, ProtocolId: SECURE_CHANNEL, ProtocolCode: SESSION_ESTABLISHMENT_SUCCESS)
-  # var raw = send_status_report(0x00, 0x0000, 0x0000)
-  # self.responder.send_response(raw, msg.remote_ip, msg.remote_port, nil)
+  # self.send_status_report(msg, 0x00, 0x0000, 0x0000, false)
   def send_status_report(msg, general_code, protocol_id, protocol_code, reliable)
     # now package the response message
     var resp = msg.build_response(0x40 #-StatusReport-#, reliable)
@@ -147,7 +146,7 @@ class Matter_Commisioning_Context
 
     session.__Msg2 = pbkdfparamresp_raw
 
-    var resp = msg.build_response(0x21 #-PBKDR Response-#, true)
+    var resp = msg.build_response(0x21 #-PBKDFParamResponse-#, true)
     var raw = resp.encode_frame(pbkdfparamresp_raw)
 
     self.responder.send_response_frame(resp)
@@ -171,7 +170,7 @@ class Matter_Commisioning_Context
     # log("MTR: received pA=" + pA.tohex(), 4)
     
     # instanciate SPAKE
-    # for testing purpose, we don't send `w1` to make sure
+    # the verifier does not use w1 (passed as nil), only w0 and L
     var spake = crypto.SPAKE2P_Matter(self.device.commissioning.commissioning_w0, nil, self.device.commissioning.commissioning_L)
 
     # generate `y` nonce (not persisted)
@@ -231,7 +230,7 @@ class Matter_Commisioning_Context
     session.__spake_Ke = spake.Ke
 
     # now package the response message
-    var resp = msg.build_response(0x23 #-pake-2-#, true)  # no reliable flag
+    var resp = msg.build_response(0x23 #-pake-2-#, true)  # reliable message (R flag set)
     var raw = resp.encode_frame(pake2_raw)
 
     # log the fact that a new commissioning is starting
@@ -339,7 +338,7 @@ class Matter_Commisioning_Context
     # find session
     var is_resumption = (sigma1.resumptionID != nil && sigma1.initiatorResumeMIC != nil)
 
-    # Check that it's a resumption
+    # find the session that matches the resumption id, if any
     var session_resumption
     if is_resumption
       session_resumption = self.device.sessions.find_session_by_resumption_id(sigma1.resumptionID)
@@ -530,7 +529,6 @@ class Matter_Commisioning_Context
 
       var sigma2_tbedata_raw = sigma2_tbedata.tlv2raw()
       # log("MTR: * TBEData2Raw   = " + sigma2_tbedata_raw.tohex(), 4)
-      # // `AES_CCM.init(secret_key:bytes(16 or 32), iv:bytes(7..13), aad:bytes(), data_len:int, tag_len:int) -> instance`
 
       var aes = crypto.AES_CCM(s2k, bytes().fromstring(self.TBEData2_Nonce), bytes(), size(sigma2_tbedata_raw), 16)
       var TBEData2Encrypted = aes.encrypt(sigma2_tbedata_raw) + aes.tag()
@@ -548,7 +546,7 @@ class Matter_Commisioning_Context
       # log("MTR: sigma2_raw: " + sigma2_raw.tohex(), 4)
   
       # now package the response message
-      var resp = msg.build_response(0x31 #-sigma-2-#, true)  # no reliable flag
+      var resp = msg.build_response(0x31 #-sigma-2-#, true)  # reliable message (R flag set)
       var raw = resp.encode_frame(sigma2_raw)
   
       # log the fact that a new connection is starting
@@ -707,7 +705,7 @@ class Matter_Commisioning_Context
   end
 
   #############################################################
-  # placeholder, nothing to run for now
+  # Log a received StatusReport. The message is not acked explicitly.
   def parse_StatusReport(msg)
     var session = msg.session
     var status_msg = msg.raw[msg.app_payload_idx..].tohex()

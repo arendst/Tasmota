@@ -94,7 +94,7 @@
 # - mode=2: Multi-press status (delayed event)
 #
 # CONFIGURATION:
-# - ARG: "button" - Tasmota Button number (1-based)
+# - SCHEMA: "button", label "Button", hint "Button<x> number", required (1-based)
 # - Example: button=1 uses Button1 input
 #
 # TYPICAL USAGE:
@@ -128,7 +128,7 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
   })
   static var TYPES = { 0x000F: 3 }                  # Generic Switch - Matter 1.4.1 Device Library Rev 3
 
-  var tasmota_switch_index                          # Switch number in Tasmota (one based)
+  var tasmota_switch_index                          # Button number in Tasmota (one based)
   var shadow_position
 
   #############################################################
@@ -221,7 +221,7 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
       if (state == 1) && (press_counter > 0)
         # MultiPressOngoing
         self.publish_event(0x003B, 0x05, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, 1),
-                                                            matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, press_counter + 1))   # MultiPressCom­ plete
+                                                            matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, press_counter + 1))   # MultiPressOngoing
       end
     elif (mode == 2) && (press_counter > 0)       # Multipress
       self.publish_event(0x003B, 0x06, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x06 #-matter.TLV.U4-#, 1),

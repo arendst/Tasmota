@@ -104,7 +104,7 @@ class Matter_IM_Subscription
   #
   # Force to always be an actual array
   def set_event_generator_or_arr(event_generator_or_arr)
-    # copy list of event paths, we will reuse each time we send events
+    # keep a reference to the event generators, reused each time events are sent
     if event_generator_or_arr == nil
       self.event_generators = []
     elif isinstance(event_generator_or_arr, list)
@@ -122,7 +122,7 @@ class Matter_IM_Subscription
   end
 
   #################################################################################
-  # clear log after it was sent, and re-arm next expiration
+  # called right after the report is queued: clears pending updates and update_event_no, sets wait_status
   def clear_before_arm()
     self.updates.clear()
     self.wait_status = true
@@ -152,7 +152,7 @@ class Matter_IM_Subscription
          (filter.cluster == nil   || filter.cluster   == ctx.cluster)  &&
          (filter.attribute == nil || filter.attribute == ctx.attribute)
 
-         # ready to push the new attribute, check that it 
+         # path matches: queue the changed attribute for the next report
          self._add_attribute_unique_path(ctx)
       end
       idx += 1
@@ -173,9 +173,9 @@ class Matter_IM_Subscription
   # this event has not been sent in subscription updates
   #
   # Arg:
-  #   - event: instance of Matter_EventQueued
+  #   - new_event: instance of Matter_EventQueued
   def event_published(new_event)
-    if (self.update_event_no == nil)                              # if we have already an event to send updates, all events after this are potential candidates
+    if (self.update_event_no == nil)                              # no event pending yet: record the first matching event; later events are covered by it
       var idx = 0
       while idx < size(self.event_generators)
         if self.event_generators[idx].event_is_match(new_event)
@@ -187,7 +187,7 @@ class Matter_IM_Subscription
   end
 
   #################################################################################
-  # add an attribute path for an updated attribute, remove any duplicate
+  # add an attribute path for an updated attribute, skipping it if already queued
   def _add_attribute_unique_path(ctx)
     var idx = 0
     while idx < size(self.updates)
@@ -205,7 +205,7 @@ class Matter_IM_Subscription
   #################################################################################
   # update_event_generator_array
   #
-  # Returns an array, or single instance of nil, with generators
+  # Returns nil if there are no event generators, the generator itself if there is one, or an array of generators
   def update_event_generator_array()
     if   size(self.event_generators) == 0
       return nil                                    # empty, return nil

@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Bridge_Sensor_Soil.be - implements base class for a Soil Sensor via HTTP to Tasmota
+# Matter_Plugin_Bridge_Sensor_Soil.be - implements a Soil Sensor via HTTP to Tasmota
 #
 # Copyright (C) 2026  Ludovic BOUÉ
 #

@@ -135,7 +135,7 @@ class Matter_Plugin_Sensor_Humidity : Matter_Plugin_Sensor
       if   attribute == 0x0000          #  ---------- Humidity / u16 ----------
         return tlv_solo.set_or_nil(0x06 #-TLV.U4-#, int(self.shadow_value))
       elif attribute == 0x0001          #  ---------- MinMeasuredValue / u16 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 500)  # 0%
+        return tlv_solo.set(0x06 #-TLV.U4-#, 500)  # 5%
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / u16 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 10000)  # 100%
       end

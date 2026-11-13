@@ -28,7 +28,7 @@
 # - 0x0003: Identify (M) - Device identification
 # - 0x001D: Descriptor (M) - Inherited from base class
 #
-# CLUSTERS (Client):
+# CLUSTERS (Client, not implemented by this plugin):
 # - 0x0003: Identify (M) - Can identify other devices
 # - 0x0004: Groups (O) - Group management
 # - 0x0062: Scenes Management (P,O) - Scene control
@@ -37,10 +37,8 @@
 # - 0x0300: Color Control (O) - Controls color devices
 #
 # NOTES:
-# - This is a CLIENT device that controls other devices
-# - Reads switch state and sends commands to bound devices
-# - Can control lights, plugs, and other On/Off devices
-# - Supports optional dimming and color control
+# - The spec role is CLIENT (control of other devices), which this plugin does not implement
+# - This plugin only reads the switch state and exposes it as the On/Off server attribute
 # - Inherits from Matter_Plugin_Sensor_Boolean base class
 #################################################################################
 
@@ -50,7 +48,7 @@
 # Cluster Revision: 6 (Matter 1.4.1)
 # Role: Application | Scope: Endpoint
 #
-# NOTE: On/Off Sensor uses On/Off cluster as CLIENT to control other devices
+# NOTE: This plugin exposes the On/Off server attribute. It does not send commands to other devices.
 # This implementation also exposes the switch state as a server attribute
 #
 # ATTRIBUTES (Server - for state reporting):
@@ -66,7 +64,7 @@
 # - R: Read
 # - V: View privilege required
 #
-# COMMANDS (Client - sent to controlled devices):
+# COMMANDS (Client - spec only, not sent by this plugin):
 # ID   | Name   | Dir  | Response | Access | Conf
 # -----|--------|------|----------|--------|-----
 # 0x00 | Off    | C→S  | Y        | O      | M
@@ -78,7 +76,6 @@
 # - Switch ON = OnOff true
 # - Switch OFF = OnOff false
 # - Update interval: 750ms for responsive control
-# - Can send On/Off commands to bound Matter devices
 #
 # TYPICAL APPLICATIONS:
 # - Wall switches controlling smart lights
@@ -87,16 +84,9 @@
 # - Button panels for scene control
 # - Occupancy-based lighting control
 #
-# BINDING MECHANISM:
-# - Uses Matter binding to associate with target devices
-# - Switch state changes trigger commands to bound devices
-# - Supports group control via Groups cluster
-# - Can control multiple devices simultaneously
-#
 # CONFIGURATION:
 # - ARG: "switch" - Tasmota Switch number (1-based)
 # - Example: switch=1 uses Switch1 input
-# - Binding configured via Matter controller
 #################################################################################
 
 # Matter plug-in for core behavior

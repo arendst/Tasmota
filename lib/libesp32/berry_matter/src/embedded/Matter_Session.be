@@ -27,7 +27,7 @@ class Matter_Expirable end
 #################################################################################
 # Matter_Session class
 #
-# Session is refered by remote_session_id once a session is established
+# Session is referred to by local_session_id once a session is established
 # It can also be retrived by `source_node_id` when `local_session_id` is 0
 #
 # By convention, names starting with `_` are not persisted
@@ -38,16 +38,16 @@ class Matter_Session : Matter_Expirable
   static var _CASE = 2           # CASE authentication in progress
   static var _COUNTER_SND_INCR = 1024  # counter increased when persisting
   var _store                     # reference back to session store
-  # mode for Session. Can be PASE=1, CASE=2, Established=10 none=0
+  # mode for Session. Can be PASE=1, CASE=2 or none=0
   var mode
   # link to a fabric object, temporary and in construction for PASE, persistent for CASE
   var _fabric
   # sesions
-  var local_session_id            # id for the current local session, starts with 1
+  var local_session_id            # id for the current local session, random 16-bit value chosen by the session store
   var initiator_session_id        # id used to respond to the initiator
   var created                     # timestamp (UTC) when the session was created
   var last_used                   # timestamp (UTC) when the session was last used
-  var _source_node_id             # source node if bytes(8) (opt, used only when session is not established)
+  var _source_node_id             # peer source node id, bytes(8); used to find the session of an unsecured message
   # temporary data for ArmFailSafe provisioning - before it is stored in a fabric
   var _temp_root_ca_certificate   # temporary root_ca_certificate added by `AddTrustedRootCertificate` before `AddNoc`
   var _temp_pk
@@ -87,10 +87,10 @@ class Matter_Session : Matter_Expirable
   var __Msg1, __Msg2
 
   # below are placeholders for ongoing transactions or chunked responses
-  var __chunked_attr_reports      # if not `nil` holds a container for the current _chuked_attr_reports
+  var __chunked_attr_reports      # if not `nil` holds a container for the current `__chunked_attr_reports`
 
   # Group Key Derivation
-  static var _GROUP_KEY = "GroupKey v1.0"  # starting with double `_` means it's not writable
+  static var _GROUP_KEY = "GroupKey v1.0"
 
   #############################################################
   def init(store, local_session_id, initiator_session_id, fabric)
@@ -377,7 +377,7 @@ class Matter_Session : Matter_Expirable
     var seg1 = bytes("3070020100300E310C300A060355040A0C034353523059301306072A8648CE3D020106082A8648CE3D030107034200")
     seg1 .. pub
     seg1 .. bytes("A000")
-    var seg2 = bytes("300C06082A8648CE3D0403020500")    # not mutable
+    var seg2 = bytes("300C06082A8648CE3D0403020500")    # constant DER fragment, not modified below
     # compute signature in ECDSA format
     var sig = ec256.ecdsa_sign_sha256_asn1(pk, seg1)
     var seg3 = bytes(128)

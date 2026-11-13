@@ -126,7 +126,7 @@ end
 matter.Pake1 = Matter_Pake1
 
 #################################################################################
-# class Pake1
+# class Pake2
 #################################################################################
 class Matter_Pake2
   var pB                # 65 bytes
@@ -222,7 +222,7 @@ class Matter_Sigma2
   def tlv2raw(b)
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
-    # initiatorRandom
+    # responderRandom
     s.add_TLV(1, 0x10 #-TLV.B1-#, self.responderRandom)
     s.add_TLV(2, 0x06 #-TLV.U4-#, self.responderSessionId)
     s.add_TLV(3, 0x10 #-TLV.B1-#, self.responderEphPubKey)
@@ -254,7 +254,7 @@ class Matter_Sigma2Resume
   def tlv2raw(b)
     var TLV = matter.TLV
     var s = TLV.Matter_TLV_struct()
-    # initiatorRandom
+    # resumptionID
     s.add_TLV(1, 0x10 #-TLV.B1-#, self.resumptionID)
     s.add_TLV(2, 0x10 #-TLV.B1-#, self.sigma2ResumeMIC)
     s.add_TLV(3, 0x06 #-TLV.U4-#, self.responderSessionID)

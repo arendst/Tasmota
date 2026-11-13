@@ -39,7 +39,7 @@
 # - Scenes Management: CopyScene cmd P, M
 # - On/Off: Lighting feature M
 # - Level Control: OnOff feature M, Lighting feature M, CurrentLevel 1-254, MinLevel 1, MaxLevel 254
-# - Color Control: HueSaturation O, EnhancedHue O, ColorLoop O, XY M, ColorTemperature M, RemainingTime M
+# - Color Control: HueSaturation O, EnhancedHue O, ColorLoop O, XY M, ColorTemperature M (spec, not implemented here), RemainingTime M
 #
 # IMPLEMENTATION (light3 = RGB):
 # - FeatureMap / ColorCapabilities = 0x09 (HS | XY), cluster revision 6 kept
@@ -117,7 +117,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
-  # var virtual                                       # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
+  # static VIRTUAL                                    # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
   # var shadow_onoff                                  # (bool) status of the light power on/off
   # var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
   # var shadow_color_mode, cc_options                 # Color Control, see Light1
@@ -205,7 +205,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   # set_hue_sat
   #
   # `hue` 0..254 or `nil`
-  # `sat` 0..255 or `nil`
+  # `sat` 0..254 or `nil`
   # `mode` ColorMode to switch to, `nil` = 0 (HS)
   def set_hue_sat(hue_254, sat_254, mode)
     self.set_color_mode((mode != nil) ? mode : 0)   # before update_shadow()
@@ -268,9 +268,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   # For Bridge devices
   #############################################################
   #############################################################
-  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
-  #
-  # This call is synnchronous and blocking.
+  # Update HS shadows from remote Status 11 (bridge mode)
   def parse_status(data, index)
     super(self).parse_status(data, index)
 

@@ -49,8 +49,7 @@
 # - TYPES: Define device type ID
 #
 # CONFIGURATION:
-# - ARG: "switch" - Tasmota Switch number (1-based)
-# - ARG_HINT: "Switch<x> number" - User guidance
+# - SCHEMA: "switch", label "Switch", hint "Switch<x> number", required (1-based)
 # - UPDATE_TIME: 750ms - Fast update for responsive binary sensors
 #
 # TASMOTA INTEGRATION:
@@ -166,9 +165,9 @@ class Matter_Plugin_Sensor_Boolean : Matter_Plugin_Device
   # For Bridge devices
   #############################################################
   #############################################################
-  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  # Update shadow values from Status 10 (local copies of what we published to the Matter gateway)
   #
-  # This call is synnchronous and blocking.
+  # This call is synchronous and blocking.
   def parse_status(data, index)
     if index == 10                             # Status 10
       var switch_key = "Switch" + str(self.tasmota_switch_index)

@@ -23,10 +23,10 @@ import matter
 #@ solidify:Matter_EventQueued,weak
 
 #################################################################################
-# Matter_Event_Queued class
+# Matter_EventQueued class
 #
 # This class encapsulates any element within teh event queue
-# Takes a `Matter_EventDataIB`
+# Takes the event fields (event_no, endpoint, cluster, event_id, is_urgent, priority, data0..data2) and an optional epoch_buf
 #
 # Invariants:
 #    `priority` is guaranteed to be in range 0..2
@@ -157,7 +157,7 @@ class Matter_EventQueued
   #############################################################
   # eventpath2raw
   #
-  # Encodes endpoint/cluster/attribute as `EventPathIB` elements
+  # Encodes endpoint/cluster/event as EventPathIB elements
   # Takes sub-tag
   #
   #   1 = EventPathIB
@@ -364,7 +364,7 @@ class Matter_EventHandler
   end
 
   #####################################################################
-  # Enqueue event
+  # Compact events
   #
   # Remove the cached `raw_tlv` from all events in queues
   # to save some space
@@ -423,7 +423,7 @@ class Matter_EventHandler
   #                or `nil` if smallest number
   #
   # Returns:
-  #   - event_no (int) or `nil` of none found
+  #   - the next matching Matter_EventQueued (smallest event_no above event_min_no), or nil if none
   #####################################################################
   def find_min_no(event_min_no)
     # fail fast if `event_min_no` is the same as `counter_event_no`
@@ -434,9 +434,6 @@ class Matter_EventHandler
 
     #####################################################################
     # Find the next available event right above `event_min_no`
-    #
-    # TODO: since queues are sorted, we can abort searching when we reach
-    # an event below `event_min_no`
     #
     # Arg
     #   - event_smallest: the event found up to now (from previous queues)
@@ -499,11 +496,4 @@ class Matter_EventHandler
 
 end
 matter.EventHandler = Matter_EventHandler
-
-#-
-
-# Unit tests
-
-
--#
 

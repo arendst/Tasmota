@@ -31,7 +31,7 @@ class Matter_IM
   var send_queue                      # list of IM_Message queued for sending as part of exchange-id
 
   var read_request_solo               # instance of ReadRequestMessage_solo to optimize single reads
-  var invoke_request_solo             # instance of InvokeRequestMessage_solo to optimize single reads
+  var invoke_request_solo             # instance of InvokeRequestMessage_solo to optimize single invoke requests
   var tlv_solo                        # instance of Matter_TLV_item for simple responses
   var timed_exchanges                 # map: exchange_id -> expiration_millis for timed interactions
   
@@ -127,7 +127,7 @@ class Matter_IM
   #############################################################
   # send Ack response now and don't enqueue it
   #
-  # returns `true` if packet could be sent
+  # send an encrypted Ack for msg now, without queuing it
   def send_ack_now(msg)
     if msg == nil   return  end
     msg.session._message_handler.send_encrypted_ack(msg, false #-not reliable-#)
@@ -172,7 +172,7 @@ class Matter_IM
   end
 
   #############################################################
-  # find in send_queue by exchangeid
+  # remove all send_queue entries with this exchangeid
   #
   def remove_sendqueue_by_exchangeid(exchange_id)
     if exchange_id == nil    return end
@@ -248,7 +248,7 @@ class Matter_IM
   # `session` is the current session
   # `force_log` is false, then don't log normal values - typically used to not log wildcard requests
   #
-  # return `true` if 
+  # return the encoded bytes() (a list of bytes() if too big), or nil if nothing to report
   def read_single_attribute_to_bytes(pi, ctx, session, force_log)
     var TLV = matter.TLV
     var attr_name 
@@ -359,7 +359,7 @@ class Matter_IM
       raw.add(ctx.cluster, 4)
     end
     # add attribute
-    if ctx.attribute <= 0xFF       # cluster is 32 bits max
+    if ctx.attribute <= 0xFF       # attribute is 32 bits max
       raw.add(0x2404, -2)          # add 2404
       raw.add(ctx.attribute, 1)
     elif ctx.attribute <= 0xFFFF
@@ -431,7 +431,7 @@ class Matter_IM
   end
 
   #############################################################
-  # attributedata2raw
+  # attributestatus2raw
   #
   # generate a raw version of AttributeStatusIB
   #
@@ -495,7 +495,7 @@ class Matter_IM
   end
 
   #############################################################
-  # attributedata2raw
+  # invokeresponse2raw
   #
   # generate a raw version of InvokeResponseIB()
   # Typical answer
@@ -545,7 +545,7 @@ class Matter_IM
   def invokeresponse2raw(raw, ctx, val)
     raw.add(0x15, 1)                    # add 15
     if val == nil
-      raw.add(0x3501, -2)                 # add 3500
+      raw.add(0x3501, -2)                 # add 3501
     else
       raw.add(0x3500, -2)                 # add 3500
     end
@@ -569,8 +569,8 @@ class Matter_IM
       raw.add(0x2601, -2)         # add 2601
       raw.add(ctx.cluster, 4)
     end
-    # add attribute
-    if ctx.command <= 0xFF       # cluster is 32 bits max
+    # add command
+    if ctx.command <= 0xFF       # command is 32 bits max
       raw.add(0x2402, -2)          # add 2402
       raw.add(ctx.command, 1)
     elif ctx.command <= 0xFFFF
@@ -886,7 +886,7 @@ class Matter_IM
 
     if !query.keep_subscriptions
       # log(f"MTR: remove all subscriptions for session {msg.session}", 3)
-      self.subs_shop.remove_by_session(msg.session)      # if `keep_subscriptions`, kill all subscriptions from current session
+      self.subs_shop.remove_by_session(msg.session)      # if keep_subscriptions is false, remove all subscriptions of the current session
     end
 
     var sub = self.subs_shop.new_subscription(msg.session, query)
@@ -925,7 +925,7 @@ class Matter_IM
   # or raises an exception
   def process_invoke_request(msg, val)
     # import debug
-    # structure is `ReadRequestMessage` 10.6.2 p.558
+    # structure is `InvokeRequestMessage` 10.6.2 p.558
     # log("MTR: IM:invoke_request processing start", 4)
     var ctx = matter.Path()
     ctx.msg = msg
@@ -1007,7 +1007,7 @@ class Matter_IM
   #############################################################
   # process IM 0x08 Invoke Request
   #
-  # val is the TLV structure
+  # ctx is the decoded InvokeRequestMessage_solo (endpoint, cluster, command, command_fields)
   # returns `true` if processed, `false` if silently ignored,
   # or raises an exception
   def process_invoke_request_solo(msg, ctx)
@@ -1113,7 +1113,7 @@ class Matter_IM
   # and a status, and completes the WriteResponseMessage (in ret)
   #
   # `ret` is the array WriteResponseMessage.write_responses
-  # `ctx` is the context with endpoint/cluster/attribute, `cts.status` is non-nil for direct request and contains the error message to show
+  # `ctx` is the context with endpoint/cluster/attribute, `ctx.status` is non-nil for direct request and contains the error message to show
   # `write_data` the data written, only for logging
   #
   def write_single_attribute_status_to_bytes(ret, ctx, write_data)
@@ -1351,7 +1351,7 @@ class Matter_IM
   end
   
   #############################################################
-  # send regular update for data subscribed
+  # send a subscription heartbeat (empty ReportData, no attribute data)
   #
   def send_subscribe_heartbeat(sub)
     var session = sub.session
@@ -1373,7 +1373,7 @@ class Matter_IM
   end
 
   #############################################################
-  # placeholder, nothing to run for now
+  # every second: expire queued messages and timed exchanges
   def every_second()
     self.expire_sendqueue()
     # clean up expired timed exchanges
