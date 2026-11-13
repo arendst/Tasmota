@@ -1156,6 +1156,12 @@ void CmndStatus(void)
                           GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_LOCALNOTZ).c_str(), GetDateAndTime(DT_DST).c_str(),
                           GetDateAndTime(DT_STD).c_str(), stemp);
 #endif  // USE_TIMERS and USE_SUNRISE
+#ifdef USE_LOCATION
+    TasmotaGlobal.mqtt_data.remove(ResponseLength() -2);  // Reopen StatusTIM object by removing "}}"
+    ResponseAppend_P(PSTR(","));
+    LocationResponseAppend();
+    ResponseJsonEndEnd();
+#endif  // USE_LOCATION
     CmndStatusResponse(7);
   }
 
