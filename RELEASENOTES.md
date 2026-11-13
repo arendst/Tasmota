@@ -138,6 +138,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - HttpClientLight keep read timeouts longer than 65s [#25180](https://github.com/arendst/Tasmota/issues/25180)
 - GUI allow `;` or `{` in a password saved from the settings page [#25184](https://github.com/arendst/Tasmota/issues/25184)
 - Refactor JPEG size retrieval function [#25226](https://github.com/arendst/Tasmota/issues/25226)
+- OpenTherm use RMT on ESP32, add command `ot_report` [#25254](https://github.com/arendst/Tasmota/issues/25254)
 - ESP32 web login uses own Basic auth instead Arduino [#25210](https://github.com/arendst/Tasmota/issues/25210)
 - BLE EQ3-TRV avoid sending of empty status [#25182](https://github.com/arendst/Tasmota/issues/25182)
 
@@ -150,6 +151,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - WifiManager name the setup AP as it is turned on [#25169](https://github.com/arendst/Tasmota/issues/25169)
 - VEML7700 lux/white rounding, add new command [#25150](https://github.com/arendst/Tasmota/issues/25150)
 - MPR121 sizeof [#25203](https://github.com/arendst/Tasmota/issues/25203)
+- AHT20/AHT30 stale readings when used with deep sleep, with optional `#define USE_AHT_DIAG` [#25258](https://github.com/arendst/Tasmota/issues/25258)
 - SML ESP8266 serial mode [#25201](https://github.com/arendst/Tasmota/issues/25201)
 - DisplayText [pN] command now works when followed by another [pN] [#25188](https://github.com/arendst/Tasmota/issues/25188)
 - Missing NUL terminator for stored `ModbusBridgeSend` command data [#25218](https://github.com/arendst/Tasmota/issues/25218)

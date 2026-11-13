@@ -31,6 +31,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_TIMERS                | x     | x / x | x     | x     | x     | x     |
 | USE_TIMERS_WEB            | x     | x / x | x     | x     | x     | x     |
 | USE_SUNRISE               | x     | x / x | x     | x     | x     | x     |
+| USE_LOCATION              | x     | x / x | x     | x     | x     | x     |
 | USE_RULES                 | x     | x / x | x     | x     | x     | x     |
 | USE_SCRIPT                | -     | - / - | -     | -     | -     | -     |
 | USE_HOTPLUG               | -     | - / - | -     | -     | -     | -     |

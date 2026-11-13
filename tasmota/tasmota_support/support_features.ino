@@ -973,9 +973,15 @@ constexpr uint32_t feature[] = {
 #if defined(USE_I2C) && defined(USE_STCC4)
   0x00800000 |  // xsns_120_stcc4.ino
 #endif
-//  0x01000000 |  // 
-//  0x02000000 |  // 
-//  0x04000000 |  // 
+#if defined(USE_SPI) && defined(USE_TFA_MARBELLA)
+  0x01000000 |  // xsns_121_tfa_marbella
+#endif
+#ifdef USE_MODBUS_RELAY
+  0x02000000 |  // xdrv_94_modbus_relay
+#endif
+#ifdef USE_LOCATION
+  0x04000000 |  // xdrv_95_location
+#endif
 //  0x08000000 |  // 
 //  0x10000000 |  // 
 //  0x20000000 |  //
