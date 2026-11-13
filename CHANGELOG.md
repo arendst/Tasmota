@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Function `subStr()` possible buffer overflow
+- AHT20/AHT30 stale readings when used with deep sleep, with optional `#define USE_AHT_DIAG`
 
 ### Removed
 - Support for migration from versions below v9.1
