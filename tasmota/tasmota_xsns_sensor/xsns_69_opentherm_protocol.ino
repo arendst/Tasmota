@@ -32,6 +32,8 @@ typedef union {
         uint8_t supported : 1;    // Set if at least one response were successfull
         uint8_t retryCount : 2;   // Retry counter before notSupported flag being set
         uint8_t skip : 1;       // Only manual call        
+        uint8_t report : 1;     // Publish telemetry as soon as the value changes (ot_report)
+        uint8_t changed : 1;    // Value changed since the last report
     };
 } OpenThermParamFlags;
 
@@ -573,6 +575,8 @@ unsigned long sns_opentherm_get_next_request(struct OT_BOILER_STATUS_T *boilerSt
     if (++sns_opentherm_current_command >= SNS_OT_COMMANDS_COUNT)
     {
         sns_opentherm_current_command = 0;
+        // Polling pass completed, report everything that changed during it in one message
+        sns_opentherm_report_changes();
     }
 
     // Select next supported command
@@ -620,7 +624,78 @@ void sns_opentherm_process_success_response(struct OT_BOILER_STATUS_T *boilerSta
     // mark command as supported
     cmd->m_flags.supported = true;
 
+    ResponseStorage prev[2];
+    memcpy(prev, cmd->m_results, sizeof(prev));
     cmd->m_ot_parse_response(cmd, boilerStatus, response);
+    if (cmd->m_flags.report && memcmp(prev, cmd->m_results, sizeof(prev)))
+    {
+        cmd->m_flags.changed = true;
+    }
+}
+
+// Publish tele/<topic>/SENSOR with the changed values only:
+// {"Time":"...","OPENTHERM":{"SLAVE":{...},"TB":26}}
+void sns_opentherm_report_changes()
+{
+    bool any = false;
+    for (int i = 0; i < SNS_OT_COMMANDS_COUNT; ++i)
+    {
+        struct OpenThermCommandT *cmd = &sns_opentherm_commands[i];
+        if (!cmd->m_flags.changed)
+        {
+            continue;
+        }
+        cmd->m_flags.changed = false;
+        if (!any)
+        {
+            ResponseClear();
+            ResponseAppendTime();
+            ResponseAppend_P(PSTR(",\"OPENTHERM\":{"));
+        }
+        ResponseAppend_P(PSTR("%s\"%s\":"), any ? "," : "", cmd->m_command_name);
+        cmd->m_ot_appent_telemetry(cmd);
+        any = true;
+    }
+    if (any)
+    {
+        ResponseAppend_P(PSTR("}}"));
+        MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
+    }
+}
+
+// Set report-on-change list from comma separated command names, e.g. "SLAVE,TB,ASFF".
+// Anything that does not match (e.g. "0") clears the list.
+void sns_opentherm_set_report(char *list)
+{
+    for (int i = 0; i < SNS_OT_COMMANDS_COUNT; ++i)
+    {
+        sns_opentherm_commands[i].m_flags.report = false;
+        sns_opentherm_commands[i].m_flags.changed = false;
+    }
+    char *saveptr;
+    for (char *name = strtok_r(list, ", ", &saveptr); name; name = strtok_r(nullptr, ", ", &saveptr))
+    {
+        for (int i = 0; i < SNS_OT_COMMANDS_COUNT; ++i)
+        {
+            if (!strcasecmp(sns_opentherm_commands[i].m_command_name, name))
+            {
+                sns_opentherm_commands[i].m_flags.report = true;
+            }
+        }
+    }
+}
+
+void sns_opentherm_append_report_list()
+{
+    bool addComma = false;
+    for (int i = 0; i < SNS_OT_COMMANDS_COUNT; ++i)
+    {
+        if (sns_opentherm_commands[i].m_flags.report)
+        {
+            ResponseAppend_P(PSTR("%s%s"), addComma ? "," : "", sns_opentherm_commands[i].m_command_name);
+            addComma = true;
+        }
+    }
 }
 
 void sns_opentherm_dump_telemetry()
@@ -645,8 +720,10 @@ void sns_opentherm_protocol_reset()
     {
         struct OpenThermCommandT *cmd = &sns_opentherm_commands[i];
         int skip = cmd->m_flags.skip;
+        int report = cmd->m_flags.report;
         cmd->m_flags.m_flags = 0;
         cmd->m_flags.skip = skip;
+        cmd->m_flags.report = report;
         memset(cmd->m_results, 0, sizeof(OpenThermCommandT::m_results));
     }
 }
