@@ -5,14 +5,22 @@ All notable changes to this project will be documented in this file.
 
 ## [16.0.0.4]
 ### Added
-- Device location and local pose with commands `Location`, `LocationRot`, `LocationScale`, `LocationClear` and `SetOption166` stored as JSON in file system or packed in ESP8266 settings (#25222)
-
-## [16.0.0.3]
-### Added
-- Matter Doorbell (0x0148) device type mapped to a Button, with fabric-scoped Binding storage (Chime client not yet implemented) (#25187)
+- Device location and local pose with commands `Location`, `LocationRot`, `LocationScale`, `LocationClear` and `SetOption166` stored as JSON in file system or packed in ESP8266 settings (#25244)
 
 ### Breaking Changed
 
+
+### Changed
+
+
+### Fixed
+
+
+### Removed
+
+## [16.0.0.3] 20261113
+### Added
+- Matter Doorbell (0x0148) device type mapped to a Button, with fabric-scoped Binding storage (Chime client not yet implemented) (#25187)
 
 ### Changed
 - ESP8266 platform update from 2026.10.00 to 2026.11.00 (#25097)
