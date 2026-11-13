@@ -1,20 +1,44 @@
 /*
-OpenTherm.h - OpenTherm Library for the ESP8266/ESP32/Arduino platform
-https://github.com/ihormelnyk/OpenTherm
-http://ihormelnyk.com/pages/OpenTherm
-Licensed under MIT license
-Copyright 2023, Ihor Melnyk
-
-Frame Structure:
-P MGS-TYPE SPARE DATA-ID  DATA-VALUE
-0 000      0000  00000000 00000000 00000000
-*/
+ * OpenTherm Library
+ * Original Author: Ihor Melnyk (https://github.com/ihormelnyk/opentherm_library)
+ * 
+ * Copyright (c) 2019 Ihor Melnyk
+ * MIT License
+ * 
+ * This software is released under the MIT License.
+ * https://opensource.org/licenses/MIT
+ *
+ * ---------------------------------------------
+ * Modifications and improvements by Alex Pavlov
+ * Copyright (c) 2025 Alex Pavlov
+ *
+ * Description of changes:
+ * - Added support for ESP32 RMT peripheral for OpenTherm communication in Arduino environment.
+ *   (https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/rmt.html)
+ 
+ * Frame Structure:
+ * P MGS-TYPE SPARE DATA-ID  DATA-VALUE
+ * 0 000      0000  00000000 00000000 00000000
+ */
 
 #ifndef OpenTherm_h
 #define OpenTherm_h
 
+// Enable RMT on ESP32 chips that have it (not ESP32-C2/C61: they use the interrupt implementation)
+#ifdef ESP32
+    #include <soc/soc_caps.h>
+    #if SOC_RMT_SUPPORTED
+        #define OPENTHERM_USE_RMT
+    #endif
+#endif  // ESP32
+
 #include <stdint.h>
 #include <Arduino.h>
+
+#ifdef OPENTHERM_USE_RMT
+#include <driver/rmt_tx.h>
+#include <driver/rmt_rx.h>
+#endif
 
 enum class OpenThermResponseStatus : byte
 {
@@ -221,6 +245,35 @@ public:
     float getModulation();
     float getPressure();
     unsigned char getFault();
+
+    // Diagnostics (RMT only; always 0 / empty for the interrupt implementation).
+    // Raw pulses of the last captured frame as "H500 L1000 ..." (H/L = level on RX pin).
+    size_t dumpLastRx(char *buf, size_t len);
+    // Number of short captures (< 8 symbols) ignored as glitches since the last request.
+    uint16_t getRxGlitchCount();
+
+#ifdef OPENTHERM_USE_RMT
+private:
+    uint16_t rmtGlitches = 0;
+    size_t rmtLastCount = 0;
+    static constexpr size_t RMT_RX_SYMBOLS = 64;   // 34 Manchester bits need <= 35 symbols
+
+    rmt_channel_handle_t rmtTx = nullptr;
+    rmt_channel_handle_t rmtRx = nullptr;
+    rmt_encoder_handle_t rmtEncoder = nullptr;
+    rmt_symbol_word_t rmtRxBuf[RMT_RX_SYMBOLS];
+    volatile size_t rmtRxCount = 0;
+    volatile bool rmtRxDone = false;
+    volatile bool rmtRxArmed = false;
+
+    bool setupRMT();
+    void releaseRMT();
+    bool sendRMT(uint32_t data);
+    void startReceiveRMT();
+    void stopReceiveRMT();
+    static bool decodeRMT(const rmt_symbol_word_t *symbols, size_t count, uint32_t &frame);
+    static bool rmtRxDoneCallback(rmt_channel_handle_t channel, const rmt_rx_done_event_data_t *edata, void *ctx);
+#endif
 
 private:
     const int inPin;

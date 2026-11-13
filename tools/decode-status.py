@@ -221,7 +221,8 @@ a_setoption = [[
     "(GUI) Disable display of GUI device name (1)",
     "(WizMote) Enable WiZ Smart Remote support (1)",
     "(TLS) Enable ECDSA validation in addition to RSA",
-    "","","","",
+    "(Location) Add device location/pose to tele/STATE (1)",
+    "","","",
     "","","","",
     "","","",""
     ]]
@@ -314,7 +315,7 @@ a_features = [[
     "USE_C8_CO2_5K","USE_WIZMOTE","USE_V9240","USE_TELNET",
     "USE_XYZMODEM","USE_WIREGUARD","USE_AP33772S","USE_VID6608",
     "USE_AGS02MA","USE_SEN6X","USE_FM24CXX","USE_STCC4",
-    "","","","",
+    "USE_TFA_MARBELLA","USE_MODBUS_RELAY","USE_LOCATION","",
     "","","",""
     ]]
 
@@ -343,7 +344,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v15.3.0.1 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v16.0.0.4 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

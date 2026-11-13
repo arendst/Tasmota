@@ -41,14 +41,20 @@
 const char kTimerCommands[] PROGMEM = "|"  // No prefix
   D_CMND_TIMER "|" D_CMND_TIMERS
 #ifdef USE_SUNRISE
-  "|" D_CMND_LATITUDE "|" D_CMND_LONGITUDE "|" D_CMND_SUNRISE
+#ifndef USE_LOCATION
+  "|" D_CMND_LATITUDE "|" D_CMND_LONGITUDE
+#endif  // USE_LOCATION - Latitude and Longitude are provided by xdrv_95_location
+  "|" D_CMND_SUNRISE
 #endif
   ;
 
 void (* const TimerCommand[])(void) PROGMEM = {
   &CmndTimer, &CmndTimers
 #ifdef USE_SUNRISE
-  , &CmndLatitude, &CmndLongitude, &CmndSunrise
+#ifndef USE_LOCATION
+  , &CmndLatitude, &CmndLongitude
+#endif  // USE_LOCATION
+  , &CmndSunrise
 #endif
   };
 
@@ -499,6 +505,7 @@ void CmndTimers(void)
 }
 
 #ifdef USE_SUNRISE
+#ifndef USE_LOCATION
 void CmndLongitude(void) {
   if (XdrvMailbox.data_len) {
     Settings->longitude = (int)(CharToFloat(XdrvMailbox.data) *1000000);
@@ -512,6 +519,7 @@ void CmndLatitude(void) {
   }
   ResponseCmndFloat((float)(Settings->latitude) /1000000, 6);
 }
+#endif  // USE_LOCATION
 
 void CmndSunrise(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {

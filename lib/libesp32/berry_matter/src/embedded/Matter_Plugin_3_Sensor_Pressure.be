@@ -113,7 +113,23 @@ class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
   # This must be overriden.
   # This allows to convert the raw sensor value to the target one, typically int
   def pre_value(val)
-    return val != nil ? int(val) : nil
+    if val == nil   return nil  end
+    # Tasmota sensor drivers report pressure in mmHg or inHg when SetOption24 is set
+    # (SetOption139 selects inHg). Matter MeasuredValue is 10 x kPa, i.e. hPa,
+    # so convert back to hPa (same factors as `ConvertHgToHpa()` in support.ino).
+    # Zigbee values are reported in hPa and are not converted.
+    var unit = self.PRESSURE_HPA
+    if self.BRIDGE || self.mqtt_remote
+      unit = self.pressure_unit                 # from `PressureUnit` in remote Status 10
+    elif !self.ZIGBEE
+      if tasmota.get_option(24) == 1            # SetOption24: mmHg or inHg instead of hPa
+        unit = (tasmota.get_option(139) == 1) ? self.PRESSURE_INHG : self.PRESSURE_MMHG
+      end
+    end
+    if   unit == self.PRESSURE_MMHG   val = val * 1.3332239
+    elif unit == self.PRESSURE_INHG   val = val * 33.86389
+    end
+    return int(val)
   end
 
   #############################################################

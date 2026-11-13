@@ -175,7 +175,7 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Sensor_Boolean
   def web_values()
     import webserver
     self.web_values_prefix()        # display '| ' and name if present
-    webserver.content_send(format("Occupancy%i %s", self.shadow_bool_value, self.web_value_onoff(self.shadow_occupancy)))
+    webserver.content_send(format("Occupancy%i %s", self.tasmota_switch_index, self.web_value_onoff(self.shadow_bool_value)))
   end
 
   # Show prefix before web value
@@ -183,7 +183,7 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Sensor_Boolean
     import webserver
     var name = self.get_name()
     if !name
-      name = "Switch" + str(self.shadow_bool_value)
+      name = "Switch" + str(self.tasmota_switch_index)
     end
     webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
   end

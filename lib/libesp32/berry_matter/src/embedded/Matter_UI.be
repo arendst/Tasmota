@@ -27,13 +27,16 @@ import matter
 #@ solidify:Matter_UI,weak
 
 #################################################################################
-# Partition_wizard_UI
+# Matter_UI
 #
-# WebUI for the partition manager
+# WebUI for Matter configuration (/matterc), remote devices and bridge status
 #################################################################################
 class Matter_UI
   static var _ADD_ENDPOINT_JS =
   "<script type='text/javascript'>"
+  # HTML-escape a value before concatenating it into markup (config values come from
+  # MQTT discovery or remote devices and must not be able to inject attributes or tags)
+  "function he(s){return String(s).replace(/&/g,'&amp;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};"
   # Parse compact schema string into object
   "function parseSchema(s){"
   "var r={t:'t',r:0};"
@@ -60,7 +63,7 @@ class Matter_UI
   "var ti=def.h?' title=\"'+def.h+'\"':'';"
   "var dv=(val!=null&&val!=='')?val:(def.d||'');"
   "if(def.t==='i')"
-  "return '<input type=\"number\" id=\"'+fn+'\" name=\"'+fn+'\" value=\"'+dv+'\" size=\"1\"'+ti+req+'>';"
+  "return '<input type=\"number\" id=\"'+fn+'\" name=\"'+fn+'\" value=\"'+he(dv)+'\" size=\"1\"'+ti+req+'>';"
   "if(def.t==='s'){"
   "var h='<select id=\"'+fn+'\" name=\"'+fn+'\"'+req+'>';"
   "(def.o||[]).forEach(function(o){"
@@ -70,7 +73,7 @@ class Matter_UI
   "if(def.t==='c'){"
   "var chk=(String(dv)==='1'||dv==='true'||dv===true)?' checked':'';"
   "return '<input type=\"checkbox\" id=\"'+fn+'\" name=\"'+fn+'\"'+chk+' style=\"width:auto\">';}"
-  "return '<input type=\"text\" id=\"'+fn+'\" name=\"'+fn+'\" value=\"'+dv+'\" size=\"1\"'+ti+req+'>';"
+  "return '<input type=\"text\" id=\"'+fn+'\" name=\"'+fn+'\" value=\"'+he(dv)+'\" size=\"1\"'+ti+req+'>';"
   "};"
   # Build type <select> options from dn map
   "function typeOpts(sel){"
@@ -108,11 +111,11 @@ class Matter_UI
   # Header row: # | Name | Type | delete
   "h+='<tr id=\"epr'+ep+'\">"
   "<td style=\"font-size:smaller\"><b>'+ep+'</b></td>"
-  "<td style=\"font-size:smaller\"><input type=\"text\" id=\"epNam'+ep+'\" size=\"1\" value=\"'+nam+'\" placeholder=\"(optional)\"></td>';"
+  "<td style=\"font-size:smaller\"><input type=\"text\" id=\"epNam'+ep+'\" size=\"1\" value=\"'+he(nam)+'\" placeholder=\"(optional)\"></td>';"
   "if(isNew){"
   "h+='<td style=\"font-size:smaller\"><select id=\"epTyp'+ep+'\" onchange=\"chgType('+ep+',this.value)\">'+typeOpts(typ)+'</select></td>';"
   "}else{"
-  "var dnam=dn[typ]||(typ.indexOf('http_')===0?'&#x1F517; '+(dn[typ.substring(5)]||typ.substring(5)):(typ.indexOf('mqtt_')===0?'&#x1F4E1; '+(dn[typ.substring(5)]||typ.substring(5)):typ));"
+  "var dnam=dn[typ]||(typ.indexOf('http_')===0?'&#x1F517; '+(dn[typ.substring(5)]||he(typ.substring(5))):(typ.indexOf('mqtt_')===0?'&#x1F4E1; '+(dn[typ.substring(5)]||he(typ.substring(5))):he(typ)));"
   "h+='<td style=\"font-size:smaller\"><b>'+dnam+'</b></td>';}"
   "h+='<td style=\"text-align:center\"><button type=\"button\" title=\"Delete\" "
   "style=\"background:none;border:none;line-height:1;cursor:pointer\" "
@@ -311,7 +314,6 @@ class Matter_UI
   # Uses introspection to iterate through numbered SCHEMA variables
   # Stops when nil or empty string is encountered
   # Returns a map: {arg_name: schema_string, ...}
-  # Requirements: 1.7, 1.8, 5.8
   #----------------------------------------------------------------------- -#
   def collect_plugin_schemas(cl)
     import introspect
@@ -363,7 +365,6 @@ class Matter_UI
   # The browser sends the entire "config" section as a JSON string
   # Server parses, validates, replaces config, recomputes nextep,
   # reconciles live plugins, and saves.
-  # Requirements: 4.6, 4.7, 4.8, 4.9
   #----------------------------------------------------------------------- -#
   def handle_config_json()
     import webserver
@@ -425,7 +426,6 @@ class Matter_UI
   # Parameters:
   #   old_config: the previous plugins_config map
   #   new_config: the new plugins_config map
-  # Requirements: 4.8
   #----------------------------------------------------------------------- -#
   def reconcile_plugins(old_config, new_config)
     # Build set of new endpoint numbers
@@ -535,9 +535,7 @@ class Matter_UI
   end
 
   #- ---------------------------------------------------------------------- -#
-  #- Show commissioning information and QR Code
-  #
-  # Returns true if Matter is enabled
+  #- Show Matter enable, commissioning, bridge mode and lights delayed-on options
   #- ---------------------------------------------------------------------- -#
   def show_enable()
     import webserver
@@ -659,7 +657,7 @@ class Matter_UI
   end
 
   #- ---------------------------------------------------------------------- -#
-  #- Show commissioning information and QR Code
+  #- Show associated fabrics, with a delete button for each
   #- ---------------------------------------------------------------------- -#
   def show_fabric_info()
     import webserver
@@ -703,7 +701,6 @@ class Matter_UI
   #- Streams schemas directly to webserver without intermediate string to minimize memory usage
   #- Uses collect_plugin_schemas() to get all schemas for each plugin
   #- Output format: var ps={"type":{"arg1":"schema1","arg2":"schema2"},...};
-  #- Requirements: 3.1, 3.2, 3.3
   #----------------------------------------------------------------------- -#
   def generate_schema_js()
     import string
@@ -746,17 +743,34 @@ class Matter_UI
   end
 
   #----------------------------------------------------------------------- -#
+  #- Serialize a value as JSON that is safe to embed in an inline <script>
+  #-
+  #- `json.dump()` escapes only quotes, backslash and control characters,
+  #- so a string containing `</script>` (e.g. an MQTT discovery topic or a
+  #- remote sensor name) would close the script block and inject HTML/JS.
+  #- `<`, `>` and `&` only appear inside JSON strings, where `\u00XX` is an
+  #- equivalent and valid JSON/JavaScript escape.
+  #----------------------------------------------------------------------- -#
+  def _json_for_script(v)
+    import json
+    import string
+    var s = json.dump(v)
+    s = string.replace(s, '<', '\\u003C')
+    s = string.replace(s, '>', '\\u003E')
+    s = string.replace(s, '&', '\\u0026')
+    return s
+  end
+
+  #----------------------------------------------------------------------- -#
   #- Generate JavaScript with current config and nextep
   #- Sends current plugins_config as `var cfg={...};`
   #- Sends next_ep as `var nextep=N;`
-  #- Requirements: 4.7
   #----------------------------------------------------------------------- -#
   def generate_config_js()
-    import json
     import webserver
     
     webserver.content_send("var cfg=")
-    webserver.content_send(json.dump(self.device.plugins_config))
+    webserver.content_send(self._json_for_script(self.device.plugins_config))
     webserver.content_send(";")
     webserver.content_send(format("var nextep=%i;", self.device.next_ep))
   end
@@ -1211,8 +1225,8 @@ class Matter_UI
         end
         rem_configs.push(entry)
       end
-      webserver.content_send(format("var remcfg=%s;", json.dump(rem_configs)))
-      webserver.content_send(format("var remurl=%s;", json.dump(url)))
+      webserver.content_send(format("var remcfg=%s;", self._json_for_script(rem_configs)))
+      webserver.content_send(format("var remurl=%s;", self._json_for_script(url)))
       webserver.content_send("</script>")
       webserver.content_send(self._ADD_ENDPOINT_JS)
 
@@ -1395,8 +1409,8 @@ class Matter_UI
       end
       rem_configs.push(entry)
     end
-    # JSON embedded in a script must not contain a literal '<' (for example </script> from a sensor name).
-    var rem_configs_json = string.replace(json.dump(rem_configs), '<', '\\u003C')
+    # JSON embedded in a script must not contain a literal '<' (for example </script> from a sensor name), see `_json_for_script()`
+    var rem_configs_json = self._json_for_script(rem_configs)
     webserver.content_send("<script type='text/javascript'>")
     webserver.content_send(format("var remcfg=%s;", rem_configs_json))
     webserver.content_send("</script>")
@@ -1506,16 +1520,33 @@ class Matter_UI
       # end
 
       #---------------------------------------------------------------------#
-      # Change Passcode and/or Passcode
+      # Change Passcode and/or Discriminator
       #---------------------------------------------------------------------#
       if webserver.has_arg("passcode") || webserver.has_arg("discriminator")
         log(format("MTR: /matterc received '%s' command", 'passcode'), 3)
+        # Validate server-side before changing anything (the HTML min/max are client-side only).
+        # Passcode: 1..99999998 and not one of the trivial values forbidden by the spec.
+        #   Values >= 2^27 would also be truncated in the QR code but not in PBKDF, breaking pairing.
+        # Discriminator: 12 bits, values above 4095 are truncated in QR/manual code but not in mDNS.
+        var new_passcode, new_discriminator
         if webserver.has_arg("passcode")
-          self.device.root_passcode = int(webserver.arg("passcode"))
+          new_passcode = int(webserver.arg("passcode"))
+          var passcode_ok = (new_passcode != nil) && (new_passcode >= 1) && (new_passcode <= 99999998)
+          for inv: matter.Commissioning.PASSCODE_INVALID
+            if new_passcode == inv    passcode_ok = false   end
+          end
+          if !passcode_ok
+            raise "value_error", "Invalid passcode, must be 1..99999998 and not a trivial value like 12345678"
+          end
         end
         if webserver.has_arg("discriminator")
-          self.device.root_discriminator = int(webserver.arg("discriminator"))
+          new_discriminator = int(webserver.arg("discriminator"))
+          if (new_discriminator == nil) || (new_discriminator < 0) || (new_discriminator > 4095)
+            raise "value_error", "Invalid discriminator, must be 0..4095"
+          end
         end
+        if new_passcode != nil          self.device.root_passcode = new_passcode              end
+        if new_discriminator != nil     self.device.root_discriminator = new_discriminator    end
         self.device.ipv4only = webserver.arg("ipv4") == 'on'
         self.device.save_param()
 
@@ -1669,7 +1700,7 @@ class Matter_UI
           return
         end
 
-        # Handle HTTP remote (existing code)
+        # Handle HTTP remote
         if url == nil || url == ''    raise "value_error", "url shouldn't be null"  end
 
         var rem_json_str = webserver.arg('rem_json')
@@ -1725,7 +1756,8 @@ class Matter_UI
       webserver.content_start("Parameter error")           #- title of the web page -#
       webserver.content_send_style()                  #- send standard Tasmota styles -#
 
-      webserver.content_send(format("<p style='width:340px;'><b>Exception:</b><br>'%s'<br>%s</p>", e, m))
+      # escape: messages can contain user-supplied values (e.g. plugin type, url)
+      webserver.content_send(format("<p style='width:340px;'><b>Exception:</b><br>'%s'<br>%s</p>", webserver.html_escape(str(e)), webserver.html_escape(str(m))))
 
       webserver.content_button(webserver.BUTTON_CONFIGURATION) #- button back to configuration page -#
       webserver.content_stop()                        #- end of web page -#
@@ -1830,7 +1862,6 @@ class Matter_UI
 
     if self.matter_enabled
 
-      # mtc0 = close, mtc1 = open commissioning
       var fabrics_count = (self.device.sessions != nil) ? self.device.sessions.count_active_fabrics() : 0
       if fabrics_count == 0
         webserver.content_send(format("<div style='text-align:right;font-size:11px;color:#aaa;padding:0px;'>%s</div>", "Matter: No active association"))

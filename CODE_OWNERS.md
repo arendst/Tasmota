@@ -105,6 +105,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_92_vid6608              | @petrows
 | xdrv_93_fm24cxx              | Martin Macák
 | xdrv_94_modbus_relay         | Jacek Ziółkowski
+| xdrv_95_location             | Clemens Arth
 |                              |
 | xdrv_119_i2c_ap33772s        | @arendst
 | xdrv_120_xyzmodem            | @arendst
@@ -237,6 +238,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_118_ags02ma             | Akshaylal S
 | xsns_119_sen6x               | @arendst
 | xsns_120_stcc4               | @arendst
+| xsns_121_tfa_marbella        | Philipp Schroeer
 |                              |
 | xsns_127_esp32_sensors       | @arendst
 |                              |

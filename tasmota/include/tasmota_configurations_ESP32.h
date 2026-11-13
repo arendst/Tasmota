@@ -74,6 +74,7 @@
 #undef USE_TIMERS                                // Disable support for up to 16 timers
 #undef USE_TIMERS_WEB                            // Disable support for timer webpage
 #undef USE_SUNRISE                               // Disable support for Sunrise and sunset tools
+#undef USE_LOCATION                              // Disable support for device location and pose
 #undef USE_PING                                  // Disable Ping command (+2k code)
 #undef USE_UNISHOX_COMPRESSION                   // Disable support for string compression in Rules or Scripts
 #undef USE_RULES                                 // Disable support for rules

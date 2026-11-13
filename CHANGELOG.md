@@ -3,13 +3,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [16.0.0.3]
+## [16.0.0.4]
 ### Added
+- Device location and local pose with commands `Location`, `LocationRot`, `LocationScale`, `LocationClear` and `SetOption166` stored as JSON in file system or packed in ESP8266 settings (#25244)
 - Wrapper function for esp_sleep_get_wakeup_cause() with mapping to Berry as tasmota.wakeup_cause()
-- Matter Doorbell (0x0148) device type mapped to a Button, with fabric-scoped Binding storage (Chime client not yet implemented) (#25187)
 
 ### Breaking Changed
 
+
+### Changed
+- OpenTherm use RMT on ESP32, add command `ot_report` (#25254)
+
+### Fixed
+- AHT20/AHT30 stale readings when used with deep sleep, with optional `#define USE_AHT_DIAG` (#25258)
+
+
+### Removed
+
+## [16.0.0.3] 20261113
+### Added
+- Matter Doorbell (0x0148) device type mapped to a Button, with fabric-scoped Binding storage (Chime client not yet implemented) (#25187)
 
 ### Changed
 - ESP8266 platform update from 2026.10.00 to 2026.11.00 (#25097)

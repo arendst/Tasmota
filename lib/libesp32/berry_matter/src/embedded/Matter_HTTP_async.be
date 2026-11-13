@@ -44,12 +44,12 @@ class Matter_HTTP_async : Matter_TCP_async
   var is_chunked                                  # true if the content is chunked
   var chunk_size                                  # nil or int, size of the current chunk
   static var HTTP_GET = "GET %s HTTP/1.1\r\n"     # see https://stackoverflow.com/questions/6686261/what-at-the-bare-minimum-is-required-for-an-http-request
-                        "Host %s:%s\r\n"
+                        "Host: %s:%s\r\n"
                         "Connection: close\r\n"
                         "\r\n"
 
   static var HTTP_GET_AUTH =  "GET %s HTTP/1.1\r\n"     # same with auth
-                              "Host %s:%s\r\n"
+                              "Host: %s:%s\r\n"
                               "Authorization: Basic %s\r\n"
                               "Connection: close\r\n"
                               "\r\n"
@@ -166,8 +166,10 @@ class Matter_HTTP_async : Matter_TCP_async
       self.phase = 1                      # proceed to parsing headers
       self.parse_http_headers()
     elif size(self.response) > 100        # if no match and we still have 100 bytes, then it fails
-      self.close()
       self.status = -4
+      self.http_status = -1               # set before `close()` so `event_closed()` does not report success
+      self.close()
+      self.event_http_failed()
     end
   end
 
@@ -194,9 +196,9 @@ class Matter_HTTP_async : Matter_TCP_async
           self.parse_http_payload()         # continue to parsing payload
         end
         if size(self.response) > 1024       # we don't accept a single header larger than 1KB
-          self.close()
           self.status = -4
-          self.http_status = -1
+          self.http_status = -1             # set before `close()` so `event_closed()` does not report success
+          self.close()
           self.event_http_failed()
         end
         return
@@ -262,7 +264,7 @@ class Matter_HTTP_async : Matter_TCP_async
   # Send http request
   def send_http()
     import string
-    # "GET %s HTTP/1.1\r\nHost %s:%s\r\nConnection: close\r\n\r\n"
+    # "GET %s HTTP/1.1\r\nHost: %s:%s\r\nConnection: close\r\n\r\n"
     self.response = ""
 
     # special formatting for IPv6
@@ -281,9 +283,9 @@ class Matter_HTTP_async : Matter_TCP_async
     var ret = self.write(req)
     if ret != size(req)
       # print("Could not send","size=",size(req),"ret=",ret)
-      self.close()
       self.status = -4
-      self.http_status = -1
+      self.http_status = -1               # set before `close()` so `event_closed()` does not report success
+      self.close()
       self.event_http_failed()
     end
   end
@@ -372,8 +374,8 @@ class Matter_HTTP_async : Matter_TCP_async
       # connection timeout
       # print("Connected timeout in", tasmota.millis() - self.time_start, "ms")
       self.status = -3
+      self.http_status = -2               # set before `close()` so `event_closed()` does not report success
       self.close()
-      self.http_status = -2
       self.event_http_timeout()
     else
 

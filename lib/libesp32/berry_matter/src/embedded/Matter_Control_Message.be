@@ -38,6 +38,13 @@ class Matter_Control_Message
   end
 
   def process_incoming_control_message(msg)
+    # MCSP is not implemented. The exchange header (including the opcode) is inside the
+    # encrypted payload, which is not decrypted here, so `msg.opcode` is nil at this point.
+    # Drop the message without Ack.
+    if msg.opcode == nil
+      log(format("MTR: >Control   ignored, MCSP not implemented (session_id=%i counter=%i)", msg.local_session_id, msg.message_counter), 3)
+      return false
+    end
 
     log("MTR: received control message " + matter.inspect(msg), 3)
     if   msg.opcode == 0x00

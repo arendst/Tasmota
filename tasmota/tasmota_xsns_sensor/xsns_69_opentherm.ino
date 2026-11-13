@@ -41,7 +41,13 @@
 #define OT_HOT_WATER_DEFAULT 36;
 #endif
 #ifndef OT_BOILER_DEFAULT
-#define OT_BOILER_DEFAULT 85;
+#define OT_BOILER_DEFAULT 60;
+#endif
+
+// Commands published to tele/<topic>/SENSOR as soon as their value changes,
+// all changes of one polling pass go in one message. Runtime: ot_report SLAVE,TB,ASFF (ot_report 0 clears)
+#ifndef OT_REPORT_ON_CHANGE
+#define OT_REPORT_ON_CHANGE ""
 #endif
 
 // Seconds before OT will make an attempt to connect to the boiler after connection error
@@ -188,6 +194,29 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
     AddLog(LOG_LEVEL_DEBUG_MORE,
               PSTR("[OTH]: Processing response. Status=%s, Response=0x%lX"),
               sns_ot_master->statusToString(status), response);
+
+    // RX diagnostics: what was actually seen on the line when a request failed
+    if (status == OpenThermResponseStatus::INVALID)
+    {
+        if (response == 0)
+        {
+            // Nothing decodable (Manchester/start/stop error): dump raw pulses
+            static char raw[600];
+            sns_ot_master->dumpLastRx(raw, sizeof(raw));
+            AddLog(LOG_LEVEL_INFO, PSTR("[OTH]: undecodable frame, glitches=%u raw: %s"),
+                   sns_ot_master->getRxGlitchCount(), raw[0] ? raw : "-");
+        }
+        else
+        {
+            // Decoded but not an ACK (e.g. UNKNOWN-DATAID) or bad parity
+            AddLog(LOG_LEVEL_DEBUG, PSTR("[OTH]: INVALID frame=0x%08lX"), response);
+        }
+    }
+    else if (status == OpenThermResponseStatus::TIMEOUT && sns_ot_master->getRxGlitchCount())
+    {
+        AddLog(LOG_LEVEL_INFO, PSTR("[OTH]: TIMEOUT, %u short glitches on RX"),
+               sns_ot_master->getRxGlitchCount());
+    }
 
     if (sns_ot_connection_status == OpenThermConnectionStatus::OTC_HANDSHAKE)
     {
@@ -344,8 +373,14 @@ void sns_ot_start_handshake()
 
     sns_opentherm_protocol_reset();
 
-    sns_ot_master->sendRequestAsync(
-        OpenTherm::buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0));
+    if (!sns_ot_master->sendRequestAsync(
+        OpenTherm::buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0)))
+    {
+        // Library is busy (or not initialized): stay in CONNECTING and retry next second
+        // instead of waiting forever for a callback that will never come.
+        AddLog(LOG_LEVEL_DEBUG, PSTR("[OTH]: handshake postponed, OT not ready"));
+        return;
+    }
 
     sns_ot_connection_status = OpenThermConnectionStatus::OTC_HANDSHAKE;
 }
@@ -502,8 +537,12 @@ uint8_t sns_opentherm_read_flags(char *data, uint32_t len)
 // BLOR - Reset boiler 
 #define D_CMND_BLLOR "blor"
 
+// Get/Set list of commands reported on change, e.g. "ot_report SLAVE,TB,ASFF". Not saved,
+// use OT_REPORT_ON_CHANGE define or a System#Boot rule to make it permanent
+#define D_CMND_OTHERM_REPORT "report"
+
 const char kOpenThermCommands[] PROGMEM = D_PRFX_OTHERM "|" D_CMND_OTHERM_BOILER_SETPOINT "|" D_CMND_OTHERM_DHW_SETPOINT
-	    "|" D_CMND_OTHERM_SAVE_SETTINGS "|" D_CMND_OTHERM_FLAGS "|" D_CMND_SET_CENTRAL_HEATING_ENABLED "|" D_CMND_SET_HOT_WATER_ENABLED "|" D_CMND_BLLOR;
+	    "|" D_CMND_OTHERM_SAVE_SETTINGS "|" D_CMND_OTHERM_FLAGS "|" D_CMND_SET_CENTRAL_HEATING_ENABLED "|" D_CMND_SET_HOT_WATER_ENABLED "|" D_CMND_BLLOR "|" D_CMND_OTHERM_REPORT;
 
 void (*const OpenThermCommands[])(void) PROGMEM = {
     &sns_opentherm_boiler_setpoint_cmd,
@@ -512,7 +551,8 @@ void (*const OpenThermCommands[])(void) PROGMEM = {
     &sns_opentherm_flags_cmd,
     &sns_opentherm_set_central_heating_cmd,
     &sns_opentherm_set_hot_water_cmd,
-    &sns_opentherm_blor_cmd,};
+    &sns_opentherm_blor_cmd,
+    &sns_opentherm_report_cmd,};
 
 void sns_opentherm_cmd(void) { }
 void sns_opentherm_boiler_setpoint_cmd(void)
@@ -614,6 +654,17 @@ void sns_opentherm_blor_cmd(void)
     ResponseCmndNumber(retval);
 }
 
+void sns_opentherm_report_cmd(void)
+{
+    if (XdrvMailbox.data_len > 0)
+    {
+        sns_opentherm_set_report(XdrvMailbox.data);
+    }
+    Response_P(PSTR("{\"%s\":\""), XdrvMailbox.command);
+    sns_opentherm_append_report_list();
+    ResponseAppend_P(PSTR("\"}"));
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -627,6 +678,8 @@ bool Xsns69(uint32_t function)
         {
             sns_opentherm_check_settings();
             sns_opentherm_init_boiler_status();
+            char report[] = OT_REPORT_ON_CHANGE;
+            sns_opentherm_set_report(report);
         }
     }
 

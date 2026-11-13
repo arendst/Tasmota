@@ -90,7 +90,7 @@ class Matter_Fabric : Matter_Expirable
     self._counter_group_data_snd_impl = matter.Counter()
     self._counter_group_ctrl_snd_impl  = matter.Counter()
     self.counter_group_data_snd = self._counter_group_data_snd_impl.next() + self._GROUP_SND_INCR
-    self.counter_group_ctrl_snd = self._counter_group_data_snd_impl.next() + self._GROUP_SND_INCR
+    self.counter_group_ctrl_snd = self._counter_group_ctrl_snd_impl.next() + self._GROUP_SND_INCR
     self.group_key_map = []
     self.group_table = []
     self.group_key_sets = []

@@ -1711,6 +1711,14 @@ void SettingsDelta(void) {
         }
       }
     }
+    if (Settings->version < 0x10000004) {  // 16.0.0.4
+#ifdef ESP8266
+      // Ex gpio16_converted and free_esp8266_3D0 now hold the packed device local pose (USE_LOCATION).
+      // Clear once as it may hold the gpio16 conversion marker or ex_friendlyname text from before v9.1.
+      // Kept on downgrade and re-upgrade
+      memset(Settings->location_packed, 0, sizeof(Settings->location_packed));
+#endif  // ESP8266
+    }
 
     Settings->version = TASMOTA_VERSION;
     SettingsSave(1);
