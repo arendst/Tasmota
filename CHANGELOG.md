@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [16.0.0.4]
 ### Added
 - Device location and local pose with commands `Location`, `LocationRot`, `LocationScale`, `LocationClear` and `SetOption166` stored as JSON in file system or packed in ESP8266 settings (#25244)
+- Berry `tasmota.wakeup_cause()` mapped to `esp_sleep_get_wakeup_cause()`
 
 ### Breaking Changed
 
