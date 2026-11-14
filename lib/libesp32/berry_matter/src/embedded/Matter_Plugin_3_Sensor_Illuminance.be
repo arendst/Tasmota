@@ -93,8 +93,8 @@
 #
 # TASMOTA IMPLEMENTATION:
 # - Reads illuminance from Tasmota sensor JSON (Status 10)
-# - Converts using logarithmic formula: log10(val + 1) * 10000
-# - Handles negative values by returning 0
+# - Converts using the spec formula: round(10000 × log10(lux) + 1), clamped to 0xFFFE
+# - Values below 1 lx (including negative) are reported as 0 ("too low to be measured")
 # - MinMeasuredValue: 1 (minimum detectable light)
 # - MaxMeasuredValue: 0xFFFE (65534, maximum range)
 #################################################################################
@@ -124,11 +124,16 @@ class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
     if val == nil   return nil    end
     import math
 
-    if val < 0
+    # Matter (and Zigbee ZCL) encoding: MeasuredValue = 10000 × log10(lux) + 1
+    # for 1 lx <= lux <= 3.576 Mlx (MeasuredValue 1..0xFFFE).
+    # Below 1 lx the value is 0, which means "too low to be measured".
+    # Controllers decode with lux = 10^((MeasuredValue - 1) / 10000).
+    if val < 1
       return 0
-    else
-      return math.log10(val + 1) * 10000
     end
+    var mv = int(10000 * math.log10(val) + 1 + 0.5)    # round to nearest
+    if mv > 0xFFFE    mv = 0xFFFE   end
+    return mv
   end
 
   #############################################################
@@ -171,8 +176,13 @@ class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
   def web_values()
     import webserver
     self.web_values_prefix()        # display '| ' and name if present
-    webserver.content_send(format("&#128261; %i lux",
-                                         int(self.shadow_value)))
+    # shadow_value holds the Matter MeasuredValue, decode it back to lux for display
+    var lux = 0
+    if self.shadow_value != nil && self.shadow_value > 0
+      import math
+      lux = math.pow(10, (self.shadow_value - 1) / 10000.0)
+    end
+    webserver.content_send(format("&#128261; %i lux", int(lux + 0.5)))
   end
   #############################################################
   #############################################################
