@@ -184,7 +184,12 @@ uint64_t reverseBitsInBytes64(uint64_t b) {
  * IR Receive
 \*********************************************************************************************/
 
-const bool IR_FULL_RCV_SAVE_BUFFER = false;         // false = do not use buffer, true = use buffer for decoding
+// true: decode from a second buffer, so the receiver goes on capturing while the last message is
+// decoded and published. With false nothing is heard until then, which loses the start of a remote's
+// next frame when it repeats long frames quickly (Denon/Kaseikyo 48-bit, about every 150 ms).
+#ifndef IR_FULL_RCV_SAVE_BUFFER
+#define IR_FULL_RCV_SAVE_BUFFER false
+#endif  // IR_FULL_RCV_SAVE_BUFFER
 
 #ifndef IR_TIME_AVOID_DUPLICATE
 #define IR_TIME_AVOID_DUPLICATE 50           // Milliseconds
@@ -1034,7 +1039,15 @@ bool Xdrv05(uint32_t function)
         IrReceiveInit();
       }
       break;
+// IR_RCV_IN_LOOP checks the receiver on every loop (with Sleep 0, at once) rather than every 50 ms.
+// The receiver is deaf from the end of a capture (IR__FULL_RCV_TIMEOUT after the last pulse) until
+// the check takes it, so a remote that repeats a frame within ~100 ms of the last one ending has
+// the start of each repeat cut off by however long the 50 ms tick took to come round.
+#ifdef IR_RCV_IN_LOOP
+    case FUNC_LOOP:
+#else
     case FUNC_EVERY_50_MSECOND:
+#endif  // IR_RCV_IN_LOOP
       if (ir_recv_active) {
         IrReceiveCheck();  // check if there's anything on IR side
       }
