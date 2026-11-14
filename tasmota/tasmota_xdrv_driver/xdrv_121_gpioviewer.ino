@@ -600,8 +600,11 @@ void GVHandlePinModes(void) {
       firstEntry = false;
       jsonResponse += "{";
       jsonResponse += "\"pin\":\"" + String(i) + "\",";
-      jsonResponse += "\"mode\":\"" + String(GV->pinmode[i]) + "\",";
-      jsonResponse += "\"label\":\"" + GpioLabel(i) + "\"";
+      jsonResponse += "\"mode\":\"" + String(GV->pinmode[i]) + "\"";
+      String gpio_label = GpioLabel(i);
+      if (gpio_label != "None") {
+        jsonResponse += ",\"label\":\"" + gpio_label + "\"";
+      }
       jsonResponse += "}";
     }
   }
