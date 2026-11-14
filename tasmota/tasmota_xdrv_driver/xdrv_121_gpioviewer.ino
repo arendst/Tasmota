@@ -30,6 +30,9 @@
  *   GvUrl 1                - Select default url (GV_BASE_URL)
  *   GvUrl https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer_1_5/
  *
+ * Note 20261114
+ * - Add label to pinmodes request - Needs Web application >= v2.3.4
+ *
  * Note 20251025
  * - GVRelease 1.7.0
  * - Add APP partition info
@@ -547,6 +550,43 @@ void GVHandlePartition(void) {
 
 /*-------------------------------------------------------------------------------------------*/
 
+String GpioLabel(int pin) {
+  String result = "None";
+  if ((pin < nitems(Settings->my_gp.io)) && !FlashPin(pin)) {
+    myio template_gp;
+    TemplateGpios(&template_gp);
+    uint32_t sensor_type = Settings->my_gp.io[pin];  // Module config
+    if (!ValidGPIO(pin, template_gp.io[pin])) {
+      sensor_type = template_gp.io[pin];             // Template config
+      if (AGPIO(GPIO_USER) == sensor_type) {         // A user GPIO equals a not connected (=GPIO_NONE) GPIO here
+        sensor_type = GPIO_NONE;
+      }
+    }
+    char sindex[4] = { 0 };
+    uint32_t sensor_name_idx = BGPIO(sensor_type);
+    uint32_t nice_list_search = sensor_type & 0xFFE0;
+    for (uint32_t j = 0; j < nitems(kGpioNiceList); j++) {
+      uint32_t nls_idx = pgm_read_word(&kGpioNiceList[j]);
+      if (((nls_idx & 0xFFE0) == nice_list_search) && ((nls_idx & 0x001F) > 0)) {
+        snprintf_P(sindex, sizeof(sindex), PSTR("%d"), (sensor_type & 0x001F) +1);
+        break;
+      }
+    }
+    const char *sensor_names = kSensorNames;
+    if (sensor_name_idx > GPIO_FIX_START) {
+      sensor_name_idx = sensor_name_idx - GPIO_FIX_START -1;
+      sensor_names = kSensorNamesFixed;
+    }
+    char stemp1[TOPSZ];
+    GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names);
+    result = stemp1;
+    result += sindex;
+  }
+  return result;
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
 void GVHandlePinModes(void) {
   String jsonResponse = "["; // Start of JSON array
   bool firstEntry = true;    // Used to format the JSON array correctly
@@ -560,7 +600,8 @@ void GVHandlePinModes(void) {
       firstEntry = false;
       jsonResponse += "{";
       jsonResponse += "\"pin\":\"" + String(i) + "\",";
-      jsonResponse += "\"mode\":\"" + String(GV->pinmode[i]) + "\"";
+      jsonResponse += "\"mode\":\"" + String(GV->pinmode[i]) + "\",";
+      jsonResponse += "\"label\":\"" + GpioLabel(i) + "\"";
       jsonResponse += "}";
     }
   }
