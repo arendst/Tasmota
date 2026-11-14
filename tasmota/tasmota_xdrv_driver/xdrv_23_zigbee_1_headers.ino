@@ -49,6 +49,12 @@ const uint8_t  ZIGBEE_LABEL_READY = 20;   // goto label 20 for main loop
 const uint8_t  ZIGBEE_LABEL_MAIN_LOOP = 21;   // main loop
 const uint8_t  ZIGBEE_LABEL_NETWORK_CONFIGURED = 22;   // main loop
 const uint8_t  ZIGBEE_LABEL_BAD_CONFIG = 23;          // EZSP configuration is not the right one
+// EZSP version negotiation and per-version steps
+const uint8_t  ZIGBEE_LABEL_PROBE_VERSION = 24;      // send EZSP version() and probe the NCP protocol version
+const uint8_t  ZIGBEE_LABEL_SET_PACKET_BUF = 25;     // EZSP v8 only: set packet buffer count
+const uint8_t  ZIGBEE_LABEL_AFTER_PACKET_BUF = 26;   // continue after packet buffer step
+const uint8_t  ZIGBEE_LABEL_GET_KEY_V8 = 27;         // EZSP v8 only: getKey
+const uint8_t  ZIGBEE_LABEL_AFTER_GET_KEY = 28;      // continue after network key check
 const uint8_t  ZIGBEE_LABEL_PERMIT_JOIN_CLOSE = 30;   // disable permit join
 const uint8_t  ZIGBEE_LABEL_PERMIT_JOIN_OPEN_60 = 31;    // enable permit join for 60 seconds
 const uint8_t  ZIGBEE_LABEL_PERMIT_JOIN_OPEN_XX = 32;    // enable permit join for 60 seconds
@@ -108,6 +114,7 @@ public:
 
   uint32_t permit_end_time = 0;       // timestamp when permit join ends, with ZNP 1.2, it takes only 0 (off) and -1 (on)
 #ifdef USE_ZIGBEE_EZSP
+  uint8_t protocol_version = 0;
   uint16_t ezsp_version = 0;
 #endif
 

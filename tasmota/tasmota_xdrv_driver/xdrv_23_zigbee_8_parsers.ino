@@ -126,21 +126,61 @@ int32_t EZ_NetworkParameters(int32_t res, SBuffer &buf) {
 }
 
 //
-// Analyze response to "getKey" and check NWK key
+// Handle response to "setConfigurationValue"
+// Best-effort: EZSP_ERROR_OUT_OF_MEMORY (0x35) simply means the NCP cannot grow the
+// table at runtime (with v13 packet buffers are fixed at NCP build time), and the
+// NCP keeps its default value. EZSP_ERROR_INVALID_CALL (0x38) means the value is
+// read-only. Neither must abort the initialization.
+//
+int32_t EZ_CheckConfigValue(int32_t res, SBuffer &buf) {
+  uint8_t status = buf.get8(2);
+  if (0 != status) {
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "setConfigurationValue ignored, status 0x%02X (keeping NCP default)"), status);
+  }
+  return 0;     // never fatal
+}
+
+//
+// Analyze the response to the network key query and check the NWK key.
+// The layout depends on the negotiated EZSP protocol version.
 //
 int32_t EZ_CheckKeyNWK(int32_t res, SBuffer &buf) {
-  // uint8_t  status = buf.get8(2);
-  // uint16_t bitmask = buf.get16(3);
-  uint8_t  key_type = buf.get8(5);
-  uint64_t key_low  = buf.get64(6);
-  uint64_t key_high = buf.get64(14);
+  if (8 == zigbee.protocol_version) {
+    // getKey: response is [frame id 2][status][key bitmask 2][key type 1][key 16]...
+    // uint8_t  status = buf.get8(2);
+    // uint16_t bitmask = buf.get16(3);
+    uint8_t  key_type = buf.get8(5);
+    uint64_t key_low  = buf.get64(6);
+    uint64_t key_high = buf.get64(14);
 
-  if ( (key_type == EMBER_CURRENT_NETWORK_KEY) &&
-       (key_low  == ezsp_key_low) &&
+    if ( (key_type == EMBER_CURRENT_NETWORK_KEY) &&
+         (key_low  == ezsp_key_low) &&
+         (key_high == ezsp_key_high) ) {
+      return 0;     // proceed to next step
+    } else {
+      return -2;    // error state
+    }
+  }
+
+  // exportKey: response is [frame id 2][key 16][sl_status_t 4]
+  if (buf.len() < 22) { return -2; }     // malformed response
+  uint64_t key_low  = buf.get64(2);
+  uint64_t key_high = buf.get64(10);
+  uint32_t status   = buf.get32(18);
+
+  if (0 != status) {
+    // Export failed (key not available/exportable), we cannot verify the key.
+    // Keep the current network instead of forcing a factory reset; a reset can
+    // still be forced with `ZbReset 1`
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "exportKey failed 0x%08X"), status);
+    return 0;
+  }
+
+  if ( (key_low  == ezsp_key_low) &&
        (key_high == ezsp_key_high) ) {
     return 0;     // proceed to next step
   } else {
-    return -2;    // error state
+    return -2;    // error state, key does not match -> reconfigure
   }
 }
 
@@ -492,18 +532,32 @@ int32_t EZ_ReceiveCheckVersion(int32_t res, SBuffer &buf) {
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
-  if (0x08 == protocol_version) {
-    if ((zigbee.ezsp_version & 0xFF00) == 0x6700) {
-      // If v6.7 there is a bug so we need to change the response
-      ZBW(ZBR_SET_OK2, 0x00, 0x00 /*high*/, 0x00 /*ok*/)
-    }
-  	return 0;	  // protocol v8 is ok
-  } else {
+  if ((8 != protocol_version) && (13 != protocol_version)) {
     return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
   }
+  zigbee.protocol_version = protocol_version;
+
+  // The NCP only accepts the EZSP version it supports. If it reported a different
+  // version than requested (ex: v13 requested from a v8 NCP), ask again with the
+  // version reported by the NCP so the version transaction succeeds.
+  if (ZBS_VERSION[2] != protocol_version) {
+    ZBS_VERSION[2] = protocol_version;
+    return ZIGBEE_LABEL_PROBE_VERSION;
+  }
+
+  if ((8 == protocol_version) && ((zigbee.ezsp_version & 0xFF00) == 0x6700)) {
+    // If v6.7 there is a bug so we need to change the response of setConfigurationValue
+    ZBW(ZBR_SET_OK2, 0x00, 0x00 /*high*/, 0x00 /*ok*/)
+  }
+  return 0;   // protocol version negotiated
 }
 
 bool EZ_reset_config = false;
+
+// Runtime branch used by the state machine to select EZSP v8 only steps
+int32_t EZ_GotoIfV8(uint8_t value) {
+  return (8 == zigbee.protocol_version) ? value : 0;
+}
 
 // Set or clear reset_config
 int32_t EZ_Set_ResetConfig(uint8_t value) {
