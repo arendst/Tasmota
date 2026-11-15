@@ -50,8 +50,13 @@
 #define OT_REPORT_ON_CHANGE ""
 #endif
 
-// Seconds before OT will make an attempt to connect to the boiler after connection error
-#define SNS_OT_DISCONNECT_COOLDOWN_SECONDS 4
+// Seconds before OT will make an attempt to connect to the boiler after connection error.
+// 0 = handshake at once. OpenTherm v2.2 requires a master frame at least every second
+// (4.3.1), and a boiler may take >= 5 s without a valid frame as an open/short line and
+// fall back to its own setpoints (3.5). A cooldown keeps the bus silent that long.
+#ifndef SNS_OT_DISCONNECT_COOLDOWN_SECONDS
+#define SNS_OT_DISCONNECT_COOLDOWN_SECONDS 0
+#endif
 
 // Number of consecutive timeouts which are accepted before entering disconnect state
 #define SNS_OT_MAX_TIMEOUTS_BEFORE_DISCONNECT 3
@@ -85,6 +90,17 @@ enum OpenThermConnectionStatus
 OpenThermConnectionStatus sns_ot_connection_status = OpenThermConnectionStatus::OTC_NONE;
 uint8_t sns_ot_disconnect_cooldown = 0;
 uint8_t sns_ot_timeout_before_disconnect = 0;
+// Failed handshakes since the last good one: only the first is logged as error,
+// repeats (every ~1.2 s while no boiler answers) go to debug
+uint32_t sns_ot_handshake_failures = 0;
+
+// Connection lost: wait for the cooldown (DISCONNECTED) or start the next handshake at once
+void sns_ot_set_disconnected()
+{
+    sns_ot_connection_status = (SNS_OT_DISCONNECT_COOLDOWN_SECONDS > 0)
+                                   ? OpenThermConnectionStatus::OTC_DISCONNECTED
+                                   : OpenThermConnectionStatus::OTC_CONNECTING;
+}
 
 OpenTherm *sns_ot_master = NULL;
 
@@ -248,7 +264,7 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
         sns_opentherm_check_retry_request();
         if (--sns_ot_timeout_before_disconnect == 0)
         {
-            sns_ot_connection_status = OpenThermConnectionStatus::OTC_DISCONNECTED;
+            sns_ot_set_disconnected();
         }
         else
         {
@@ -376,7 +392,7 @@ void sns_ot_start_handshake()
     if (!sns_ot_master->sendRequestAsync(
         OpenTherm::buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0)))
     {
-        // Library is busy (or not initialized): stay in CONNECTING and retry next second
+        // Library is busy (or not initialized): stay in CONNECTING and retry on the next tick
         // instead of waiting forever for a callback that will never come.
         AddLog(LOG_LEVEL_DEBUG, PSTR("[OTH]: handshake postponed, OT not ready"));
         return;
@@ -390,13 +406,18 @@ void sns_ot_process_handshake(unsigned long response, int st)
     OpenThermResponseStatus status = (OpenThermResponseStatus)st;
     if (status != OpenThermResponseStatus::SUCCESS || !sns_ot_master->isValidResponse(response))
     {
-        AddLog(LOG_LEVEL_ERROR,
+        AddLog(sns_ot_handshake_failures++ ? LOG_LEVEL_DEBUG : LOG_LEVEL_ERROR,
                   PSTR("[OTH]: getSlaveConfiguration failed. Status=%s"),
                   sns_ot_master->statusToString(status));
-        sns_ot_connection_status = OpenThermConnectionStatus::OTC_DISCONNECTED;
+        sns_ot_set_disconnected();
         return;
     }
 
+    if (sns_ot_handshake_failures > 1)
+    {
+        AddLog(LOG_LEVEL_INFO, PSTR("[OTH]: connected after %u failed handshakes"), sns_ot_handshake_failures);
+    }
+    sns_ot_handshake_failures = 0;
     AddLog(LOG_LEVEL_DEBUG, PSTR("[OTH]: getLastResponseStatus SUCCESS. Slave Cfg: %lX"), response);
 
     sns_ot_boiler_status.m_slave_flags = (response & 0xFF00) >> 8;
@@ -694,7 +715,11 @@ bool Xsns69(uint32_t function)
         sns_ot_master->process();
         break;
     case FUNC_EVERY_100_MSECOND:
-        if (sns_ot_connection_status == OpenThermConnectionStatus::OTC_READY && sns_ot_master->isReady())
+        if (sns_ot_connection_status == OpenThermConnectionStatus::OTC_CONNECTING && sns_ot_master->isReady())
+        {
+            sns_ot_start_handshake();
+        }
+        else if (sns_ot_connection_status == OpenThermConnectionStatus::OTC_READY && sns_ot_master->isReady())
         {
             unsigned long request = sns_opentherm_get_next_request(&sns_ot_boiler_status);
             if (-1 != request)
@@ -716,10 +741,6 @@ bool Xsns69(uint32_t function)
             {
                 sns_ot_connection_status = OpenThermConnectionStatus::OTC_CONNECTING;
             }
-        }
-        else if (sns_ot_connection_status == OpenThermConnectionStatus::OTC_CONNECTING)
-        {
-            sns_ot_start_handshake();
         }
         break;
     case FUNC_COMMAND:
