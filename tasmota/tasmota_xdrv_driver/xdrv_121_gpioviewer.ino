@@ -552,8 +552,16 @@ void GVHandlePartition(void) {
 
 char* GpioLabel(char* out, size_t out_size, int pin) {
   out[0] = 0;
-  if (pin >= MAX_GPIO_PIN) { return out; }
-  uint32_t sensor_type = TasmotaGlobal.gpio_pin[pin];
+  if ((pin >= nitems(Settings->my_gp.io)) || FlashPin(pin)) { return out; }
+  myio template_gp;
+  TemplateGpios(&template_gp);
+  uint32_t sensor_type = Settings->my_gp.io[pin];  // Module config
+  if (!ValidGPIO(pin, template_gp.io[pin])) {
+    sensor_type = template_gp.io[pin];             // Template config
+    if (AGPIO(GPIO_USER) == sensor_type) {         // A user GPIO equals a not connected (=GPIO_NONE) GPIO here
+      sensor_type = GPIO_NONE;
+    }
+  }
   if (GPIO_NONE == sensor_type) { return out; }
 
   uint32_t sensor_name_idx = BGPIO(sensor_type);
