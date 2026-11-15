@@ -169,7 +169,7 @@ People helping to keep the show on the road:
 - Pete Ba for more user friendly energy monitor calibration
 - Lobradov providing compile optimization tips
 - Flexiti for his initial timer implementation
-- reloxx13 for his [TasmoAdmin](https://github.com/reloxx13/TasmoAdmin) management tool
+- reloxx13 for his [TasmoAdmin](https://github.com/TasmoAdmin/TasmoAdmin) management tool
 - Joachim Banzhaf for his TSL2561 library and driver
 - Andre Thomas for providing many drivers
 - Gijs Noorlander for his MHZ19, SenseAir and updated PubSubClient drivers
