@@ -3,23 +3,34 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [16.0.0.4]
+## [16.0.0.5]
+### Added
+
+
+### Breaking Changed
+
+
+### Changed
+- ESP32 Platform from 2026.11.50 to 2026.11.51, Framework (Arduino Core) from v3.3.12-2 to v3.3.12-2 and IDF v5.5.5 (#25275)
+
+
+### Fixed
+- GPIOViewer fails to execute, regression from platform 2026.11.50 (#25275)
+
+### Removed
+
+
+## [16.0.0.4] 20261115
 ### Added
 - Device location and local pose with commands `Location`, `LocationRot`, `LocationScale`, `LocationClear` and `SetOption166` stored as JSON in file system or packed in ESP8266 settings (#25244)
 - Berry `tasmota.wakeup_cause()` mapped to `esp_sleep_get_wakeup_cause()` (#25251)
 - GPIOViewer labels to GPIOs using web app v2.3.4 (#25257)
-
-### Breaking Changed
-
 
 ### Changed
 - OpenTherm use RMT on ESP32, add command `ot_report` (#25254)
 
 ### Fixed
 - AHT20/AHT30 stale readings when used with deep sleep, with optional `#define USE_AHT_DIAG` (#25258)
-
-
-### Removed
 
 ## [16.0.0.3] 20261113
 ### Added

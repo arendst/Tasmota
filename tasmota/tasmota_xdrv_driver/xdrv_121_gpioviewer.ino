@@ -550,42 +550,30 @@ void GVHandlePartition(void) {
 
 /*-------------------------------------------------------------------------------------------*/
 
-String GpioLabel(int pin) {
-  String result = "None";
-  if ((pin < nitems(Settings->my_gp.io)) && !FlashPin(pin)) {
-    myio template_gp;
-    TemplateGpios(&template_gp);
-    uint32_t sensor_type = Settings->my_gp.io[pin];  // Module config
-    if (!ValidGPIO(pin, template_gp.io[pin])) {
-      sensor_type = template_gp.io[pin];             // Template config
-      if (AGPIO(GPIO_USER) == sensor_type) {         // A user GPIO equals a not connected (=GPIO_NONE) GPIO here
-        sensor_type = GPIO_NONE;
-      }
-    }
+char* GpioLabel(char* out, size_t out_size, int pin) {
+  out[0] = 0;
+  if (pin >= MAX_GPIO_PIN) { return out; }
+  uint32_t sensor_type = TasmotaGlobal.gpio_pin[pin];
+  if (GPIO_NONE == sensor_type) { return out; }
 
-    if (sensor_type != GPIO_NONE) {
-      char sindex[4] = { 0 };
-      uint32_t sensor_name_idx = BGPIO(sensor_type);
-      uint32_t nice_list_search = sensor_type & 0xFFE0;
-      for (uint32_t j = 0; j < nitems(kGpioNiceList); j++) {
-        uint32_t nls_idx = pgm_read_word(&kGpioNiceList[j]);
-        if (((nls_idx & 0xFFE0) == nice_list_search) && ((nls_idx & 0x001F) > 0)) {
-          snprintf_P(sindex, sizeof(sindex), PSTR("%d"), (sensor_type & 0x001F) +1);
-          break;
-        }
-      }
-      const char *sensor_names = kSensorNames;
-      if (sensor_name_idx > GPIO_FIX_START) {
-        sensor_name_idx = sensor_name_idx - GPIO_FIX_START -1;
-        sensor_names = kSensorNamesFixed;
-      }
-      char stemp1[TOPSZ];
-      GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names);
-      result = stemp1;
-      result += sindex;
+  uint32_t sensor_name_idx = BGPIO(sensor_type);
+  const char *sensor_names = kSensorNames;
+  if (sensor_name_idx > GPIO_FIX_START) {
+    sensor_name_idx = sensor_name_idx - GPIO_FIX_START -1;
+    sensor_names = kSensorNamesFixed;
+  }
+  GetTextIndexed(out, out_size, sensor_name_idx, sensor_names);
+
+  uint32_t nice_list_search = sensor_type & 0xFFE0;
+  for (uint32_t j = 0; j < nitems(kGpioNiceList); j++) {
+    uint32_t nls_idx = pgm_read_word(&kGpioNiceList[j]);
+    if (((nls_idx & 0xFFE0) == nice_list_search) && ((nls_idx & 0x001F) > 0)) {
+      snprintf_P(out, out_size, PSTR("%s%d"), out, (sensor_type & 0x001F) +1);
+      break;
     }
   }
-  return result;
+
+  return out;
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -604,10 +592,11 @@ void GVHandlePinModes(void) {
       jsonResponse += "{";
       jsonResponse += "\"pin\":\"" + String(i) + "\",";
       jsonResponse += "\"mode\":\"" + String(GV->pinmode[i]) + "\"";
-      String gpio_label = GpioLabel(i);
-      if (gpio_label != "None") {
-        jsonResponse += ",\"label\":\"" + gpio_label + "\"";
+      char gpio_label[32];
+      if (strlen(GpioLabel(gpio_label, sizeof(gpio_label), i)) > 0) {
+        jsonResponse += ",\"label\":\"" + String(gpio_label) + "\"";
       }
+
       jsonResponse += "}";
     }
   }

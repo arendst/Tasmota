@@ -114,7 +114,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v16.0.0.4
+## Changelog v16.0.0.5
 ### Added
 - Heap Map optional feature fur detailed memory usage at boot [#25186](https://github.com/arendst/Tasmota/issues/25186)
 - Device location and local pose with commands `Location`, `LocationRot`, `LocationScale`, `LocationClear` and `SetOption166` stored as JSON in file system or packed in ESP8266 settings [#25244](https://github.com/arendst/Tasmota/issues/25244)
@@ -135,7 +135,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - ESP8266 platform update from 2026.09.00 to 2026.11.00 [#25097](https://github.com/arendst/Tasmota/issues/25097)
-- ESP32 Platform from 2026.09.50 to 2026.11.50, Framework (Arduino Core) from v3.3.12 to v3.3.12-2 and IDF v5.5.5 [#25097](https://github.com/arendst/Tasmota/issues/25097)
+- ESP32 Platform from 2026.09.50 to 2026.11.51, Framework (Arduino Core) from v3.3.12 to v3.3.12-2 and IDF v5.5.5 [#25275](https://github.com/arendst/Tasmota/issues/25275)
 - OTA give up on a stalled OTA after 30s, not 300 reads [#25177](https://github.com/arendst/Tasmota/issues/25177)
 - HttpClientLight keep read timeouts longer than 65s [#25180](https://github.com/arendst/Tasmota/issues/25180)
 - GUI allow `;` or `{` in a password saved from the settings page [#25184](https://github.com/arendst/Tasmota/issues/25184)
