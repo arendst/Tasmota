@@ -78,7 +78,7 @@ class Matter_Plugin_Light5 : Matter_Plugin_Light3
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
   # static VIRTUAL                                    # (bool) is the device pure virtual (i.e. not related to a device implementation by Tasmota)
   # var shadow_onoff                                  # (bool) status of the light power on/off
-  # var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
+  # var shadow_bri                                    # (int 1..254) Matter CurrentLevel, brightness before Gamma correction - kept while off, 0 and 255 are not allowed
   # var shadow_hue, shadow_sat, shadow_x, shadow_y    # HS and XY, see Light3
   # var shadow_ct, ct_min, ct_max, ct_startup         # Color Control CT, see Light1
   # var shadow_color_mode, cc_options                 # Color Control, see Light1

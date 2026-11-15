@@ -18,10 +18,10 @@
 #
 
 #################################################################################
-# Matter 1.4.1 Device Specification
+# Matter 1.6.1 Device Specification
 #################################################################################
 # Device Type: Dimmable Light (0x0101)
-# Device Type Revision: 3 (Matter 1.4.1)
+# Device Type Revision: 4 (Matter 1.6.1), revision 3 is reported (rev 4 requires Groupcast, not implemented)
 # Class: Simple | Scope: Endpoint
 # Superset: On/Off Light (0x0100)
 #
@@ -42,13 +42,13 @@
 # NOTES:
 # - Extends On/Off Light with dimming capability
 # - Level Control cluster is mandatory for this device type
-# - CurrentLevel range is 1-254 (255 is not allowed for lights); 0 is reported when the light is off
+# - CurrentLevel range is 1-254 (255 is not allowed for lights); the off state is reported by the On/Off cluster
 #################################################################################
 
 #################################################################################
-# Matter 1.4.1 Level Control Cluster (0x0008)
+# Matter 1.6.1 Level Control Cluster (0x0008)
 #################################################################################
-# Cluster Revision: 6 (Matter 1.4.1)
+# Cluster Revision: 7 (Matter 1.6.1), revision 6 is reported (rev 7 changes not verified)
 # Role: Application | Scope: Endpoint
 #
 # PURPOSE:
@@ -60,28 +60,28 @@
 # Bit | Code | Feature      | Conf | Summary
 # ----|------|--------------|------|---------------------------
 # 0   | OO   | OnOff        | M    | Dependency on On/Off
-# 1   | LT   | Lighting     | O    | Lighting behavior
+# 1   | LT   | Lighting     | O    | Lighting behavior (M for lights)
 # 2   | FQ   | Frequency    | P    | Frequency control
 #
 # ATTRIBUTES:
-# ID     | Name                  | Type         | Constraint      | Quality | Default | Access | Conf
-# -------|-----------------------|--------------|-----------------|---------|---------|--------|-----
-# 0x0000 | CurrentLevel          | uint8        | 1-254           | XQN     | null    | R V    | M
-# 0x0001 | RemainingTime         | uint16       | all             | Q       | 0       | R V    | LT
-# 0x0002 | MinLevel              | uint8        | 1-254           |         | 1/0     | R V    | O
-# 0x0003 | MaxLevel              | uint8        | MinLevel-254    |         | 254     | R V    | O
-# 0x0004 | CurrentFrequency      | uint16       | MinFreq-MaxFreq | QP      | 0       | R V    | FQ
-# 0x0005 | MinFrequency          | uint16       | 0-MaxFreq       | F       | 0       | R V    | FQ
-# 0x0006 | MaxFrequency          | uint16       | MinFreq-65535   | F       | 0       | R V    | FQ
-# 0x000F | Options               | OptionsBitmap| all             |         | 0       | RW VO  | M
-# 0x0010 | OnOffTransitionTime   | uint16       | all             |         | 0       | RW VO  | O
-# 0x0011 | OnLevel               | uint8        | MinLevel-MaxLevel| XN     | null    | RW VO  | M
-# 0x0012 | OnTransitionTime      | uint16       | all             | XN      | null    | RW VO  | O
-# 0x0013 | OffTransitionTime     | uint16       | all             | XN      | null    | RW VO  | O
-# 0x0014 | DefaultMoveRate       | uint8        | all             | XN      | null    | RW VO  | O
-# 0x4000 | StartUpCurrentLevel   | uint8        | 1-254           | XN      | MS      | RW VM  | LT
-# 0xFFFC | FeatureMap            | map32        | all             | F       | 0       | R V    | M
-# 0xFFFD | ClusterRevision       | uint16       | all             | F       | 6       | R V    | M
+# ID     | Name                  | Type         | Constraint       | Quality | Default | Access | Conf
+# -------|-----------------------|--------------|------------------|---------|---------|--------|-----
+# 0x0000 | CurrentLevel          | uint8        | MinLevel-MaxLevel| XQNS    | null    | R V    | M
+# 0x0001 | RemainingTime         | uint16       | all              | Q       | 0       | R V    | LT
+# 0x0002 | MinLevel              | uint8        | 1-254 (LT)       | F       | 1       | R V    | M
+# 0x0003 | MaxLevel              | uint8        | MinLevel-254     | F       | 254     | R V    | M
+# 0x0004 | CurrentFrequency      | uint16       | MinFreq-MaxFreq  | QS      | 0       | R V    | FQ
+# 0x0005 | MinFrequency          | uint16       | all              |         | 0       | R V    | FQ
+# 0x0006 | MaxFrequency          | uint16       | min MinFrequency |         | 0       | R V    | FQ
+# 0x000F | Options               | OptionsBitmap| all              |         | 0       | RW VO  | M
+# 0x0010 | OnOffTransitionTime   | uint16       | all              |         | 0       | RW VO  | O
+# 0x0011 | OnLevel               | uint8        | MinLevel-MaxLevel| XN      | null    | RW VO  | M
+# 0x0012 | OnTransitionTime      | uint16       | all              | XN      | null    | RW VO  | O
+# 0x0013 | OffTransitionTime     | uint16       | all              | XN      | null    | RW VO  | O
+# 0x0014 | DefaultMoveRate       | uint8        | min 1            | XN      | MS      | RW VO  | O
+# 0x4000 | StartUpCurrentLevel   | uint8        | desc             | XN      | MS      | RW VM  | LT
+# 0xFFFC | FeatureMap            | map32        | all              | F       | 0       | R V    | M
+# 0xFFFD | ClusterRevision       | uint16       | all              | F       | 7       | R V    | M
 #
 # DATA TYPES:
 # - OptionsBitmap: ExecuteIfOff=Bit0, CoupleColorTempToLevel=Bit1
@@ -115,16 +115,38 @@
 # - X: Nullable
 # - Q: Quieter reporting (less frequent updates)
 # - N: NonVolatile (persists across power cycles)
-# - P: Periodic reporting
+# - S: Scene
+# - F: Fixed
 #
 # IMPLEMENTATION NOTES:
-# - CurrentLevel: 0=Off, 1-254=brightness levels, 255 not allowed for lights
-# - For Tasmota: Maps to Dimmer (0-100%) scaled to 0-254
-# - OnLevel: Level to use when turning on (null = use previous level)
-# - MinLevel/MaxLevel: Constrain the usable range (default 1-254)
+# - Lighting feature: MinLevel is 1, CurrentLevel is 1..254 (255 not allowed), off is reported by On/Off only
+# - A requested Level below MinLevel (0) is clamped to MinLevel (1)
+# - Level 1 (MinLevel) is a valid level, it does not mean off by itself:
+#   - MoveToLevel/Step (without On/Off, Move is a no-op) never change On/Off: MoveToLevel(1) (or 0) sets the lowest
+#     level and does not switch off. This is the only way to be on at level 1
+#   - MoveToLevelWithOnOff/MoveWithOnOff/StepWithOnOff set On/Off to (CurrentLevel != MinLevel): reaching
+#     level 1 always switches off, so the lowest level they leave on is 2 (same in CHIP SDK level-control.cpp)
+# - MoveToLevel while off is ignored (SUCCESS, no change) unless ExecuteIfOff is set: Options is 0 and
+#   not writable, so only OptionsMask/OptionsOverride bit 0 can set it; the level is then stored and the
+#   light stays off (local and virtual lights only: bridges and Zigbee ignore it, their commands switch on)
+# - Zigbee: MoveToLevel is sent as raw Zigbee MoveToLevel `0008!00` (without On/Off), the WithOnOff commands
+#   as `ZbSend Dimmer` (MoveToLevelWithOnOff); a delayed On merged into MoveToLevel(1) uses level 2 to switch on
+# - MoveToLevelWithOnOff: Level above MinLevel switches on, Level at MinLevel (0 or 1) switches off;
+#   when switching off the last level is kept (as Tasmota `Dimmer 0` and On/Off Off), so the next On restores it
+# - Move/MoveWithOnOff: validated and accepted as no-ops (no transition engine, a jump to 1 or 254 would break
+#   press-and-hold dimming); Step/StepWithOnOff are applied instantly; Stop/StopWithOnOff have nothing to stop
+# - Tasmota brightness 1..255 <-> Matter level 1..254, same value without scaling: Matter 254 -> Tasmota 255,
+#   Tasmota 254 and 255 -> Matter 254 (Tasmota 254 is sacrificed, very uncommon).
+#   Tasmota 0 is off: it is never sent for a level and the last level is kept.
+#   Matter 1 <-> Tasmota 1 (lowest brightness), Matter 1..254 read back exactly on a local light.
+#   Limitation of the WithOnOff commands (used by most controllers): the lowest level they leave on is 2,
+#   i.e. Tasmota 2; Tasmota 1 is reached only through MoveToLevel/Step.
+#   Bridges keep the level sent while the remote Dimmer matches it (Dimmer has 100 steps)
+# - Tasmota Dimmer 1..100 is derived from Tasmota brightness, minimum 1 (Dimmer 0 is off)
+# - Virtual (MtrUpdate `Bri`) and Zigbee (`Dimmer` 0..254) use the Matter scale directly, `Bri 0` is off
+# - OnLevel: null, Tasmota switches on at the previous level
 # - OnOff feature (bit 0) is mandatory - level changes can affect on/off state
 # - Lighting feature (bit 1) adds StartUpCurrentLevel and RemainingTime
-# - WithOnOff commands: Automatically turn on when increasing level from 0
 # - TransitionTime: In 1/10th second units (null = use default)
 #################################################################################
 
@@ -133,8 +155,8 @@
 #################################################################################
 # Light1 hosts the Color Control server shared by Light2 (0x010C), Light3 and
 # Light5 (0x010D), gated by the static `CC_FEAT`. With `CC_FEAT == 0` (Light1)
-# every Color Control path is dormant: Light1 clusters, attributes,
-# AcceptedCommandList and behaviour are unchanged.
+# every Color Control path is dormant: no Color Control cluster, attributes,
+# commands or AcceptedCommandList on Light1.
 #
 # CC_FEAT = FeatureMap = ColorCapabilities:
 # - HS 0x01 (HueSaturation), XY 0x08, CT 0x10 (ColorTemperature)
@@ -176,10 +198,10 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     # 0x0004: inherited                                     # Groups 1.3 p.21
     # 0x0062: inherited                                     # Scenes Management 1.4 (PROVISIONAL) - replaces 0x0005
     # 0x0006: [0],                                    # On/Off 1.5 p.48
-    0x0008: [0,2,3,0x0F,0x11],                      # Level Control 1.6 p.57
+    0x0008: [0,1,2,3,0x0F,0x11,0x4000],             # Level Control 1.6 p.57
   })
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Bri")
-  static var TYPES = { 0x0101: 3 }                  # Dimmable Light - Matter 1.4.1 Device Library Rev 3
+  static var TYPES = { 0x0101: 3 }                  # Dimmable Light - rev 3 kept deliberately, rev 4 (1.6.1) requires Groupcast, not implemented
   static var DELAYED_ON_MS = 600                    # "Lights delayed on": max wait for a level command after an On while off
 
   static var CC_FEAT = 0                            # Color Control FeatureMap/ColorCapabilities: 0 = none (Light1), HS 0x01, XY 0x08, CT 0x10
@@ -213,7 +235,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   # var tasmota_relay_index                             # Relay number in Tasmota (1 based), nil for internal light
   # var shadow_onoff                                  # (bool) status of the light power on/off
   # var light_index                                   # index number when using `light.get()` and `light.set()`
-  var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
+  var shadow_bri                                    # (int 1..254) Matter CurrentLevel, brightness before Gamma correction - kept while off, 0 and 255 are not allowed
   # Color Control (initialized only by `cc_init()`, stay `nil` on Light1)
   var shadow_ct                                     # (int) ColorTemperatureMireds, CT plugins only
   var ct_min, ct_max                                # physical CT range: 153..500, or 200..380 with SetOption82
@@ -224,7 +246,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   #############################################################
   # Constructor
   def init(device, endpoint, arguments)
-    self.shadow_bri = 0
+    self.shadow_bri = 1                             # Matter level 1..254, last level is kept while turning off
     super(self).init(device, endpoint, arguments)
   end
 
@@ -268,13 +290,9 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
           self.attribute_updated(0x0006, 0x0000)
           self.shadow_onoff = pow
         end
-        var bri = light_status.find('bri', nil)
-        if bri != nil
-          bri = tasmota.scale_uint(bri, 0, 255, 0, 254)
-          if bri != self.shadow_bri
-            self.attribute_updated(0x0008, 0x0000)
-            self.shadow_bri = bri
-          end
+        var bri = light_status.find('bri', nil)                 # Tasmota 0..255, 0 = off: the last level is kept
+        if bri != nil && bri > 0
+          self.set_shadow_bri(self.bri_from_tasmota(bri))       # 1..255 -> 1..254
         end
         if self.CC_FEAT   self.cc_update(light_status)   end    # Color Control shadows, same `light.get()` map
       end
@@ -283,37 +301,96 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   end
 
   #############################################################
+  # Level conversions
+  #
+  # Matter level 1..254 (MinLevel 1) <-> Tasmota brightness 1..255 and Dimmer 1..100.
+  # Tasmota brightness 0 and `Dimmer 0` mean off, so a level never converts to 0.
+  # Same value, no scaling: Matter 1..253 <-> Tasmota 1..253, Matter 254 -> Tasmota 255, Tasmota 254 and 255 -> Matter 254
+  # (Tasmota 254 is sacrificed, it is very uncommon). Matter 1..254 read back exactly.
+  # Limitation of the WithOnOff commands: level 1 switches off, so the lowest level they leave on
+  # is 2 (Tasmota 2); Matter 1 / Tasmota 1 is reached only through MoveToLevel/Step.
+
+  # Matter level 1..254 -> Tasmota brightness 1..253 and 255 (254 is never sent)
+  def bri_to_tasmota(bri_254)
+    if (bri_254 < 1)    return 1     end      # never 0, which is off
+    if (bri_254 >= 254) return 255   end
+    return bri_254
+  end
+
+  # Tasmota brightness 1..255 -> Matter level 1..254, 254 and 255 are merged (0 is off, not converted by callers)
+  def bri_from_tasmota(bri_255)
+    if (bri_255 < 1)    return 1     end      # MinLevel
+    if (bri_255 >= 254) return 254   end
+    return bri_255
+  end
+
+  # Matter level 1..254 -> Tasmota Dimmer 1..100
+  def dimmer_from_bri(bri_254)
+    var dimmer = tasmota.scale_uint(self.bri_to_tasmota(bri_254), 0, 255, 0, 100)   # input already bounded to 1..255
+    if (dimmer < 1)     dimmer = 1     end      # never `Dimmer 0`, which is off
+    if (dimmer > 100)   dimmer = 100   end
+    return dimmer
+  end
+
+  # Tasmota Dimmer 1..100 -> Matter level 1..254
+  def bri_from_dimmer(dimmer)
+    if (dimmer < 1)     dimmer = 1     end      # before scale_uint(): negative values wrap in uint16 to full brightness
+    if (dimmer > 100)   dimmer = 100   end
+    return self.bri_from_tasmota(tasmota.scale_uint(dimmer, 0, 100, 0, 255))
+  end
+
+  # update CurrentLevel shadow (nil = unchanged), reported on change
+  def set_shadow_bri(bri_254)
+    if (bri_254 != nil) && (bri_254 != self.shadow_bri)
+      self.attribute_updated(0x0008, 0x0000)
+      self.shadow_bri = bri_254
+    end
+  end
+
+  #############################################################
   # Set Bri
   #
-  # `bri` is in range 0.255 and not 0..254 like in Matter
-  # `pow` can be bool on `nil` if no change
+  # `bri_254` is a Matter level, clamped to 1..254, or `nil` to keep the level
+  # `pow` can be bool or `nil` if no change
+  # `pow == false` switches off and keeps the last level, `bri_254` is ignored
   def set_bri(bri_254, pow)
-    if (bri_254 < 0)    bri_254 = 0     end
-    if (bri_254 > 254)  bri_254 = 254   end
+    if bri_254 != nil
+      if (bri_254 < 1)    bri_254 = 1     end
+      if (bri_254 > 254)  bri_254 = 254   end
+    end
     pow = (pow != nil) ? bool(pow) : nil        # nil or bool
+    if pow == false
+      bri_254 = nil                             # off: the last level is kept, as Tasmota `Dimmer 0`
+    end
     if self.BRIDGE
-      var dimmer = tasmota.scale_uint(bri_254, 0, 254, 0, 100)
-      var ret = self.call_remote_sync("Dimmer", str(dimmer))
-      if ret != nil
-        self.parse_status(ret, 11)        # update shadow from return value
+      if bri_254 != nil
+        var ret = self.call_remote_sync("Dimmer", str(self.dimmer_from_bri(bri_254)))   # `Dimmer N` switches on unless `SetOption20 1`
+        if ret != nil || self.mqtt_remote       # accepted (MQTT has no reply): keep the exact level, Dimmer has only 100 steps
+          self.set_shadow_bri(bri_254)
+        end
+        if ret != nil   self.parse_status(ret, 11)   end   # the level only if the remote Dimmer differs
+      end
+      if pow == false
+        self.set_onoff(false)                   # `Power` keeps the remote level
+      elif pow == true && (self.mqtt_remote || !self.shadow_onoff)
+        self.set_onoff(true)                    # `SetOption20 1` stays off after `Dimmer`; MQTT has no reply
+      end
+      if self.mqtt_remote && pow != nil && pow != self.shadow_onoff   # MQTT commands have no synchronous reply
+        self.attribute_updated(0x0006, 0x0000)
+        self.shadow_onoff = pow
       end
     elif self.VIRTUAL
       if (pow != nil) && (pow != self.shadow_onoff)
         self.attribute_updated(0x0006, 0x0000)
         self.shadow_onoff = pow
       end
-      if bri_254 != self.shadow_bri
-        self.attribute_updated(0x0008, 0x0000)
-        self.shadow_bri = bri_254
-      end
+      self.set_shadow_bri(bri_254)
     else
       import light
-      var bri_255 = tasmota.scale_uint(bri_254, 0, 254, 0, 255)
-      if pow == nil
-        light.set({'bri': bri_255}, self.light_index)
-      else
-        light.set({'bri': bri_255, 'power': pow}, self.light_index)
-      end
+      var l = {}
+      if bri_254 != nil   l['bri'] = self.bri_to_tasmota(bri_254)   end
+      if pow != nil       l['power'] = pow                          end
+      if size(l) > 0      light.set(l, self.light_index)            end
       self.update_shadow()
     end
   end
@@ -362,30 +439,32 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   end
 
   # A delayed On merged into MoveToLevel(WithOnOff): switch on directly at the new level
-  def level_on(bri_254, waited)
-    if (bri_254 < 0)    bri_254 = 0     end
+  # `bri_254` is clamped to 1..254; `on` is false for MoveToLevelWithOnOff at MinLevel (0 or 1),
+  # the light then stays off and keeps its last level
+  def level_on(bri_254, waited, on)
+    if (bri_254 < 1)    bri_254 = 1     end
     if (bri_254 > 254)  bri_254 = 254   end
-    var on = bri_254 > 0
-    if self.BRIDGE
-      self.set_bri(bri_254)                     # remote Tasmota: `Dimmer N` switches on at N
-      if on && (self.mqtt_remote || !self.shadow_onoff)   self.set_onoff(true)   end   # `SetOption20 1` stays off; MQTT has no reply
+    if on && self.ZIGBEE && bri_254 < 2         # `ZbSend Dimmer 1` (MoveToLevelWithOnOff at MinLevel) would stay off
+      bri_254 = 2
+    end
+    if !on
+      self.set_bri(nil, false)                  # the delayed On was never sent: make sure the light is off, level kept
+    elif self.BRIDGE
+      self.set_bri(bri_254, true)                 # also handles SetOption20 and MQTT bridges
     elif self.VIRTUAL
-      self.set_bri(bri_254, on)                 # virtual and Zigbee: shadows, the command is published below
+      self.set_bri(bri_254, true)               # virtual and Zigbee: shadows, the command is published below
     else
       import light                              # local light: level first while still off, then power,
-      light.set({'bri': tasmota.scale_uint(bri_254, 0, 254, 0, 255)}, self.light_index)
-      if on   light.set({'power': true}, self.light_index)   end   # so the previous level is never shown
+      light.set({'bri': self.bri_to_tasmota(bri_254)}, self.light_index)
+      light.set({'power': true}, self.light_index)  # so the previous level is never shown
       self.update_shadow()
     end
-    if !on && self.shadow_onoff                 # level 0: stays off (MQTT has no reply to confirm)
-      self.attribute_updated(0x0006, 0x0000)
-      self.shadow_onoff = false
-    end
-    var dimmer = tasmota.scale_uint(bri_254, 0, 254, 0, 100)
-    if self.ZIGBEE                              # `ZbSend Dimmer` is MoveToLevelWithOnOff: no separate On
-      self.publish_command('Bri', bri_254, 'Dimmer', dimmer)
+    if !on
+      self.publish_command('Power', 0)          # same as Off: the last level is kept
+    elif self.ZIGBEE                            # `ZbSend Dimmer` is MoveToLevelWithOnOff: no separate On
+      self.publish_command('Bri', bri_254, 'Dimmer', self.dimmer_from_bri(bri_254))
     else
-      self.publish_command('Power', on ? 1 : 0, 'Bri', bri_254, 'Dimmer', dimmer)
+      self.publish_command('Power', 1, 'Bri', bri_254, 'Dimmer', self.dimmer_from_bri(bri_254))
     end
     log(f"MTR: [{self.endpoint:02X}] delayed On merged into level {bri_254} after {waited} ms", 3)
     return true
@@ -527,9 +606,11 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   #############################################################
   # get_accepted_commands
   #
-  # AcceptedCommandList for Color Control only; Level Control 0x0008 is unchanged (empty)
+  # AcceptedCommandList for Level and Color Control
   def get_accepted_commands(cluster)
-    if cluster == 0x0300 && self.CC_FEAT
+    if cluster == 0x0008
+      return bytes("0001020304050607")
+    elif cluster == 0x0300 && self.CC_FEAT
       var r = bytes()
       for c: 0..0x4C
         if self.cc_supported(c)   r.add(c, 1)   end             # ascending order
@@ -585,16 +666,20 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     # ====================================================================================================
     if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
       self.update_shadow_lazy()
+      # Lighting feature: MinLevel is 1 and CurrentLevel stays in 1..254 (`shadow_bri` is kept in
+      # that range, and keeps the last level while off). Off is reported by the On/Off cluster only.
       if   attribute == 0x0000          #  ---------- CurrentLevel / u1 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, self.shadow_bri)
-      elif attribute == 0x0002          #  ---------- MinLevel / u1 ----------
+      elif attribute == 0x0001          #  ---------- RemainingTime / u2 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 0)
+      elif attribute == 0x0002          #  ---------- MinLevel / u1 ----------
+        return tlv_solo.set(0x06 #-TLV.U4-#, 1)
       elif attribute == 0x0003          #  ---------- MaxLevel / u1 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 254)
       elif attribute == 0x000F          #  ---------- Options / map8 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, 0)    #
-      elif attribute == 0x0011          #  ---------- OnLevel / u1 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, self.shadow_bri)
+      elif attribute == 0x0011 || attribute == 0x4000   #  ---------- OnLevel / StartUpCurrentLevel, nullable ----------
+        return tlv_solo.set(0x14 #-TLV.NULL-#, nil)
       end
 
     # ====================================================================================================
@@ -630,6 +715,27 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   end
 
   #############################################################
+  # Apply an immediate level command. `onoff` is bool for WithOnOff commands, nil otherwise.
+  # `onoff == false` switches off and keeps the last level (`bri_254` is ignored)
+  def apply_level(bri_254, onoff)
+    self.set_bri(bri_254, onoff)
+    var dimmer = self.dimmer_from_bri(bri_254)
+    if onoff == false
+      self.publish_command('Power', 0)          # same as Off: `ZbSend Dimmer` would switch a Zigbee light back on
+    elif onoff == true
+      self.publish_command('Power', 1, 'Bri', bri_254, 'Dimmer', dimmer)
+    elif self.ZIGBEE
+      if self.zigbee_mapper && self.zigbee_mapper.resolve_zb_device()
+        self.zigbee_mapper.zb_single_command('Level', bri_254)
+      end
+      matter.publish_command('MtrReceived', self.endpoint, self.node_label, f'"Bri":{bri_254},"Dimmer":{dimmer}')
+    else
+      self.publish_command('Bri', bri_254, 'Dimmer', dimmer)
+    end
+    return true
+  end
+
+  #############################################################
   # Invoke a command
   #
   # returns a TLV object if successful, contains the response
@@ -648,36 +754,76 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
       if   command == 0x0000            # ---------- MoveToLevel ----------
         var bri_254 = val.findsubval(0)  # Level 0..254
         ctx.log = "bri:"+str(bri_254)
-        if held != nil   return self.level_on(bri_254, held)   end
-        self.set_bri(bri_254)
-        self.publish_command('Bri', bri_254, 'Dimmer', tasmota.scale_uint(bri_254, 0, 254, 0, 100))
-        return true
+        if (bri_254 < 1)    bri_254 = 1     end   # below MinLevel: clamped, On/Off is never changed
+        if (bri_254 > 254)  bri_254 = 254   end
+        if !self.shadow_onoff                     # off (a delayed On is reported on): ExecuteIfOff
+          # Options is 0, OptionsMask bit 0 selects OptionsOverride bit 0 instead
+          var mask = val.findsubval(2)
+          var over = val.findsubval(3)
+          var execute_if_off = (type(mask) == 'int') && (mask & 1) && (type(over) == 'int') && (over & 1)
+          # bridges (`Dimmer N`) and Zigbee (`ZbSend Dimmer`) cannot set a level without switching on
+          if !execute_if_off || self.BRIDGE || self.ZIGBEE
+            ctx.log += " off, ignored"
+            return true                           # not executed, SUCCESS
+          end
+        end
+        if held != nil   return self.level_on(bri_254, held, true)   end   # the delayed On switches on
+        return self.apply_level(bri_254, nil)
       elif command == 0x0001            # ---------- Move ----------
-        # TODO, we don't really support it
+        var mode = val.findsubval(0)
+        var rate = val.findsubval(1)
+        if (mode != 0 && mode != 1) || rate == 0
+          ctx.status = 0x85 #-matter.INVALID_COMMAND-#
+          return nil
+        end
+        ctx.log = "no-op"               # no transition engine: a jump to 1 or 254 would break press-and-hold dimming
         return true
       elif command == 0x0002            # ---------- Step ----------
-        # TODO, we don't really support it
-        return true
+        var mode = val.findsubval(0)
+        var step = val.findsubval(1)
+        if (mode != 0 && mode != 1) || type(step) != 'int' || step <= 0
+          ctx.status = 0x85 #-matter.INVALID_COMMAND-#
+          return nil
+        end
+        if !self.shadow_onoff   ctx.log = "off, ignored"   return true   end
+        var bri_254 = self.shadow_bri + (mode == 0 ? step : -step)
+        if bri_254 < 1     bri_254 = 1     end
+        if bri_254 > 254   bri_254 = 254   end
+        ctx.log = "bri:"+str(bri_254)
+        return self.apply_level(bri_254, nil)
       elif command == 0x0003            # ---------- Stop ----------
-        # TODO, we don't really support it
-        return true
+        return true                     # commands are applied immediately, so there is no active transition
       elif command == 0x0004            # ---------- MoveToLevelWithOnOff ----------
         var bri_254 = val.findsubval(0)  # Level 0..254
         ctx.log = "bri:"+str(bri_254)
-        if held != nil   return self.level_on(bri_254, held)   end
-        var onoff = bri_254 > 0
-        self.set_bri(bri_254, onoff)
-        self.publish_command('Power', onoff ? 1 : 0, 'Bri', bri_254, 'Dimmer', tasmota.scale_uint(bri_254, 0, 254, 0, 100))
-        return true
+        if (bri_254 < 1)    bri_254 = 1     end   # below MinLevel: clamped
+        if (bri_254 > 254)  bri_254 = 254   end
+        var onoff = bri_254 > 1          # above MinLevel switches on, MinLevel switches off: the lowest level left on is 2
+        if held != nil   return self.level_on(bri_254, held, onoff)   end
+        return self.apply_level(bri_254, onoff)
       elif command == 0x0005            # ---------- MoveWithOnOff ----------
-        # TODO, we don't really support it
+        var mode = val.findsubval(0)
+        var rate = val.findsubval(1)
+        if (mode != 0 && mode != 1) || rate == 0
+          ctx.status = 0x85 #-matter.INVALID_COMMAND-#
+          return nil
+        end
+        ctx.log = "no-op"               # no transition engine, see Move
         return true
       elif command == 0x0006            # ---------- StepWithOnOff ----------
-        # TODO, we don't really support it
-        return true
+        var mode = val.findsubval(0)
+        var step = val.findsubval(1)
+        if (mode != 0 && mode != 1) || type(step) != 'int' || step <= 0
+          ctx.status = 0x85 #-matter.INVALID_COMMAND-#
+          return nil
+        end
+        var bri_254 = self.shadow_bri + (mode == 0 ? step : -step)
+        if bri_254 < 1     bri_254 = 1     end
+        if bri_254 > 254   bri_254 = 254   end
+        ctx.log = "bri:"+str(bri_254)
+        return self.apply_level(bri_254, bri_254 > 1)   # MinLevel switches off, the last level is kept
       elif command == 0x0007            # ---------- StopWithOnOff ----------
-        # TODO, we don't really support it
-        return true
+        return true                     # commands are applied immediately, so there is no active transition
       end
 
     # ====================================================================================================
@@ -764,11 +910,18 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
       var val_ct = int(payload.find("CT"))          # int or nil
       if val_ct != nil   self.set_ct(val_ct)   end
     end
-    var val_onoff = payload.find("Power")
-    if self.on_hold != nil && val_onoff != nil && !bool(val_onoff)   val_onoff = nil   end   # delayed On: not switched on yet
+    # 'Power' is read here only when 'Bri' is present: 'Bri 0' must override it before the delayed On check.
+    # Without 'Bri', super() (Light0) reads 'Power' itself, with the same delayed On check.
     var val_bri = payload.find("Bri")
     if val_bri != nil
-      self.set_bri(int(val_bri), val_onoff)
+      var val_onoff = payload.find("Power")
+      val_bri = int(val_bri)
+      if val_bri < 1                        # `Bri 0` is off, as Tasmota `Dimmer 0`: the last level is kept
+        val_bri = nil
+        val_onoff = false
+      end
+      if self.on_hold != nil && val_onoff != nil && !bool(val_onoff)   val_onoff = nil   end   # delayed On: not switched on yet
+      self.set_bri(val_bri, val_onoff)      # level clamped to 1..254
       return    # don't call super() because we already handeld 'Power'
     end
     super(self).update_virtual(payload)
@@ -784,8 +937,10 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
 
     if index == 11                              # Status 11
       var dimmer = int(data.find("Dimmer"))     # 0..100
-      if dimmer != nil
-        var bri = tasmota.scale_uint(dimmer, 0, 100, 0, 254)
+      # Dimmer 0 is off: keep the last level, off is reported by POWER
+      # unchanged if it is what shadow_bri gives, so a level set from Matter is kept as sent
+      if dimmer != nil && dimmer > 0 && dimmer != self.dimmer_from_bri(self.shadow_bri)
+        var bri = self.bri_from_dimmer(dimmer)  # 1..254
         if bri != self.shadow_bri
           self.attribute_updated(0x0008, 0x0000)
           self.shadow_bri = bri
@@ -814,7 +969,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   def web_value_dimmer()
     var bri_html = ""
     if self.shadow_bri != nil
-      var bri = tasmota.scale_uint(self.shadow_bri, 0, 254, 0, 100)
+      var bri = self.dimmer_from_bri(self.shadow_bri)
       bri_html = format("%i%%", bri)
     end
     return  "&#128261; " + bri_html;

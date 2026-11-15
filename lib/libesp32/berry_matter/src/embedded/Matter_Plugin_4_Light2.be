@@ -111,7 +111,7 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
   # var shadow_onoff                                  # (bool) status of the light power on/off
-  # var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
+  # var shadow_bri                                    # (int 1..254) Matter CurrentLevel, brightness before Gamma correction - kept while off, 0 and 255 are not allowed
   # var light_index                                   # index number when using `light.get()` and `light.set()`
   # var shadow_ct, ct_min, ct_max, ct_startup         # Color Control CT, see Light1
   # var shadow_color_mode, cc_options                 # Color Control, see Light1

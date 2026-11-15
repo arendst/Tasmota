@@ -168,8 +168,8 @@ class FakeMapper
   def init() self.shortaddr = 0x1234 self.sent = [] end
   def parse_configuration(config) end
   def resolve_zb_device() return true end
-  def zb_single_command(key, value)              # as Matter_Zigbee_Mapper: only Power, Bri (ZbSend Dimmer) and CT
-    if key == 'Power' || key == 'Bri' || key == 'CT'   self.sent.push(f"{key} {value}")   end
+  def zb_single_command(key, value)              # as Matter_Zigbee_Mapper: Power, Bri (ZbSend Dimmer), CT and Level (raw MoveToLevel)
+    if key == 'Power' || key == 'Bri' || key == 'CT' || key == 'Level'   self.sent.push(f"{key} {value}")   end
   end
 end
 class MemoryDevice : matter.Device
@@ -330,7 +330,7 @@ check("HTTP: command, shadow and publish details", def ()
   assert(commands(p) == ["Dimmer 5"], "only the level goes to the remote: " + str(commands(p)))
   assert(published == ['"Power":1,"Bri":14,"Dimmer":5'], str(published))
   assert(lamp(p).power && lamp(p).dimmer == 5)
-  assert(p.on_hold == nil && p.shadow_onoff && p.shadow_bri == 13)
+  assert(p.on_hold == nil && p.shadow_onoff && p.shadow_bri == 14)          # exact level kept, Dimmer 5 is what level 14 gives
   assert(logged("delayed On merged into level 14 after 120 ms"))
   advance(1000)
   assert(commands(p) == ["Dimmer 5"], "expired timer of a merged delay must do nothing")
@@ -399,14 +399,23 @@ check("HTTP: SetOption20 remote, level 0, colour first, repeated On", def ()
   assert(commands(p) == ["Dimmer 5", "Power1 1"] && lamp(p).power && lamp(p).max_seen() == 5, str(commands(p)))
   p = bridged(false, 100)
   on(p)  advance(40)  level_onoff(p, 0)  advance(1000)
-  assert(commands(p) == ["Dimmer 0"] && !lamp(p).power && !p.shadow_onoff, str(commands(p)))
+  assert(commands(p) == ["Power1 0"] && !lamp(p).power && !p.shadow_onoff && lamp(p).dimmer == 100, str(commands(p)))
+  p = bridged(false, 100)
+  on(p)  advance(40)  level_onoff(p, 1)  advance(1000)                      # MinLevel with OnOff: off, level kept
+  assert(commands(p) == ["Power1 0"] && !lamp(p).power && !p.shadow_onoff && p.shadow_bri == 254, str(commands(p)))
+  assert(published == ['"Power":0'], str(published))
   p = bridged(false, 100)
   on(p)  advance(40)  ct(p, 460)
   assert(commands(p)[0] == "Power1 1" && commands(p)[-1] == "CT 460", str(commands(p)))
   assert(logged("delayed On sent after 40 ms, before another command"))
   p = bridged(false, 100)
-  on(p)  advance(40)  invoke(p, 0x0008, 0x06, [0, 10, 0])  advance(1000)     # StepWithOnOff: accepted no-op
-  assert(commands(p) == ["Power1 1", "Status 11"], "delayed On must be sent once, first: " + str(commands(p)))
+  on(p)  advance(40)  invoke(p, 0x0008, 0x06, [0, 10, 0])  advance(1000)
+  assert(commands(p) == ["Power1 1", "Status 11", "Dimmer 100"] && lamp(p).power, str(commands(p)))
+  p = bridged(false, 100)
+  device.lights_delayed_on = false
+  lamp(p).so20 = true
+  level_onoff(p, 14)
+  assert(commands(p) == ["Status 11", "Dimmer 5", "Power1 1"] && lamp(p).power, str(commands(p)))
   p = bridged(false, 100)
   on(p)  advance(100)  on(p)
   assert(size(tasmota.timers) == 1 && size(commands(p)) == 0, "repeated On must stay delayed: " + str(commands(p)))
@@ -437,7 +446,7 @@ check("MQTT: level after On sends Dimmer then Power, never Power first", def ()
   assert(device.mqtt_boundary.sent == ["Power1 1"], str(device.mqtt_boundary.sent))
   var z = mqtt(false, 100)
   on(z)  advance(40)  level_onoff(z, 0)
-  assert(device.mqtt_boundary.sent == ["Dimmer 0"] && !z.shadow_onoff, str(device.mqtt_boundary.sent))
+  assert(device.mqtt_boundary.sent == ["Power1 0"] && !z.shadow_onoff && z.shadow_bri == 254, str(device.mqtt_boundary.sent))
 end)
 
 check("local light: level is set before power, previous level never shown", def ()
@@ -449,8 +458,8 @@ check("local light: level is set before power, previous level never shown", def 
   p.update_shadow()
   assert(p.shadow_onoff == true, "light.get() undid the delayed On")
   level_onoff(p, 14)
-  assert(str(local.calls) == "[{'bri': 14}, {'power': true}]", str(local.calls))
-  assert(local.seen == [0, 14] && local.power && p.shadow_onoff, str(local.seen))
+  assert(str(local.calls) == "[{'bri': 14}, {'power': true}]", str(local.calls))   # level 14 is Tasmota 14
+  assert(local.seen == [0, 14] && local.power && p.shadow_onoff && p.shadow_bri == 14, str(local.seen))
   var q = local_light(false, 255)
   on(q)  advance(600)
   assert(str(local.calls) == "[{'power': true}]" && local.seen == [255])
@@ -482,6 +491,38 @@ check("Zigbee light: only ZbSend Dimmer (MoveToLevelWithOnOff)", def ()
   var q = virtual_light(matter.Plugin_Zigbee_Light1, {"zigbee_device": "0x1234"})
   on(q)  advance(600)
   assert(q.zigbee_mapper.sent == ["Power 1"], str(q.zigbee_mapper.sent))
+end)
+
+check("MoveToLevel while off: ignored unless ExecuteIfOff, never switches on or off", def ()
+  var l = local_light(false, 255)
+  device.lights_delayed_on = false
+  var r = invoke(l, 0x0008, 0x00, [14])
+  assert(r[0] == true && r[1].log == "bri:14 off, ignored" && size(local.calls) == 0, str(local.calls))
+  r = invoke(l, 0x0008, 0x00, [14, 0, 1, 1])     # OptionsMask/OptionsOverride bit 0: ExecuteIfOff
+  assert(str(local.calls) == "[{'bri': 14}]" && !local.power && !l.shadow_onoff && l.shadow_bri == 14, str(local.calls))
+  l = local_light(true, 255)
+  device.lights_delayed_on = false
+  invoke(l, 0x0008, 0x00, [1])                    # MinLevel without OnOff: lowest level, stays on
+  assert(str(local.calls) == "[{'bri': 1}]" && local.power && l.shadow_onoff && l.shadow_bri == 1, str(local.calls))   # Tasmota 1 reads back 1
+  var p = bridged(false, 100)
+  device.lights_delayed_on = false
+  invoke(p, 0x0008, 0x00, [14, 0, 1, 1])          # a remote `Dimmer` would switch on: ignored
+  assert(!lamp(p).power && commands(p).find("Dimmer 5") == nil && published == [], str(commands(p)))
+end)
+
+check("Zigbee MoveToLevel: raw MoveToLevel without On/Off, ignored while off", def ()
+  var z = virtual_light(matter.Plugin_Zigbee_Light1, {"zigbee_device": "0x1234"})
+  device.lights_delayed_on = false
+  z.update_virtual({"Power": 1})
+  invoke(z, 0x0008, 0x00, [1])                    # `ZbSend Dimmer 1` would switch the bulb off
+  assert(z.zigbee_mapper.sent == ["Level 1"], str(z.zigbee_mapper.sent))
+  assert(published == ['"Bri":1,"Dimmer":1'] && z.shadow_onoff && z.shadow_bri == 1, str(published))
+  z.update_virtual({"Power": 0})
+  invoke(z, 0x0008, 0x00, [14, 0, 1, 1])          # `ZbSend Dimmer` would switch on: ignored even with ExecuteIfOff
+  assert(z.zigbee_mapper.sent == ["Level 1"] && !z.shadow_onoff, str(z.zigbee_mapper.sent))
+  var q = virtual_light(matter.Plugin_Zigbee_Light1, {"zigbee_device": "0x1234"})
+  on(q)  advance(100)  invoke(q, 0x0008, 0x00, [1])     # delayed On merged into level 1: on at level 2
+  assert(q.zigbee_mapper.sent == ["Bri 2"] && q.shadow_onoff && q.shadow_bri == 2, str(q.zigbee_mapper.sent))
 end)
 
 check("setting is saved only when on, and defaults to off", def ()
