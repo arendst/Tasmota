@@ -139,7 +139,7 @@ enum GVPinTypes {
 };
 
 typedef struct {
-  ESP8266WebServer *WebServer;
+  TasmotaWebServer *WebServer;
   Ticker ticker;
   String baseUrl;
   int lastPinStates[MAX_GPIO_PIN];
@@ -248,7 +248,7 @@ bool GVInit(void) {
 
 void GVBegin(void) {
   if (GV->WebServer == nullptr) {
-    GV->WebServer = new ESP8266WebServer(GV->port);
+    GV->WebServer = new TasmotaWebServer(GV->port);
     // Set CORS headers for global responses
   //  GV->WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
   //  GV->WebServer->sendHeader(F("Access-Control-Allow-Methods"), F("GET, POST, OPTIONS"));
@@ -562,25 +562,28 @@ String GpioLabel(int pin) {
         sensor_type = GPIO_NONE;
       }
     }
-    char sindex[4] = { 0 };
-    uint32_t sensor_name_idx = BGPIO(sensor_type);
-    uint32_t nice_list_search = sensor_type & 0xFFE0;
-    for (uint32_t j = 0; j < nitems(kGpioNiceList); j++) {
-      uint32_t nls_idx = pgm_read_word(&kGpioNiceList[j]);
-      if (((nls_idx & 0xFFE0) == nice_list_search) && ((nls_idx & 0x001F) > 0)) {
-        snprintf_P(sindex, sizeof(sindex), PSTR("%d"), (sensor_type & 0x001F) +1);
-        break;
+
+    if (sensor_type != GPIO_NONE) {
+      char sindex[4] = { 0 };
+      uint32_t sensor_name_idx = BGPIO(sensor_type);
+      uint32_t nice_list_search = sensor_type & 0xFFE0;
+      for (uint32_t j = 0; j < nitems(kGpioNiceList); j++) {
+        uint32_t nls_idx = pgm_read_word(&kGpioNiceList[j]);
+        if (((nls_idx & 0xFFE0) == nice_list_search) && ((nls_idx & 0x001F) > 0)) {
+          snprintf_P(sindex, sizeof(sindex), PSTR("%d"), (sensor_type & 0x001F) +1);
+          break;
+        }
       }
+      const char *sensor_names = kSensorNames;
+      if (sensor_name_idx > GPIO_FIX_START) {
+        sensor_name_idx = sensor_name_idx - GPIO_FIX_START -1;
+        sensor_names = kSensorNamesFixed;
+      }
+      char stemp1[TOPSZ];
+      GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names);
+      result = stemp1;
+      result += sindex;
     }
-    const char *sensor_names = kSensorNames;
-    if (sensor_name_idx > GPIO_FIX_START) {
-      sensor_name_idx = sensor_name_idx - GPIO_FIX_START -1;
-      sensor_names = kSensorNamesFixed;
-    }
-    char stemp1[TOPSZ];
-    GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names);
-    result = stemp1;
-    result += sindex;
   }
   return result;
 }

@@ -147,9 +147,8 @@ String GetResetReason(void) {
     char buff[32];
     strncpy_P(buff, PSTR(D_JSON_BLOCKED_LOOP), sizeof(buff));
     return String(buff);
-  } else {
-    return ESP_getResetReason();
   }
+  return ESP_getResetReason();
 }
 
 #ifdef ESP32
@@ -413,14 +412,12 @@ int TextToInt(char *str)
   return strtol(str, &p, radix);
 }
 
-char* dtostrfd(double number, unsigned char prec, char *s)
-{
+char* dtostrfd(double number, unsigned char prec, char *s) {
   if ((isnan(number)) || (isinf(number))) {  // Fix for JSON output (https://stackoverflow.com/questions/1423081/json-left-out-infinity-and-nan-json-status-in-ecmascript)
     strcpy_P(s, PSTR("null"));
     return s;
-  } else {
-    return dtostrf(number, 1, prec, s);
   }
+  return dtostrf(number, 1, prec, s);
 }
 
 char* Unescape(char* buffer, uint32_t* size)
@@ -736,8 +733,7 @@ char* NoAlNumToUnderscore(char* dest, const char* source)
   return dest;
 }
 
-char IndexSeparator(void)
-{
+char IndexSeparator(void) {
 /*
   // 20 bytes more costly !?!
   const char separators[] = { "-_" };
@@ -746,9 +742,8 @@ char IndexSeparator(void)
 */
   if (Settings->flag3.use_underscore) {  // SetOption64 - Enable "_" instead of "-" as sensor index separator
     return '_';
-  } else {
-    return '-';
   }
+  return '-';
 }
 
 void SetShortcutDefault(void)
@@ -1092,10 +1087,11 @@ uint32_t SqrtInt(uint32_t num)
   do {
     y = (x + num / x) / 2;
     if (y >= x) {
-      return x;
+      break;
     }
     x = y;
   } while (true);
+  return x;
 }
 
 uint32_t RoundSqrtInt(uint32_t num)
