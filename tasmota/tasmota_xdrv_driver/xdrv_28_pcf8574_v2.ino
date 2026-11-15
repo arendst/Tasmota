@@ -213,7 +213,7 @@ int Pcf8574Pin(uint32_t gpio, uint32_t index) {
     real_gpio += index;
     mask = 0xFFFF;
   }
-  for (uint32_t i = 0; i <= Pcf8574.max_connected_ports; i++) {
+  for (uint32_t i = 0; i < Pcf8574.max_connected_ports; i++) {
     if ((Pcf8574_pin[i] & mask) == real_gpio) {
       return i;                                        // Pin number configured for gpio
     }
@@ -227,7 +227,7 @@ bool Pcf8574PinUsed(uint32_t gpio, uint32_t index) {
 }
 
 uint32_t Pcf8574GetPin(uint32_t lpin) {
-  if (lpin <= Pcf8574.max_connected_ports) {
+  if (lpin < Pcf8574.max_connected_ports) {
     return Pcf8574_pin[lpin];
   } else {
     return GPIO_NONE;
