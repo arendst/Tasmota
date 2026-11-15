@@ -209,6 +209,10 @@ class Matter_Zigbee_Mapper
   # zb_single_command
   #
   # Convert a `MtrReceived` unitary payload to a Zigbee command
+  #
+  # `Level` is not a `MtrReceived` key, it is sent directly for Matter MoveToLevel:
+  # raw Zigbee MoveToLevel 0x0008/0x00 (without On/Off), the light is never switched on or off.
+  # `Bri` is `ZbSend Dimmer`, i.e. MoveToLevelWithOnOff 0x0008/0x04.
   def zb_single_command(key, value)
     # to ease caller, we accept nil arguments and do nothing
     var cmd
@@ -223,6 +227,8 @@ class Matter_Zigbee_Mapper
       cmd = f'ZbSend {{"Device":"{dev}"{ep},"Send":{{"Dimmer":{value:i}}}}}'
     elif (key == 'CT')
       cmd = f'ZbSend {{"Device":"{dev}"{ep},"Send":{{"CT":{value:i}}}}}'
+    elif (key == 'Level')     # Level (uint8) and TransitionTime 1s (uint16 LE), as `ZbSend Dimmer`
+      cmd = f'ZbSend {{"Device":"{dev}"{ep},"Send":"0008!00/{value:02X}0A00"}}'
     end
     # send command
     if (cmd != nil)
