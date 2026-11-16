@@ -183,6 +183,13 @@ def has_device_type(value, device_type)
   return false
 end
 
+def device_type_revision(value, device_type)
+  for item : value.val
+    if item.findsubval(0) == device_type return item.findsubval(1) end
+  end
+  return nil
+end
+
 class TestMessage
   var exchange_id, session
   def init(exchange_id, session)
@@ -290,6 +297,10 @@ ctx.attribute = 0x0015
 assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 0x01060100)
 ctx.attribute = 0x0018
 assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 1)
+# ClusterRevision values follow the Matter 1.6.1 data model.
+ctx.attribute = 0xFFFD
+assert(root.read_attribute(session, ctx, TLV.Matter_TLV_item()).val == 6)   # Basic Information
+assert(root.read_attribute(session, matter.Path(0, 0x003F, 0xFFFD), TLV.Matter_TLV_item()).val == 4)  # Group Key Management
 assert(matter.StatusResponseMessage().InteractionModelRevision == 13)
 
 # Descriptor composition is coherent in both global topology modes.
@@ -305,6 +316,9 @@ assert(tlv_values(bridge_aggregator.read_attribute(session, matter.Path(1, 0x001
 assert(bridge_app_2.contains_cluster(0x0039))
 assert(has_device_type(bridge_app_2.read_attribute(session, matter.Path(2, 0x001D, 0), TLV.Matter_TLV_item()), 0x0013))
 assert(tlv_values(bridge_app_2.read_attribute(session, matter.Path(2, 0x001D, 1), TLV.Matter_TLV_item())).find(0x0039) != nil)
+assert(bridge_app_2.read_attribute(session, matter.Path(2, 0x0039, 0xFFFD), TLV.Matter_TLV_item()).val == 6)   # Bridged Device Basic Information
+assert(device_type_revision(bridge_app_2.read_attribute(session, matter.Path(2, 0x001D, 0), TLV.Matter_TLV_item()), 0x0013) == 3)  # Bridged Node
+assert(device_type_revision(bridge_aggregator.read_attribute(session, matter.Path(1, 0x001D, 0), TLV.Matter_TLV_item()), 0x000E) == 2)  # Aggregator
 
 var native_device = TestTopologyDevice(true)
 var native_root = TestRoot()

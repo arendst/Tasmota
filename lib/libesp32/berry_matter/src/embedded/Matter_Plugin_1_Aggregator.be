@@ -18,10 +18,10 @@
 #
 
 #################################################################################
-# Matter 1.4.1 Device Specification - Aggregator (0x000E)
+# Matter 1.6.1 Device Specification - Aggregator (0x000E)
 #################################################################################
 # Device Type: Aggregator (0x000E)
-# Device Type Revision: 2 (Matter 1.4.1 Device Library)
+# Device Type Revision: 2 (Matter 1.6.1 Device Library)
 # Class: Simple | Scope: Endpoint
 #
 # CLUSTERS (Server):
@@ -65,7 +65,7 @@ class Matter_Plugin_Aggregator : Matter_Plugin
     # 0x001D: inherited               # Descriptor Cluster 9.5 p.453
     0x0003: [0,1,],                   # Identify 1.2 p.16
   })
-  static var TYPES = { 0x000E: 1 }    # Aggregator
+  static var TYPES = { 0x000E: 2 }    # Aggregator (rev 2)
 
   #############################################################
   # read an attribute

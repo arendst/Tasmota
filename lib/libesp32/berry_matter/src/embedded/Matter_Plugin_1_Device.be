@@ -57,20 +57,20 @@
 #################################################################################
 
 #################################################################################
-# Matter 1.4.1 Bridged Device Basic Information Cluster (0x0039)
+# Matter 1.6.1 Bridged Device Basic Information Cluster (0x0039)
 #################################################################################
-# Cluster Revision: 3 (Matter 1.4.1)
-# Role: Application | Scope: Endpoint
+# Cluster Revision: 6 (Matter 1.6.1)
+# Role: Utility | Scope: Endpoint
 #
 # ATTRIBUTES:
 # ID     | Name                  | Type   | Constraint | Quality | Default | Access | Conf
 # -------|-----------------------|--------|------------|---------|---------|--------|-----
 # 0x0003 | ProductName           | string | max 32     |         | MS      | R V    | O
-# 0x0005 | NodeLabel             | string | max 32     | N       | ""      | RW VM  | M
+# 0x0005 | NodeLabel             | string | max 32     | N       | ""      | RW VM  | O
 # 0x000A | SoftwareVersionString | string | max 64     |         | MS      | R V    | O
 # 0x000F | SerialNumber          | string | max 32     |         | MS      | R V    | O
 # 0x0011 | Reachable             | bool   | all        |         | TRUE    | R V    | M
-# 0x0012 | UniqueID              | string | max 32     |         | MS      | R V    | O
+# 0x0012 | UniqueID              | string | max 32     |         | MS      | R V    | M
 #
 # Quality Flags:
 # - N: Non-volatile (persists across reboots)
@@ -141,7 +141,7 @@ class Matter_Plugin_Device : Matter_Plugin
     0x0004: [0],                                    # Groups 1.3 p.21
     0x0005: [0,1,2,3,4,5],                          # Scenes 1.4 p.30 - no writable
   })
-  static var TYPES = { 0x0013: 1 }                  # fake type
+  static var TYPES = { 0x0013: 3 }                  # Bridged Node (rev 3), default for abstract bases; subclasses set their own TYPES
   # Inherited
   # var device                                        # reference to the `device` global object
   # var endpoint                                      # current endpoint
@@ -266,7 +266,7 @@ class Matter_Plugin_Device : Matter_Plugin
         if !self.device.disable_bridge_mode
           var d1 = dtl.add_struct()
           d1.add_TLV(0, 0x06 #-TLV.U4-#, 0x0013)     # DeviceType
-          d1.add_TLV(1, 0x06 #-TLV.U4-#, 1)          # Revision
+          d1.add_TLV(1, 0x06 #-TLV.U4-#, 3)          # Revision (Bridged Node rev 3, Matter 1.6.1)
         end
         return dtl
       end
