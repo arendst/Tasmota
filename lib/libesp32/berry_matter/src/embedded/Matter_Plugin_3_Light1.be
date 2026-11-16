@@ -348,6 +348,24 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   end
 
   #############################################################
+  # Set OnOff
+  #
+  # Local light after `Dimmer 0`: Tasmota brightness is 0 and `Power 1` alone keeps the light dark,
+  # while Matter still reports the last level (`shadow_bri`). Restore that level before switching on,
+  # at least Tasmota brightness 1. `light.set({'bri'})` alone does not switch the light on.
+  def set_onoff(pow)
+    if pow && !self.VIRTUAL && !self.BRIDGE
+      import light
+      var st = light.get(self.light_index)
+      if st != nil && st.find('bri', 0) == 0
+        var bri_254 = (type(self.shadow_bri) == 'int') ? self.shadow_bri : 1
+        light.set({'bri': self.bri_to_tasmota(bri_254)}, self.light_index)   # bri_to_tasmota() returns 1..255
+      end
+    end
+    super(self).set_onoff(pow)
+  end
+
+  #############################################################
   # Set Bri
   #
   # `bri_254` is a Matter level, clamped to 1..254, or `nil` to keep the level
