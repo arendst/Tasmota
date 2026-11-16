@@ -1147,6 +1147,127 @@ def test_doorbell()
 end
 test_doorbell()
 
+# Boolean State StateChange event (0x0045/0x00): mandatory for Rain Sensor and
+# Water Leak Detector (CHGEVENT feature), optional and enabled for Contact Sensor.
+# Occupancy shares the base class but not Boolean State: no event.
+def test_boolean_state_events()
+  class TestBoolEvents
+    var published
+    def init() self.published = [] end
+    def publish_event(endpoint, cluster, event_id, urgent, priority, data0, data1, data2)
+      self.published.push({
+        "endpoint": endpoint, "cluster": cluster, "event": event_id,
+        "urgent": urgent, "priority": priority,
+        "data0": data0 ? data0.val : nil, "type0": data0 ? data0.typ : nil,
+        "data1": data1, "data2": data2
+      })
+    end
+  end
+  class TestBoolDevice : matter.Device
+    var updates
+    def init()
+      self.plugins = []
+      self.events = TestBoolEvents()
+      self.updates = []
+    end
+    def attribute_updated(endpoint, cluster, attribute, fabric_specific)
+      self.updates.push([endpoint, cluster, attribute])
+    end
+  end
+  class TestBoolTasmota : TestTasmota
+    var switch_state
+    def cmd(command, mute)
+      if command == "Status 10"
+        return {"StatusSNS": {"Switch1": self.switch_state}}
+      end
+      return nil
+    end
+  end
+
+  var bool_tasmota = TestBoolTasmota()
+  bool_tasmota.switch_state = "OFF"
+  tasmota = bool_tasmota
+  var dev = TestBoolDevice()
+  var ev = dev.events.published
+
+  def read(plugin, cluster, attribute)
+    return plugin.read_attribute(nil, matter.Path(plugin.endpoint, cluster, attribute), TLV.Matter_TLV_item())
+  end
+  def check_event(e, endpoint, value)
+    assert(e["endpoint"] == endpoint && e["cluster"] == 0x0045 && e["event"] == 0x00)
+    assert(e["urgent"] == true && e["priority"] == 1)
+    assert(e["type0"] == 0x08 && e["data0"] == value)
+    assert(e["data1"] == nil && e["data2"] == nil)
+  end
+
+  for cls : [matter.Plugin_Sensor_Rain, matter.Plugin_Sensor_Waterleak, matter.Plugin_Sensor_Contact]
+    ev.clear()
+    dev.updates.clear()
+    bool_tasmota.switch_state = "OFF"
+    var p = cls(dev, 3, {"switch": 1})
+    # Physical sensor: no change, no event; each transition one event with the new value
+    p.update_shadow()
+    assert(size(ev) == 0 && size(dev.updates) == 0)
+    bool_tasmota.switch_state = "ON"
+    p.update_shadow()
+    assert(size(ev) == 1)
+    check_event(ev[0], 3, true)
+    assert(size(dev.updates) == 1 && dev.updates[0] == [3, 0x0045, 0x0000])
+    p.update_shadow()
+    assert(size(ev) == 1)
+    bool_tasmota.switch_state = "OFF"
+    p.update_shadow()
+    assert(size(ev) == 2)
+    check_event(ev[1], 3, false)
+    # Bridge path (Status 10 payload): same rule
+    p.parse_status({"Switch1": "ON"}, 10)
+    p.parse_status({"Switch1": "ON"}, 10)
+    assert(size(ev) == 3)
+    check_event(ev[2], 3, true)
+    # Metadata: CHGEVENT feature, StateChange in EventList, cluster rev 3, device rev 2
+    assert(read(p, 0x0045, 0xFFFC).val == 0x01)
+    assert(tlv_values(read(p, 0x0045, 0xFFFA)) == [0x00])
+    assert(read(p, 0x0045, 0xFFFD).val == 3)
+    assert(read(p, 0x0045, 0x0000).val == true)
+    var dev_type = (cls == matter.Plugin_Sensor_Rain) ? 0x0044 : (cls == matter.Plugin_Sensor_Waterleak) ? 0x0043 : 0x0015
+    assert(size(p.TYPES) == 1 && p.TYPES[dev_type] == 2)
+  end
+
+  # Virtual sensors: event only when the value changes
+  for cls : [matter.Plugin_Virt_Sensor_Rain, matter.Plugin_Virt_Sensor_Waterleak, matter.Plugin_Virt_Sensor_Contact]
+    ev.clear()
+    dev.updates.clear()
+    var p = cls(dev, 4, {})
+    var payload = {}
+    payload[p.JSON_NAME] = false
+    p.update_virtual(payload)
+    assert(size(ev) == 0 && size(dev.updates) == 0)
+    payload[p.JSON_NAME] = true
+    p.update_virtual(payload)
+    p.update_virtual(payload)
+    p.update_virtual({})
+    assert(size(ev) == 1 && size(dev.updates) == 1)
+    check_event(ev[0], 4, true)
+  end
+
+  # Occupancy: reports 0x0406 only, never a Boolean State event
+  ev.clear()
+  dev.updates.clear()
+  bool_tasmota.switch_state = "OFF"
+  var occupancy = matter.Plugin_Sensor_Occupancy(dev, 5, {"switch": 1})
+  bool_tasmota.switch_state = "ON"
+  occupancy.update_shadow()
+  assert(size(ev) == 0)
+  assert(size(dev.updates) == 1 && dev.updates[0] == [5, 0x0406, 0x0000])
+  assert(read(occupancy, 0x0406, 0x0000).val == true)
+  assert(read(occupancy, 0x0406, 0xFFFC).val == 0)
+  assert(size(tlv_values(read(occupancy, 0x0406, 0xFFFA))) == 0)
+
+  tasmota = test_tasmota
+  print("  Boolean State StateChange events (Rain, Waterleak, Contact, Occupancy): OK")
+end
+test_boolean_state_events()
+
 # ConfigurationVersion changes with endpoint composition and is persisted.
 var config_device = TestConfigurationDevice()
 config_device.signal_endpoints_changed()

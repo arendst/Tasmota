@@ -55,6 +55,8 @@ const matter_event_t matter_Events[] = {
   { 0x0039, 0x01, "ShutDown" },
   { 0x0039, 0x02, "Leave" },
   { 0x0039, 0x03, "ReachableChanged" },
+  // 0x0045 Boolean State Cluster
+  { 0x0045, 0x00, "StateChange" },
 #endif // USE_MATTER_VERBOSE
   { 0xFFFF, 0xFF, NULL }
 };

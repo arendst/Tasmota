@@ -43,10 +43,20 @@
 # - State changes trigger value_updated() callback
 #
 # DERIVED CLASSES MUST IMPLEMENT:
-# - value_updated(): Handle attribute updates when state changes
 # - JSON_NAME: Name of boolean attribute in JSON payloads
 # - CLUSTERS: Define appropriate cluster (typically Boolean State 0x0045)
 # - TYPES: Define device type ID
+# - value_updated() and read_attribute(): only when not using Boolean State
+#   0x0045 (e.g. Occupancy 0x0406, OnOff 0x0006)
+#
+# BOOLEAN STATE 0x0045 (shared by Contact, Rain, Waterleak):
+# - value_updated() reports StateValue 0x0000
+# - read_attribute() answers StateValue 0x0000
+# - CHGEVENT: set to true to enable the ChangeEvent feature. Then
+#   value_updated() publishes the StateChange event 0x00 {StateValue:bool},
+#   FeatureMap 0xFFFC is 0x01 and EventList 0xFFFA is [0x00]
+# - CHGEVENT is mandatory for Rain, Water Leak and Water Freeze detectors,
+#   optional for Contact Sensor (Matter 1.6.1)
 #
 # CONFIGURATION:
 # - SCHEMA: "switch", label "Switch", hint "Switch<x> number", required (1-based)
@@ -61,7 +71,9 @@
 # STATE MANAGEMENT:
 # - shadow_bool_value: Cached boolean state
 # - State changes detected by comparing new vs cached value
-# - value_updated() called only when state actually changes
+# - value_updated() called only when state actually changes, after
+#   shadow_bool_value holds the new value (derived classes read it for the
+#   Boolean State StateChange event payload)
 # - Reduces unnecessary Matter attribute updates
 #
 # EXAMPLES:
@@ -101,6 +113,7 @@ class Matter_Plugin_Sensor_Boolean : Matter_Plugin_Device
                       "h:Switch<x> number|"         # hint
                       "r:1"                         # required
   static var UPDATE_TIME = 750                      # update every 750ms
+  static var CHGEVENT = false                       # Boolean State ChangeEvent feature, see header
 
   var tasmota_switch_index                          # Switch number in Tasmota (one based)
   var shadow_bool_value
@@ -136,9 +149,9 @@ class Matter_Plugin_Sensor_Boolean : Matter_Plugin_Device
         var state = (j.find(switch_str) == "ON")
 
         if (self.shadow_bool_value != state)
-          self.value_updated()
+          self.shadow_bool_value = state
+          self.value_updated()                    # called after the shadow holds the new value
         end
-        self.shadow_bool_value = state
       end
     end
   end
@@ -147,8 +160,36 @@ class Matter_Plugin_Sensor_Boolean : Matter_Plugin_Device
   # value_updated
   #
   # This is triggered when a new value is changed, for subscription
-  # This method is meant to be overloaded and maximize shared code
+  # `shadow_bool_value` already holds the new value when this is called
+  # Default implementation for Boolean State 0x0045, overloaded by
+  # sensors using another cluster
   def value_updated()
+    self.attribute_updated(0x0045, 0x0000)
+    if self.CHGEVENT                    # StateChange event {StateValue:bool}
+      self.publish_event(0x0045, 0x00, 1 #-matter.EVENT_INFO-#, matter.TLV.Matter_TLV_item().set(0x08 #-TLV.BOOL-#, self.shadow_bool_value))
+    end
+  end
+
+  #############################################################
+  # read an attribute
+  #
+  # Boolean State 0x0045, only reached when the cluster is in CLUSTERS
+  def read_attribute(session, ctx, tlv_solo)
+    if ctx.cluster == 0x0045            # ========== Boolean State ==========
+      var attribute = ctx.attribute
+      if   attribute == 0x0000          #  ---------- StateValue / bool ----------
+        return tlv_solo.set_or_nil(0x08 #-TLV.BOOL-#, self.shadow_bool_value)
+      elif self.CHGEVENT
+        if   attribute == 0xFFFA        #  ---------- EventList ----------
+          var events = matter.TLV.Matter_TLV_array()
+          events.add_TLV(nil, 0x06 #-TLV.U4-#, 0x00)  # StateChange
+          return events
+        elif attribute == 0xFFFC        #  ---------- FeatureMap / map32 ----------
+          return tlv_solo.set(0x06 #-TLV.U4-#, 0x01)  # CHGEVENT (bit 0)
+        end
+      end
+    end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################
@@ -156,8 +197,11 @@ class Matter_Plugin_Sensor_Boolean : Matter_Plugin_Device
   #
   # Update internal state for virtual devices
   def update_virtual(payload)
-    self.shadow_bool_value = self._parse_update_virtual(payload, self.JSON_NAME, self.shadow_bool_value, bool, nil, nil)   # publishing cluster/attr is delegated to `value_updated()`
-    self.value_updated()
+    var prev = self.shadow_bool_value
+    self.shadow_bool_value = self._parse_update_virtual(payload, self.JSON_NAME, prev, bool, nil, nil)   # publishing cluster/attr is delegated to `value_updated()`
+    if self.shadow_bool_value != prev
+      self.value_updated()
+    end
     super(self).update_virtual(payload)
   end
 
@@ -174,11 +218,24 @@ class Matter_Plugin_Sensor_Boolean : Matter_Plugin_Device
       if !data.contains(switch_key)   return   end
       var state = (data.find(switch_key) == "ON")
 
-      if self.shadow_bool_value != nil && self.shadow_bool_value != bool(state)
-        self.value_updated()
+      if self.shadow_bool_value != state
+        self.shadow_bool_value = state
+        self.value_updated()                      # called after the shadow holds the new value
       end
-      self.shadow_bool_value = state
     end
+  end
+
+  #############################################################
+  # web_values_prefix
+  #
+  # Show prefix before web value, defaults to `Switch<x>` if no name
+  def web_values_prefix()
+    import webserver
+    var name = self.get_name()
+    if !name
+      name = "Switch" + str(self.tasmota_switch_index)
+    end
+    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
   end
   #############################################################
   #############################################################
