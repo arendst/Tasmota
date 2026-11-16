@@ -6,6 +6,8 @@ set(srcs
     "src/s3_simd_dequant.S"
 )
 idf_component_register(SRCS ${srcs}      
-                    REQUIRES "jpegdec" "esp-dsp"
-                    INCLUDE_DIRS "src"
+                    REQUIRES "esp-dsp arduino-esp32"
+                    INCLUDE_DIRS "src/."
 )
+
+project(jpegdec)
