@@ -151,7 +151,7 @@ int JPEGDEC::getJPEGType()
     return (_jpeg.ucMode == 0xc2) ? JPEG_MODE_PROGRESSIVE : JPEG_MODE_BASELINE;
 } /* getJPEGType() */
 
-#ifdef __LINUX__
+#if defined( __LINUX__ ) || defined( __MACH__ )
 int JPEGDEC::open(const char *szFilename, JPEG_DRAW_CALLBACK *pfnDraw)
 {
     memset(&_jpeg, 0, sizeof(JPEGIMAGE));

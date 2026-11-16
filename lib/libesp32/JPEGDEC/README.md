@@ -30,7 +30,7 @@ Features:<br>
 
 <br>
 <p align="center">
-  <img width="600" height="250" src="https://github.com/bitbank2/JPEGDEC/blob/master/perf.jpg?raw=true">
+  <img width="634" height="389" src="https://github.com/bitbank2/JPEGDEC/blob/master/perf.png?raw=true">
 </p>
 <br>
 

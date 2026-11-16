@@ -252,7 +252,7 @@ class JPEGDEC
     int openRAM(uint8_t *pData, int iDataSize, JPEG_DRAW_CALLBACK *pfnDraw);
     int openFLASH(const uint8_t *pData, int iDataSize, JPEG_DRAW_CALLBACK *pfnDraw);
     int open(const char *szFilename, JPEG_OPEN_CALLBACK *pfnOpen, JPEG_CLOSE_CALLBACK *pfnClose, JPEG_READ_CALLBACK *pfnRead, JPEG_SEEK_CALLBACK *pfnSeek, JPEG_DRAW_CALLBACK *pfnDraw);
-#ifdef __LINUX__
+#if defined( __LINUX__ ) || defined( __MACH__ )
     int open(const char *szFilename, JPEG_DRAW_CALLBACK *pfnDraw);
 #endif
     int open(void *fHandle, int iDataSize, JPEG_CLOSE_CALLBACK *pfnClose, JPEG_READ_CALLBACK *pfnRead, JPEG_SEEK_CALLBACK *pfnSeek, JPEG_DRAW_CALLBACK *pfnDraw);
@@ -309,6 +309,7 @@ void JPEG_setPixelType(JPEGIMAGE *pJPEG, int iType); // defaults to little endia
 void JPEG_setMaxOutputSize(JPEGIMAGE *pJPEG, int iMaxMCUs);
 #endif // __cplusplus
 
+#ifndef MOTOLONG
 #ifdef ALLOWS_UNALIGNED
 #define INTELSHORT(p) (*(uint16_t *)p)
 #define INTELLONG(p) (*(uint32_t *)p)
@@ -325,5 +326,6 @@ void JPEG_setMaxOutputSize(JPEGIMAGE *pJPEG, int iMaxMCUs);
 #define MOTOSHORT(p) (((*(p))<<8) + (*(p+1)))
 #define MOTOLONG(p) (((*p)<<24) + ((*(p+1))<<16) + ((*(p+2))<<8) + (*(p+3)))
 #endif // ALLOWS_UNALIGNED
+#endif // MOTOLONG defined
 
 #endif // __JPEGDEC__
