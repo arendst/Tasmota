@@ -202,6 +202,7 @@
 #define MQTT_TLS_ENABLED       false             // [SetOption103] Enable TLS mode
 #define MQTT_TLS_FINGERPRINT   false             // [SetOption132] Force TLS fingerprint validation instead of CA
 #define MQTT_TLS_ECDSA         false             // [SetOption165] Enable TLS ECDSA validation in addition to RSA, false by default but automatically set to 'true' in case of a cipher error '296'
+//#define USE_UFILESYS_MQTT                        // Enable FileUpload/FileDownload Type 8 to transfer filesystem files over MQTT, requires the filesystem (+0k9 code)
 
 // -- HTTP ----------------------------------------
 #define WEB_SERVER             2                 // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)

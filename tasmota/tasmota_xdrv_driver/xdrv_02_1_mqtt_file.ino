@@ -19,6 +19,10 @@
 
 #define USE_MQTT_FILE
 
+#if defined(USE_UFILESYS_MQTT) && !defined(USE_UFILESYS)
+  #undef USE_UFILESYS_MQTT                        // Requires the filesystem
+#endif
+
 #ifdef USE_MQTT_FILE
 /*********************************************************************************************\
  * MQTT file transfer
@@ -45,16 +49,16 @@ struct FMQTT {
   uint16_t topic_size;                   // MQTT topic length with terminating <null>
   uint8_t file_id = 0;                   // MQTT unique file id during upload/download
   bool file_binary = false;              // MQTT binary file transfer
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
   File file;                             // MQTT UFS file during upload/download
   String file_name;                      // MQTT UFS file name
   uint8_t* ufs_buffer = nullptr;         // MQTT UFS download chunk buffer
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
 } FMqtt;
 
 const uint32_t FileTransferHeaderSize = 21;       // {"Id":116,"Data":""}<null>
 
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
 extern FS *ufsp;
 extern uint8_t ufs_type;
 const char MqttFileUfsTemp[] = "/.fileupload";   // Upload is renamed to File after MD5 check
@@ -70,7 +74,7 @@ void MqttFileUfsClose(void) {
   free(FMqtt.ufs_buffer);
   FMqtt.ufs_buffer = nullptr;
 }
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
 
 void MqttFileValidate(uint32_t error) {
   if (error) {
@@ -98,9 +102,9 @@ void MqttFilePublish(void) {
     FMqtt.file_binary = false;
     FMqtt.file_md5 = (const char*) nullptr;                  // Force deallocation of the String internal memory
     FMqtt.file_password = nullptr;
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
     FMqtt.file_name = (const char*) nullptr;                 // Force deallocation of the String internal memory
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
   }
   MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);
   ResponseClear();
@@ -126,13 +130,13 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
         return 2;                                            // Settings supports max size
       }
     }
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
     else if (UPL_UFSFILE == FMqtt.file_type) {
       if (!ufs_type || (((FMqtt.file_size + 1023) / 1024) > UfsInfo(1, 0))) {
         return 2;                                            // Not enough space
       }
     }
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
     else {                                                   // Check enough flash space for intermediate upload
       uint32_t head_room = (FlashWriteMaxSector() - FlashWriteStartSector()) * SPI_FLASH_SEC_SIZE;
       uint32_t rounded_size = (FMqtt.file_size + SPI_FLASH_SEC_SIZE -1) & (~(SPI_FLASH_SEC_SIZE - 1));
@@ -158,7 +162,7 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
           Update.end(true);
         }
       }
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
       else if (UPL_UFSFILE == FMqtt.file_type) {
         if (FMqtt.file_name.length()) {
           FMqtt.file = ufsp->open(MqttFileUfsTemp, "w");
@@ -167,7 +171,7 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
           }
         }
       }
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
       else {
         return 3;                                            // Invalid file type
       }
@@ -214,11 +218,11 @@ uint32_t MqttFileUploadValidate(uint32_t rcv_id) {
         Update.end(true);
         SetLedLink(0);
       }
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
       else if (UPL_UFSFILE == FMqtt.file_type) {
         MqttFileUfsClose();
       }
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
 /*
       if (FMqtt.file_buffer != nullptr) {
         free(FMqtt.file_buffer);
@@ -239,7 +243,7 @@ void CmndFileUpload(void) {
   Supported Type:
      1 - OTA firmware
      2 - Settings
-     8 - Filesystem file (USE_UFILESYS) written to File after MD5 check
+     8 - Filesystem file (USE_UFILESYS_MQTT) written to File after MD5 check
 
   FileUpload 0  - Abort current upload
 
@@ -278,10 +282,10 @@ void CmndFileUpload(void) {
         if (val) { base64_data = val.getStr(); }
         val = root[PSTR("PASSWORD")];
         if (val) { FMqtt.file_password = val.getStr(); }
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
         val = root[PSTR("FILE")];
         if (val) { MqttFileUfsName(val.getStr()); }
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
       }
     }
   } else {
@@ -315,13 +319,13 @@ void CmndFileUpload(void) {
           if (UPL_TASMOTA == FMqtt.file_type) {
             Update.write(raw_data, read_bytes);
           }
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
           else if (UPL_UFSFILE == FMqtt.file_type) {
             if (FMqtt.file.write(raw_data, read_bytes) != read_bytes) {
               FMqtt.file.close();                            // Write error, fail on finish
             }
           }
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
         }
 
         if (!binary_data) {
@@ -370,7 +374,7 @@ void CmndFileUpload(void) {
               TasmotaGlobal.restart_flag = 2;                  // Restart to load new firmware
             }
           }
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
           else if (UPL_UFSFILE == FMqtt.file_type) {
             bool ok = FMqtt.file;                            // False after a write error
             FMqtt.file.close();
@@ -381,7 +385,7 @@ void CmndFileUpload(void) {
               ResponseCmndFailed();
             }
           }
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
 /*
           if (FMqtt.file_buffer != nullptr) {
             free(FMqtt.file_buffer);
@@ -390,11 +394,11 @@ void CmndFileUpload(void) {
 */
         }
       }
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
       if (UPL_UFSFILE == FMqtt.file_type) {
         MqttFileUfsClose();
       }
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
       FMqtt.file_buffer = nullptr;
     }
   }
@@ -431,7 +435,7 @@ uint32_t MqttFileDownloadValidate(void) {
       Response_P(PSTR("{\"File\":\"%s\",\"Id\":%d,\"Type\":%d,\"Size\":%d}"),
         SettingsConfigFilename().c_str(), FMqtt.file_id, FMqtt.file_type, len);
     }
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
     else if (UPL_UFSFILE == FMqtt.file_type) {
       if (ufs_type && FMqtt.file_name.length()) {
         FMqtt.file = ufsp->open(FMqtt.file_name.c_str(), "r");
@@ -450,7 +454,7 @@ uint32_t MqttFileDownloadValidate(void) {
       Response_P(PSTR("{\"File\":\"%s\",\"Id\":%d,\"Type\":%d,\"Size\":%d}"),
         EscapeJSONString(FMqtt.file_name.c_str() +1).c_str(), FMqtt.file_id, FMqtt.file_type, FMqtt.file_size);
     }
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
     else {
       return 3;                                              // Invalid file type
     }
@@ -471,11 +475,11 @@ uint32_t MqttFileDownloadValidate(void) {
     if (UPL_SETTINGS == FMqtt.file_type) {
       SettingsBufferFree();
     }
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
     else if (UPL_UFSFILE == FMqtt.file_type) {
       MqttFileUfsClose();
     }
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
     return 4;                                                // Upload aborted
   }
   return 0;                                                  // No error
@@ -487,7 +491,7 @@ void CmndFileDownload(void) {
 
   Supported Type:
      2 - Settings
-     8 - Filesystem file (USE_UFILESYS)
+     8 - Filesystem file (USE_UFILESYS_MQTT)
 
   FileDownload 0  - Abort current download
 
@@ -518,7 +522,7 @@ void CmndFileDownload(void) {
       uint32_t bytes_left = FMqtt.file_size - FMqtt.file_pos;
       uint32_t write_bytes = (bytes_left < chunk_size) ? bytes_left : chunk_size;
       uint8_t* buffer = FMqtt.file_buffer + FMqtt.file_pos;
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
       if (UPL_UFSFILE == FMqtt.file_type) {
         buffer = FMqtt.ufs_buffer;
         if (!buffer || (FMqtt.file.read(buffer, write_bytes) != write_bytes)) {
@@ -526,7 +530,7 @@ void CmndFileDownload(void) {
           XdrvMailbox.payload = 0;                           // Abort on read error
         }
       }
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
       FMqtt.md5.add(buffer, write_bytes);
       FMqtt.file_pos += write_bytes;
 
@@ -563,11 +567,11 @@ void CmndFileDownload(void) {
       if (UPL_SETTINGS == FMqtt.file_type) {
         SettingsBufferFree();
       }
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
       else if (UPL_UFSFILE == FMqtt.file_type) {
         MqttFileUfsClose();
       }
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
 
       FMqtt.file_buffer = nullptr;
     }
@@ -583,10 +587,10 @@ void CmndFileDownload(void) {
       if (val) { FMqtt.file_binary = val.getUInt(); }
       val = root[PSTR("PASSWORD")];
       if (val) { FMqtt.file_password = val.getStr(); }
-#ifdef USE_UFILESYS
+#ifdef USE_UFILESYS_MQTT
       val = root[PSTR("FILE")];
       if (val) { MqttFileUfsName(val.getStr()); }
-#endif  // USE_UFILESYS
+#endif  // USE_UFILESYS_MQTT
     }
   }
   MqttFileValidate(MqttFileDownloadValidate());
