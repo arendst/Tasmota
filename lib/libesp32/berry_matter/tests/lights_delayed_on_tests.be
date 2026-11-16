@@ -510,6 +510,20 @@ check("MoveToLevel while off: ignored unless ExecuteIfOff, never switches on or 
   assert(!lamp(p).power && commands(p).find("Dimmer 5") == nil && published == [], str(commands(p)))
 end)
 
+check("local light: On after `Dimmer 0` restores the reported level, at least 1", def ()
+  var l = local_light(true, 153)
+  device.lights_delayed_on = false
+  local.bri = 0   local.power = false             # `Dimmer 0` on the Tasmota side
+  l.update_shadow()
+  assert(!l.shadow_onoff && l.shadow_bri == 153, "Dimmer 0 must keep the last level")
+  on(l)
+  assert(str(local.calls) == "[{'bri': 153}, {'power': true}]" && local.power && local.bri == 153, str(local.calls))
+  l = local_light(false, 0)                        # after a reboot at `Dimmer 0`: no previous level
+  device.lights_delayed_on = false
+  on(l)
+  assert(str(local.calls) == "[{'bri': 1}, {'power': true}]" && l.shadow_bri == 1, str(local.calls))
+end)
+
 check("Zigbee MoveToLevel: raw MoveToLevel without On/Off, ignored while off", def ()
   var z = virtual_light(matter.Plugin_Zigbee_Light1, {"zigbee_device": "0x1234"})
   device.lights_delayed_on = false
