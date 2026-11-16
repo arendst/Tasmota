@@ -15,6 +15,10 @@ uint16_t uDisplay::GetColorFromIndex(uint8_t index) {
     if (index >= color_count) {
         index = 0;
     }
+    if (bpp == 1) {
+        // Monochrome framebuffers expect pixel values instead of RGB565.
+        return Renderer::GetColorFromIndex(index);
+    }
     return udisp_colors[index];
 }
 
