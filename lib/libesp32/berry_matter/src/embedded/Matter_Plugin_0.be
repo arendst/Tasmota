@@ -129,7 +129,7 @@ class Matter_Plugin
     # full 1.6.1 cluster table; the compact spec includes AUX/AuxiliaryACL but
     # does not include cluster revision metadata.
     0x001F: 2,
-    0x0028: 4,                              # Basic Information - Matter 1.6.1
+    0x0028: 6,                              # Basic Information - Matter 1.6.1 (extended CapabilityMinima, ConfigurationVersion)
     # 0x002A: 1,                            # OTA Software Update Requestor - Initial Release
     # 0x002B: 1,                            # Localization Configuration - Initial Release
     # 0x002C: 1,                            # Time Format Localization - Initial Release
@@ -140,10 +140,11 @@ class Matter_Plugin
     # 0x0033: 1,                            # General Diagnostics - Initial Release
     # 0x0034: 1,                            # Software Diagnostics - Initial Release
     0x0038: 2,                              # Time Synchronization
+    0x0039: 6,                              # Bridged Device Basic Information - Matter 1.6.1 (UniqueID mandatory since v4)
     # 0x003B: 1,                            # Switch - Initial Release
     # 0x003C: 1,                            # Administrator Commissioning - Initial Release
     # 0x003E: 1,                            # Node Operational Credentials - Initial Release
-    0x003F: 4,                              # Group Key Management - Matter 1.6.1 (removed GroupKeyMulticastPolicy field in v4)
+    0x003F: 4,                              # Group Key Management - Matter 1.6.1 ("C" quality on GroupKeyMap in v4)
     # 0x0040: 1,                            # Fixed Label - Initial Release
     # 0x0041: 1,                            # User Label - Initial Release
     # 0x0042: 1,                            # Boolean State - Initial Release

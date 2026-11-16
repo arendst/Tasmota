@@ -68,9 +68,9 @@ import matter
 
 class Matter_Plugin_Root : Matter_Plugin
 #################################################################################
-# Matter 1.4.1 Basic Information Cluster (0x0028)
+# Matter 1.6.1 Basic Information Cluster (0x0028)
 #################################################################################
-# Cluster Revision: 3 (Matter 1.4.1)
+# Cluster Revision: 6 (Matter 1.6.1)
 # Role: Utility | Scope: Node
 #
 # Provides device identification, versioning, and capability information.
@@ -82,7 +82,7 @@ class Matter_Plugin_Root : Matter_Plugin
 # 0x0001 | VendorName              | string  | max 32     | F       | -       | R V    | M
 # 0x0002 | VendorID                | uint16  | all        | F       | -       | R V    | M
 # 0x0003 | ProductName             | string  | max 32     | F       | -       | R V    | M
-# 0x0004 | ProductID               | uint16  | all        | F       | -       | R V    | O
+# 0x0004 | ProductID               | uint16  | all        | F       | -       | R V    | M
 # 0x0005 | NodeLabel               | string  | max 32     | N       | ""      | RW VM  | M
 # 0x0006 | Location                | string  | 2          | N       | "XX"    | RW VA  | M
 # 0x0007 | HardwareVersion         | uint16  | all        | F       | 0       | R V    | M
@@ -91,12 +91,19 @@ class Matter_Plugin_Root : Matter_Plugin
 # 0x000A | SoftwareVersionString   | string  | 1-64       | F       | -       | R V    | M
 # 0x000F | SerialNumber            | string  | max 32     | F       | -       | R V    | O
 # 0x0011 | Reachable               | bool    | all        | -       | true    | R V    | O
-# 0x0012 | UniqueID                | string  | max 32     | F       | -       | R V    | O
+# 0x0012 | UniqueID                | string  | max 32     | F       | -       | R V    | M
 # 0x0013 | CapabilityMinima        | struct  | -          | F       | -       | R V    | M
+# 0x0015 | SpecificationVersion    | uint32  | desc       | F       | 0       | R V    | M
+# 0x0016 | MaxPathsPerInvoke       | uint16  | min 1      | F       | 1       | R V    | M
+# 0x0018 | ConfigurationVersion    | uint32  | min 1      | N       | 1       | R V    | M
 #
 # CapabilityMinima Structure:
 #   - CaseSessionsPerFabric (uint16): Min 3
 #   - SubscriptionsPerFabric (uint16): Min 3
+#   - SimultaneousInvocationsSupported (uint16): Min 1 (revision 6)
+#   - SimultaneousWritesSupported (uint16): Min 1 (revision 6)
+#   - ReadPathsSupported (uint16): Min 9 (revision 6)
+#   - SubscribePathsSupported (uint16): Min 3 (revision 6)
 #
 # EVENTS:
 # ID   | Name    | Priority | Conf
@@ -380,9 +387,9 @@ class Matter_Plugin_Root : Matter_Plugin
 #################################################################################
 
 #################################################################################
-# Matter 1.4.1 Group Key Management Cluster (0x003F)
+# Matter 1.6.1 Group Key Management Cluster (0x003F)
 #################################################################################
-# Cluster Revision: 1 (Matter 1.4.1)
+# Cluster Revision: 4 (Matter 1.6.1)
 # Role: Utility | Scope: Node
 #
 # Manages group communication encryption keys.
@@ -1899,4 +1906,3 @@ class Matter_Plugin_Root : Matter_Plugin
   end
 end
 matter.Plugin_Root = Matter_Plugin_Root
-  
