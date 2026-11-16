@@ -130,12 +130,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter Doorbell (0x0148) device type mapped to a Button, with fabric-scoped Binding storage (Chime client not yet implemented) [#25187](https://github.com/arendst/Tasmota/issues/25187)
 
 ### Breaking Changed
-- BTHome un-reverse MAC address usage for command `MI32Keys` to make it consistent
 - Reduce max number of ZCDimmer PWM channels to 5 due to allocated persistent data size [#25222](https://github.com/arendst/Tasmota/issues/25222)
+- BTHome un-reverse MAC address usage for command `MI32Keys` to make it consistent
+- Matter lights Level Control MinLevel 1 and On/Off behavior aligned with Matter 1.6.1 [#25279](https://github.com/arendst/Tasmota/issues/25279)
 
 ### Changed
 - ESP8266 platform update from 2026.09.00 to 2026.11.00 [#25097](https://github.com/arendst/Tasmota/issues/25097)
-- ESP32 Platform from 2026.09.50 to 2026.11.51, Framework (Arduino Core) from v3.3.12 to v3.3.12-2 and IDF v5.5.5 [#25275](https://github.com/arendst/Tasmota/issues/25275)
+- ESP32 Platform from 2026.09.50 to 2026.11.51, Framework (Arduino Core) from v3.3.12 to v3.3.12-3 and IDF v5.5.5 [#25275](https://github.com/arendst/Tasmota/issues/25275)
 - OTA give up on a stalled OTA after 30s, not 300 reads [#25177](https://github.com/arendst/Tasmota/issues/25177)
 - HttpClientLight keep read timeouts longer than 65s [#25180](https://github.com/arendst/Tasmota/issues/25180)
 - GUI allow `;` or `{` in a password saved from the settings page [#25184](https://github.com/arendst/Tasmota/issues/25184)

@@ -8,14 +8,13 @@ All notable changes to this project will be documented in this file.
 
 
 ### Breaking Changed
-- Matter lights Level Control MinLevel 1 and On/Off behavior aligned with Matter 1.6.1
+- Matter lights Level Control MinLevel 1 and On/Off behavior aligned with Matter 1.6.1 (#25279)
 
 ### Changed
 - ESP32 Platform from 2026.11.50 to 2026.11.51, Framework (Arduino Core) from v3.3.12-2 to v3.3.12-3 and IDF v5.5.5 (#25275)
 
-
 ### Fixed
-- GPIOViewer fails to execute, regression from platform 2026.11.50 (#25275)
+- GPIOViewer fails to execute, regression from platform 2026.11.50 with Framework v3.3.12-2 (#25275)
 
 ### Removed
 
