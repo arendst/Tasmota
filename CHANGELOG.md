@@ -5,16 +5,19 @@ All notable changes to this project will be documented in this file.
 
 ## [16.0.0.5]
 ### Added
-
+- IR receive optional check every loop (`#define IR_RCV_IN_LOOP`)  and configurable save buffer (`#define IR_FULL_RCV_SAVE_BUFFER`) (#25268)
+- MQTT optional FileDownload and FileUpload transferring a file system file (`#define USE_UFILESYS_MQTT`) (#25278)
 
 ### Breaking Changed
 - Matter lights Level Control MinLevel 1 and On/Off behavior aligned with Matter 1.6.1 (#25279)
 
 ### Changed
 - ESP32 Platform from 2026.11.50 to 2026.11.51, Framework (Arduino Core) from v3.3.12-2 to v3.3.12-3 and IDF v5.5.5 (#25275)
+- JPEGDEC library from v1.8.4 to v1.8.5 (#25282)
 
 ### Fixed
 - GPIOViewer fails to execute, regression from platform 2026.11.50 with Framework v3.3.12-2 (#25275)
+- Display palette colors on monochrome universal displays (#25260)
 
 ### Removed
 

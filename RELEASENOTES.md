@@ -120,7 +120,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Device location and local pose with commands `Location`, `LocationRot`, `LocationScale`, `LocationClear` and `SetOption166` stored as JSON in file system or packed in ESP8266 settings [#25244](https://github.com/arendst/Tasmota/issues/25244)
 - BME680 IAQ (air quality index) to BMP sensor driver [#25175](https://github.com/arendst/Tasmota/issues/25175)
 - TuyaMCU pace outgoing frames so the MCU is never written to back-to-back [#25151](https://github.com/arendst/Tasmota/issues/25151)
+- MQTT optional FileDownload and FileUpload transferring a file system file (`#define USE_UFILESYS_MQTT`) [#25278](https://github.com/arendst/Tasmota/issues/25278)
 - GPIOViewer labels to GPIOs using web app v2.3.4 [#25257](https://github.com/arendst/Tasmota/issues/25257)
+- IR receive optional check every loop (`#define IR_RCV_IN_LOOP`)  and configurable save buffer (`#define IR_FULL_RCV_SAVE_BUFFER`) [#25268](https://github.com/arendst/Tasmota/issues/25268)
 - uDisplay support for SPI QSPI displays [#25156](https://github.com/arendst/Tasmota/issues/25156)
 - BLE timeout and eQ3 TRV enhancements [#25173](https://github.com/arendst/Tasmota/issues/25173)
 - Support MAC OUI wildcard for command MI32Keys in case multiple devices use same bindkey like IoTorero: `mi32keys 0C3D5EFFFFFF=48656c6c6f204254486f6d65210d0a00`
@@ -137,6 +139,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 - ESP8266 platform update from 2026.09.00 to 2026.11.00 [#25097](https://github.com/arendst/Tasmota/issues/25097)
 - ESP32 Platform from 2026.09.50 to 2026.11.51, Framework (Arduino Core) from v3.3.12 to v3.3.12-3 and IDF v5.5.5 [#25275](https://github.com/arendst/Tasmota/issues/25275)
+- JPEGDEC library from v1.8.4 to v1.8.5 [#25282](https://github.com/arendst/Tasmota/issues/25282)
 - OTA give up on a stalled OTA after 30s, not 300 reads [#25177](https://github.com/arendst/Tasmota/issues/25177)
 - HttpClientLight keep read timeouts longer than 65s [#25180](https://github.com/arendst/Tasmota/issues/25180)
 - GUI allow `;` or `{` in a password saved from the settings page [#25184](https://github.com/arendst/Tasmota/issues/25184)
@@ -156,6 +159,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - MPR121 sizeof [#25203](https://github.com/arendst/Tasmota/issues/25203)
 - AHT20/AHT30 stale readings when used with deep sleep, with optional `#define USE_AHT_DIAG` [#25258](https://github.com/arendst/Tasmota/issues/25258)
 - SML ESP8266 serial mode [#25201](https://github.com/arendst/Tasmota/issues/25201)
+- Display palette colors on monochrome universal displays [#25260](https://github.com/arendst/Tasmota/issues/25260)
 - DisplayText [pN] command now works when followed by another [pN] [#25188](https://github.com/arendst/Tasmota/issues/25188)
 - Missing NUL terminator for stored `ModbusBridgeSend` command data [#25218](https://github.com/arendst/Tasmota/issues/25218)
 - ESP32 `Restart -1` fails to crash [#25223](https://github.com/arendst/Tasmota/issues/25223)
