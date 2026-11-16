@@ -38,7 +38,7 @@
 #################################################################################
 # Matter 1.4.1 Boolean State Cluster (0x0045)
 #################################################################################
-# Cluster Revision: 1 (Matter 1.4.1)
+# Cluster Revision: 3 (Matter 1.6.1, adds the optional ChangeEvent feature)
 # Role: Application | Scope: Endpoint
 #
 # PURPOSE:
@@ -49,8 +49,11 @@
 # ID     | Name       | Type | Constraint | Quality | Default | Access | Conf
 # -------|------------|------|------------|---------|---------|--------|-----
 # 0x0000 | StateValue | bool | all        | P       | MS      | R V    | M
-# 0xFFFC | FeatureMap | map32| all        | F       | 0       | R V    | M
-# 0xFFFD | ClusterRevision| uint16| all   | F       | 1       | R V    | M
+# 0xFFFC | FeatureMap | map32| all        | F       | 0x01    | R V    | M
+# 0xFFFD | ClusterRevision| uint16| all   | F       | 3       | R V    | M
+#
+# FEATURES:
+# - Bit 0 CHGEVENT (ChangeEvent): optional for Contact Sensor, enabled here
 #
 # QUALITY FLAGS:
 # - P: Periodic reporting (changes reported automatically)
@@ -65,16 +68,19 @@
 # EVENTS:
 # ID   | Name        | Priority | Access | Conf
 # -----|-------------|----------|--------|-----
-# 0x00 | StateChange | INFO     | V      | O
+# 0x00 | StateChange | INFO     | V      | CHGEVENT, O
 #
 # StateChange Event: {StateValue:bool}
 #
 # IMPLEMENTATION NOTES:
 # - Simple boolean state, meaning depends on device type
 # - For Contact Sensor in Tasmota: Maps to Switch state
-# - StateChange event should be generated on state transitions
+# - StateChange event published on every StateValue change (CHGEVENT = true),
+#   EventList 0x0045 = [0x00]
 # - Value is stored in shadow_bool_value as boolean
-# - Event is mandatory for Contact Sensor, Water Leak, Rain, and Freeze detectors
+# - Boolean State behavior is shared in Matter_Plugin_Sensor_Boolean
+# - CHGEVENT is optional for Contact Sensor, mandatory for Water Leak, Rain
+#   and Freeze detectors
 #################################################################################
 
 #################################################################################
@@ -131,35 +137,10 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Sensor_Boolean
     0x0045: [0],                                    # Boolean State p.70 - no writable
   })
   static var TYPES = { 0x0015: 2 }                  # Contact Sensor - Matter 1.4.1 Device Library Rev 2
+  static var CHGEVENT = true                        # Boolean State ChangeEvent: StateChange event (Matter 1.6.1)
 
   # var tasmota_switch_index                          # Switch number in Tasmota (one based)
   # var shadow_bool_value
-
-  #############################################################
-  # value_updated
-  #
-  # This is triggered when a new value is changed, for subscription
-  # This method is meant to be overloaded and maximize shared code
-  def value_updated()
-    self.attribute_updated(0x0045, 0x0000)
-  end
-
-  #############################################################
-  # read an attribute
-  #
-  def read_attribute(session, ctx, tlv_solo)
-    var cluster = ctx.cluster
-    var attribute = ctx.attribute
-
-    # ====================================================================================================
-    if   cluster == 0x0045              # ========== Boolean State ==========
-      if   attribute == 0x0000          #  ---------- StateValue / bool ----------
-        return tlv_solo.set_or_nil(0x08 #-TLV.BOOL-#, self.shadow_bool_value)
-      end
-
-    end
-    return super(self).read_attribute(session, ctx, tlv_solo)
-  end
 
   #############################################################
   # For Bridge devices
@@ -172,16 +153,6 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Sensor_Boolean
     import webserver
     self.web_values_prefix()        # display '| ' and name if present
     webserver.content_send(format("Contact%i %s", self.tasmota_switch_index, self.web_value_onoff(self.shadow_bool_value)))
-  end
-
-  # Show prefix before web value
-  def web_values_prefix()
-    import webserver
-    var name = self.get_name()
-    if !name
-      name = "Switch" + str(self.tasmota_switch_index)
-    end
-    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
   end
   #############################################################
   #############################################################

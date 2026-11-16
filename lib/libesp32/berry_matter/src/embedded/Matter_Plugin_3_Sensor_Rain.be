@@ -21,7 +21,7 @@
 # Matter 1.4.1 Device Specification - Rain Sensor (0x0044)
 #################################################################################
 # Device Type: Rain Sensor (0x0044)
-# Device Type Revision: 1 (Matter 1.4.1 Device Library)
+# Device Type Revision: 2 (Matter 1.6.1 Device Library)
 # Class: Simple | Scope: Endpoint
 #
 # CLUSTERS (Server):
@@ -34,8 +34,9 @@
 # - true: Rain detected
 # - false: No rain
 #
-# ELEMENT OVERRIDES:
-# - Boolean State: StateChange event is MANDATORY (not optional)
+# ELEMENT OVERRIDES (Matter 1.6.1):
+# - Boolean State: ChangeEvent feature (CHGEVENT) is mandatory
+# - Boolean State: StateChange event is mandatory
 #
 # NOTES:
 # - Binary sensor for rain detection
@@ -47,8 +48,13 @@
 #################################################################################
 # Matter 1.4.1 Boolean State Cluster (0x0045) - Rain Sensor Usage
 #################################################################################
-# Cluster Revision: 1 (Matter 1.4.1)
+# Cluster Revision: 3 (Matter 1.6.1)
 # Role: Application | Scope: Endpoint
+#
+# FEATURES:
+# Bit | Code     | Feature     | Conf
+# ----|----------|-------------|-----------------------
+# 0   | CHGEVENT | ChangeEvent | M (overridden from O)
 #
 # ATTRIBUTES:
 # ID     | Name       | Type | Constraint | Quality | Default | Access | Conf
@@ -65,7 +71,7 @@
 # EVENTS:
 # ID   | Name        | Priority | Access | Conf
 # -----|-------------|----------|--------|-----
-# 0x00 | StateChange | INFO     | V      | M (overridden from O)
+# 0x00 | StateChange | INFO     | V      | M (CHGEVENT)
 #
 # StateChange Event Fields:
 # - StateValue: bool - New state value
@@ -79,7 +85,9 @@
 # - Switch ON = Rain detected (true)
 # - Switch OFF = No rain (false)
 # - Update interval: 750ms for responsive detection
-# - StateChange event sent on every state transition
+# - StateChange event published on every StateValue change
+# - FeatureMap 0x0045 = 0x01 (CHGEVENT), EventList 0x0045 = [0x00]
+# - Boolean State behavior is shared in Matter_Plugin_Sensor_Boolean (CHGEVENT = true)
 #
 # TYPICAL APPLICATIONS:
 # - Weather stations
@@ -110,36 +118,11 @@ class Matter_Plugin_Sensor_Rain : Matter_Plugin_Sensor_Boolean
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0045: [0],                                    # Boolean State p.70 - no writable
   })
-  static var TYPES = { 0x0044: 1 }                  # Rain Sensor, rev 1
+  static var TYPES = { 0x0044: 2 }                  # Rain Sensor, rev 2 (Matter 1.6.1)
+  static var CHGEVENT = true                        # Boolean State ChangeEvent: StateChange event (Matter 1.6.1)
 
   # var tasmota_switch_index                          # Switch number in Tasmota (one based)
   # var shadow_bool_value
-
-  #############################################################
-  # value_updated
-  #
-  # This is triggered when a new value is changed, for subscription
-  # This method is meant to be overloaded and maximize shared code
-  def value_updated()
-    self.attribute_updated(0x0045, 0x0000)
-  end
-
-  #############################################################
-  # read an attribute
-  #
-  def read_attribute(session, ctx, tlv_solo)
-    var cluster = ctx.cluster
-    var attribute = ctx.attribute
-
-    # ====================================================================================================
-    if   cluster == 0x0045              # ========== Boolean State ==========
-      if   attribute == 0x0000          #  ---------- StateValue / bool ----------
-        return tlv_solo.set(0x08 #-TLV.BOOL-#, self.shadow_bool_value)
-      end
-
-    end
-    return super(self).read_attribute(session, ctx, tlv_solo)
-  end
 
   #############################################################
   # For Bridge devices
@@ -152,16 +135,6 @@ class Matter_Plugin_Sensor_Rain : Matter_Plugin_Sensor_Boolean
     import webserver
     self.web_values_prefix()        # display '| ' and name if present
     webserver.content_send(format("Rain%i %s", self.tasmota_switch_index, self.web_value_onoff(self.shadow_bool_value)))
-  end
-
-  # Show prefix before web value
-  def web_values_prefix()
-    import webserver
-    var name = self.get_name()
-    if !name
-      name = "Switch" + str(self.tasmota_switch_index)
-    end
-    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
   end
   #############################################################
   #############################################################

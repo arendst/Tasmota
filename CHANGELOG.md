@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - IR receive optional check every loop (`#define IR_RCV_IN_LOOP`)  and configurable save buffer (`#define IR_FULL_RCV_SAVE_BUFFER`) (#25268)
 - MQTT optional FileDownload and FileUpload transferring a file system file (`#define USE_UFILESYS_MQTT`) (#25278)
+- Matter Boolean State StateChange event for Contact, Rain and Water Leak sensors
 
 ### Breaking Changed
 - Matter lights Level Control MinLevel 1 and On/Off behavior aligned with Matter 1.6.1 (#25279)

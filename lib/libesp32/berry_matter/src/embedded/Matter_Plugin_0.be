@@ -147,7 +147,7 @@ class Matter_Plugin
     # 0x0040: 1,                            # Fixed Label - Initial Release
     # 0x0041: 1,                            # User Label - Initial Release
     # 0x0042: 1,                            # Boolean State - Initial Release
-    0x0045: 1,                              # Boolean State - Initial Release
+    0x0045: 3,                              # Boolean State - Matter 1.6.1 (ChangeEvent feature)
     0x0046: 3,                              # ICD Management Cluster revision 3 (Matter 1.4.1)
     # 0x005B: 1,                            # Air Quality - Initial Release
     # 0x005C: 1,                            # Smoke CO Alarm - Initial Release
