@@ -769,7 +769,7 @@ void WifiManagerBegin(bool reset_only) {
 
 void PollDnsWebserver(void) {
   if (DnsServer) { DnsServer->processNextRequest(); }
-  if (Webserver) { Webserver->handleClient(); }
+  if (Webserver && Web.state) { Webserver->handleClient(); }   // handleClient() costs a delay(1)
 }
 
 /*********************************************************************************************/
