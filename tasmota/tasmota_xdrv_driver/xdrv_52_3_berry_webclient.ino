@@ -833,10 +833,16 @@ extern "C" {
     HTTPClientLight * cl = wc_getclient(vm);
 #endif
     int32_t sz = cl->getSize();
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+    if (sz > 1048576) {
+      be_raise(vm, "value_error", "response size too big (>1MB)");
+    }
+#else
     // abort if we exceed 32KB size, things will not go well otherwise
     if (sz >= 32767) {
       be_raise(vm, "value_error", "response size too big (>32KB)");
     }
+#endif
     String payload = cl->getString();
     be_pushstring(vm, payload.c_str());
     cl->end();  // free allocated memory ~16KB
@@ -1052,10 +1058,16 @@ extern "C" {
     HTTPClientLight * cl = wc_getclient(vm);
 #endif
     int32_t sz = cl->getSize();
+#ifdef USE_BERRY_WEBCLIENT_ASYNC
+    if (sz > 1048576) {
+      be_raise(vm, "value_error", "response size too big (>1MB)");
+    }
+#else
     // abort if we exceed 32KB size, things will not go well otherwise
     if (sz >= 32767) {
       be_raise(vm, "value_error", "response size too big (>32KB)");
     }
+#endif
     // default to 1K starter if contetn-length not present
     if (sz < 0) sz = 1024;
     // create a bytes object at top of stack.
