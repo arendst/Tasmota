@@ -741,6 +741,21 @@ extern "C" {
     be_return_nil(vm);
   }
 
+  // wc.async_set_body_limit(bytes) -> self
+  int32_t wc_async_set_body_limit(struct bvm *vm) {
+    const int32_t argc = be_top(vm);
+    if (argc < 2 || !be_isint(vm, 2)) {
+      be_raise(vm, "type_error", "async_set_body_limit(bytes) expects an integer");
+    }
+    const int32_t limit = be_toint(vm, 2);
+    AsyncHttpClientLight *cl = wc_getclient(vm);
+    if (limit <= 0 || !cl->setAsyncBodyLimit((size_t)limit)) {
+      be_raise(vm, "value_error", "async body limit must be 1..1048576 bytes and set before a request");
+    }
+    be_pushvalue(vm, 1);
+    be_return(vm);
+  }
+
 #else
 
   int32_t wc_async_get_start(struct bvm *vm) {
@@ -775,6 +790,11 @@ extern "C" {
 
   int32_t wc_async_abort(struct bvm *vm) {
     be_raise(vm, "type_error", "wc_async_abort command unavailable in non-async webclient build.");
+    be_return(vm);
+  }
+
+  int32_t wc_async_set_body_limit(struct bvm *vm) {
+    be_raise(vm, "type_error", "wc_async_set_body_limit command unavailable in non-async webclient build.");
     be_return(vm);
   }
 

@@ -45,6 +45,7 @@ extern int wc_async_get_start(bvm *vm);
 extern int wc_async_post_start(bvm *vm);   /* payload: string|bytes */
 extern int wc_async_state(bvm *vm);
 extern int wc_async_abort(bvm *vm);
+extern int wc_async_set_body_limit(bvm *vm);
 /* ------------------------ */
 
 #include "be_fixed_be_class_webclient.h"
@@ -111,5 +112,6 @@ class be_class_webclient (scope: global, name: webclient) {
     async_post_start, func(wc_async_post_start)
     async_state, func(wc_async_state)
     async_abort, func(wc_async_abort)
+    async_set_body_limit, func(wc_async_set_body_limit)
 }
 @const_object_info_end */

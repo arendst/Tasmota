@@ -16,7 +16,7 @@
  * - asyncGETStart(), asyncPOSTStart(): launch a request in the background (FreeRTOS worker), non-blocking for the caller
  * - asyncState(): query status; after ASYNC_DONE you can use getString()/getSize()/writeToStream() without further I/O
  * - asyncAbort(): best-effort cancellation of an in-flight async request
- * Note: in async mode the response body is stored in an internal RAM buffer (hard cap kAsyncBodyLimit).
+ * Note: in async mode the response body is stored in a bounded RAM buffer (16 KB by default, configurable per client).
  *
  * Acknowledgments: API/error-code compatibility inspired by Arduino HTTPClient / Tasmota HTTPClientLight.
  * This file contains an independent implementation; no source code was copied.
@@ -1463,10 +1463,10 @@ int AsyncHttpClientLight::Job_AsyncGET(void* arg) {
   // buffer limit
   self->_asyncBody = StreamString();
   int expected = (self->_size > 0) ? self->_size : 1024;
-  if (expected > (int)AsyncHttpClientLight::kAsyncBodyLimit) expected = AsyncHttpClientLight::kAsyncBodyLimit;
+  if (expected > (int)self->_asyncBodyLimit) expected = self->_asyncBodyLimit;
   (void)self->_asyncBody.reserve(expected + 1);
 
-  int r = self->readBodyToStreamString(self->_asyncBody, (int)AsyncHttpClientLight::kAsyncBodyLimit);
+  int r = self->readBodyToStreamString(self->_asyncBody, (int)self->_asyncBodyLimit);
   if (r < 0) { self->_asyncRxBytes = r; return r; }
   self->_asyncRxBytes = r;
 
@@ -1517,10 +1517,10 @@ int AsyncHttpClientLight::Job_AsyncPOST_Buf(void* arg) {
 
   self->_asyncBody = StreamString();
   int expected = (self->_size > 0) ? self->_size : 1024;
-  if (expected > (int)AsyncHttpClientLight::kAsyncBodyLimit) expected = AsyncHttpClientLight::kAsyncBodyLimit;
+  if (expected > (int)self->_asyncBodyLimit) expected = self->_asyncBodyLimit;
   (void)self->_asyncBody.reserve(expected + 1);
 
-  int r = self->readBodyToStreamString(self->_asyncBody, (int)AsyncHttpClientLight::kAsyncBodyLimit);
+  int r = self->readBodyToStreamString(self->_asyncBody, (int)self->_asyncBodyLimit);
   if (r < 0) { self->_asyncRxBytes = r; return r; }
   self->_asyncRxBytes = r;
 
@@ -1566,10 +1566,10 @@ int AsyncHttpClientLight::Job_AsyncPOST_Str(void* arg) {
 
   self->_asyncBody = StreamString();
   int expected = (self->_size > 0) ? self->_size : 1024;
-  if (expected > (int)AsyncHttpClientLight::kAsyncBodyLimit) expected = AsyncHttpClientLight::kAsyncBodyLimit;
+  if (expected > (int)self->_asyncBodyLimit) expected = self->_asyncBodyLimit;
   (void)self->_asyncBody.reserve(expected + 1);
 
-  int r = self->readBodyToStreamString(self->_asyncBody, (int)AsyncHttpClientLight::kAsyncBodyLimit);
+  int r = self->readBodyToStreamString(self->_asyncBody, (int)self->_asyncBodyLimit);
   if (r < 0) { self->_asyncRxBytes = r; return r; }
   self->_asyncRxBytes = r;
 
