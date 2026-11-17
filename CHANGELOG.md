@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 Platform from 2026.11.50 to 2026.11.51, Framework (Arduino Core) from v3.3.12-2 to v3.3.12-3 and IDF v5.5.5 (#25275)
 - JPEGDEC library from v1.8.4 to v1.8.5 (#25282)
+- Matter cluster and device type revisions aligned with Matter 1.6.1, fixed ReachableChanged for MQTT
 
 ### Fixed
 - GPIOViewer fails to execute, regression from platform 2026.11.50 with Framework v3.3.12-2 (#25275)
