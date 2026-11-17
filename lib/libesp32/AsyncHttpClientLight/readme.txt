@@ -108,6 +108,7 @@ Negative return values (aside from HTTP 1xx..5xx):
 -9 HTTPC_ERROR_ENCODING (e.g. unsupported TE)
 -10 HTTPC_ERROR_STREAM_WRITE
 -11 HTTPC_ERROR_READ_TIMEOUT
+-13 HTTPC_ERROR_BODY_TOO_LARGE
 
 4) API (Berry – webclient)
 Initialization and security

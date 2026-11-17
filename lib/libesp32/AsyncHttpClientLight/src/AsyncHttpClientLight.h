@@ -76,6 +76,10 @@
 #define HTTPC_ERROR_ASYNC_BUSY           (-12)
 #endif
 
+#ifndef HTTPC_ERROR_BODY_TOO_LARGE
+#define HTTPC_ERROR_BODY_TOO_LARGE       (-13)
+#endif
+
 #ifndef HTTP_TCP_BUFFER_SIZE
 #define HTTP_TCP_BUFFER_SIZE 1460
 #endif

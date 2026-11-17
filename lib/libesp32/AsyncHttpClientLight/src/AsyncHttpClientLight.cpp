@@ -710,6 +710,7 @@ String AsyncHttpClientLight::errorToString(int error) {
     case HTTPC_ERROR_STREAM_WRITE:       return F("Stream write error");
     case HTTPC_ERROR_READ_TIMEOUT:       return F("read Timeout");
     case HTTPC_ERROR_ASYNC_BUSY:         return F("async request in progress");
+    case HTTPC_ERROR_BODY_TOO_LARGE:     return F("response body too large");
     default: return String();
   }
 }
@@ -1326,7 +1327,8 @@ int AsyncHttpClientLight::readBodyToStreamString(StreamString& s, int size_limit
   // identity
   if (_transferEncoding == HTTPC_TE_IDENTITY) {
     int remaining = _size;
-    if (remaining < 0) remaining = size_limit; // max to limit if we dont know content height
+    if (remaining > size_limit) return bail(HTTPC_ERROR_BODY_TOO_LARGE);
+    if (remaining < 0) remaining = size_limit + 1; // probe one byte beyond limit when length is unknown
     uint32_t lastDataTime = millis();
 
     while (remaining != 0) {
@@ -1349,14 +1351,10 @@ int AsyncHttpClientLight::readBodyToStreamString(StreamString& s, int size_limit
       uint8_t buf[HTTP_TCP_BUFFER_SIZE];
       int r = _transport->read(buf, avail);
       if (r > 0) {
-        // limit
         int room = size_limit - read_total;
-        if (room <= 0) { // limit done - close
-          return bail(0);
-        }
-        int take = (r > room) ? room : r;
-        if (!push(buf, take)) return bail(HTTPC_ERROR_STREAM_WRITE);
-        read_total += take;
+        if (room <= 0 || r > room) return bail(HTTPC_ERROR_BODY_TOO_LARGE);
+        if (!push(buf, r)) return bail(HTTPC_ERROR_STREAM_WRITE);
+        read_total += r;
         if (remaining > 0) remaining -= r;
         lastDataTime = millis();
       }
@@ -1391,6 +1389,7 @@ int AsyncHttpClientLight::readBodyToStreamString(StreamString& s, int size_limit
         while (true) { String t; if (!readLine(t)) return bail(HTTPC_ERROR_READ_TIMEOUT); if (t.length() == 0) break; }
         break; // end
       }
+      if (chunk > size_limit - read_total) return bail(HTTPC_ERROR_BODY_TOO_LARGE);
 
       int remaining = chunk;
       while (remaining > 0) {
@@ -1412,10 +1411,9 @@ int AsyncHttpClientLight::readBodyToStreamString(StreamString& s, int size_limit
         int r = _transport->read(buf, wish);
         if (r > 0) {
           int room = size_limit - read_total;
-          if (room <= 0) return bail(0);
-          int take = (r > room) ? room : r;
-          if (!push(buf, take)) return bail(HTTPC_ERROR_STREAM_WRITE);
-          read_total += take;
+          if (room <= 0 || r > room) return bail(HTTPC_ERROR_BODY_TOO_LARGE);
+          if (!push(buf, r)) return bail(HTTPC_ERROR_STREAM_WRITE);
+          read_total += r;
           remaining -= r;
         }
       }
@@ -1467,7 +1465,7 @@ int AsyncHttpClientLight::Job_AsyncGET(void* arg) {
   (void)self->_asyncBody.reserve(expected + 1);
 
   int r = self->readBodyToStreamString(self->_asyncBody, (int)self->_asyncBodyLimit);
-  if (r < 0) { self->_asyncRxBytes = r; return r; }
+  if (r < 0) { self->_asyncHttpCode = r; self->_asyncRxBytes = r; return r; }
   self->_asyncRxBytes = r;
 
   if (!self->_reuse || !self->_canReuse) {
@@ -1521,7 +1519,7 @@ int AsyncHttpClientLight::Job_AsyncPOST_Buf(void* arg) {
   (void)self->_asyncBody.reserve(expected + 1);
 
   int r = self->readBodyToStreamString(self->_asyncBody, (int)self->_asyncBodyLimit);
-  if (r < 0) { self->_asyncRxBytes = r; return r; }
+  if (r < 0) { self->_asyncHttpCode = r; self->_asyncRxBytes = r; return r; }
   self->_asyncRxBytes = r;
 
   if (!self->_reuse || !self->_canReuse) {
@@ -1570,7 +1568,7 @@ int AsyncHttpClientLight::Job_AsyncPOST_Str(void* arg) {
   (void)self->_asyncBody.reserve(expected + 1);
 
   int r = self->readBodyToStreamString(self->_asyncBody, (int)self->_asyncBodyLimit);
-  if (r < 0) { self->_asyncRxBytes = r; return r; }
+  if (r < 0) { self->_asyncHttpCode = r; self->_asyncRxBytes = r; return r; }
   self->_asyncRxBytes = r;
 
   if (!self->_reuse || !self->_canReuse) {
