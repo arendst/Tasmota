@@ -155,6 +155,22 @@ bool RgxApUp()
   return RgxSettings.status == RGX_CONFIGURED || RgxSettings.status == RGX_SETUP_NAPT;
 }
 
+// Uplink available for the AP clients: WiFi station connected or, on ESP32 with USE_ETHERNET, Ethernet with an IPv4 address
+// EthernetHasIPv4() returns false when Ethernet is not compiled in
+bool RgxUplinkUp(void)
+{
+  return (Wifi.status == WL_CONNECTED) || EthernetHasIPv4();
+}
+
+// IPv4 address of the uplink. WiFi station has priority, so nothing changes when it is connected
+uint32_t RgxUplinkIP(void)
+{
+#if defined(ESP32) && defined(USE_ETHERNET)
+  if (Wifi.status != WL_CONNECTED) { return (uint32_t)EthernetLocalIP(); }
+#endif
+  return (uint32_t)WiFi.localIP();
+}
+
 // Check the current configuration is complete, updating RgxSettings.status
 void RgxCheckConfig(void)
 {
@@ -292,7 +308,7 @@ void CmndRgxNAPT(void)
 // CmndRgxPort helper: Do port map and set response if successful
 void CmndRgxPortMap(uint8_t proto, uint16_t gw_port, uint32_t dst_ip, uint16_t dst_port)
 {
-  uint32_t gw_ip = (uint32_t)WiFi.localIP();
+  uint32_t gw_ip = RgxUplinkIP();
   if (ip_portmap_add(proto, gw_ip, gw_port, dst_ip, dst_port))
   {
     Response_P(PSTR("OK %s %_I:%u -> %_I:%u"),
@@ -400,12 +416,17 @@ void rngxSetup()
 #endif // ESP8266
 #ifdef ESP32
   esp_err_t err;
-  esp_netif_t* esp_netif_STA = get_esp_interface_netif(ESP_IF_WIFI_STA);
+  esp_netif_t* esp_netif_uplink = get_esp_interface_netif(ESP_IF_WIFI_STA);
+  if (Wifi.status != WL_CONNECTED) {
+    // Wired uplink: take the DNS from Ethernet
+    esp_netif_t* esp_netif_ETH = esp_netif_get_handle_from_ifkey("ETH_DEF");
+    if (esp_netif_ETH) { esp_netif_uplink = esp_netif_ETH; }
+  }
   esp_netif_t* esp_netif_AP = get_esp_interface_netif(ESP_IF_WIFI_AP);
   esp_netif_dns_info_t ip_dns;
 
   err = esp_netif_dhcps_stop(esp_netif_AP);
-  err = esp_netif_get_dns_info(esp_netif_STA, ESP_NETIF_DNS_MAIN, &ip_dns);
+  err = esp_netif_get_dns_info(esp_netif_uplink, ESP_NETIF_DNS_MAIN, &ip_dns);
   err = esp_netif_set_dns_info(esp_netif_AP, ESP_NETIF_DNS_MAIN, &ip_dns);
   dhcps_offer_t opt_val = OFFER_DNS; // supply a dns server via dhcps
   err = esp_netif_dhcps_option(esp_netif_AP, ESP_NETIF_OP_SET, ESP_NETIF_DOMAIN_NAME_SERVER, &opt_val, 1);
@@ -494,10 +515,12 @@ bool Xdrv58(uint32_t function)
       break;
     case FUNC_EVERY_SECOND:
       // AddLog(LOG_LEVEL_INFO, PSTR("RGX: XXX DEBUG: Wifi.status: %d, WiFi.getMode(): %d, RgxSettings.status: %d, link_count: %d"), Wifi.status, WiFi.getMode(), RgxSettings.status, Wifi.link_count);
-      if (RgxSettings.status == RGX_NOT_CONFIGURED && Wifi.status == WL_CONNECTED)
+      if (RgxSettings.status == RGX_NOT_CONFIGURED && RgxUplinkUp())
       {
-        // Setup only if WiFi in STA only mode
-        if (WiFi.getMode() == WIFI_STA)
+        AddLog(LOG_LEVEL_DEBUG, PSTR("RGX: Uplink up (WiFi %d, Ethernet %d), WiFi mode %d"),
+               Wifi.status == WL_CONNECTED, EthernetHasIPv4(), WiFi.getMode());
+        // Setup only if WiFi in STA only mode (or off when the uplink is Ethernet)
+        if ((WiFi.getMode() == WIFI_STA) || (WiFi.getMode() == WIFI_OFF))
         {
           // Connecting for the first time, setup WiFi
           rngxSetup();
@@ -507,7 +530,7 @@ bool Xdrv58(uint32_t function)
           RgxSettings.status = RGX_CONFIGURED;
         }
       }
-      else if (RgxSettings.status == RGX_FORCE_CONFIGURE && Wifi.status == WL_CONNECTED)
+      else if (RgxSettings.status == RGX_FORCE_CONFIGURE && RgxUplinkUp())
       {
         rngxSetup();
       }
