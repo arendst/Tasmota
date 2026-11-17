@@ -263,15 +263,11 @@ void QuickEspNow::espnowTxHandle () {
 void QuickEspNow::enableTransmit (bool enable) {
     DEBUG_DBG (QESPNOW_TAG, "Send esp-now task %s", enable ? "enabled" : "disabled");
     if (enable) {
-        if (espnowTxTask_cb) {
-            vTaskResume (espnowTxTask);
-            vTaskResume (espnowRxTask);
-        }
+        vTaskResume (espnowTxTask);
+        vTaskResume (espnowRxTask);
     } else {
-        if (espnowTxTask_cb) {
-            vTaskSuspend (espnowTxTask);
-            vTaskSuspend (espnowRxTask);
-        }
+        vTaskSuspend (espnowTxTask);
+        vTaskSuspend (espnowRxTask);
     }
 }
 
@@ -437,7 +433,7 @@ uint8_t PeerListClass::get_peer_number () {
 }
 
 bool PeerListClass::peer_exists (const uint8_t* mac) {
-    for (uint8_t i = 0; i < ESP_NOW_MAX_TOTAL_PEER_NUM; i++) {
+    for (int i = 0; i < ESP_NOW_MAX_TOTAL_PEER_NUM; i++) {
         if (memcmp (peer_list.peer[i].mac, mac, ESP_NOW_ETH_ALEN) == 0) {
             if (peer_list.peer[i].active) {
                 peer_list.peer[i].last_msg = millis ();
@@ -450,7 +446,7 @@ bool PeerListClass::peer_exists (const uint8_t* mac) {
 }
 
 peer_t* PeerListClass::get_peer (const uint8_t* mac) {
-    for (uint8_t i = 0; i < ESP_NOW_MAX_TOTAL_PEER_NUM; i++) {
+    for (int i = 0; i < ESP_NOW_MAX_TOTAL_PEER_NUM; i++) {
         if (memcmp (peer_list.peer[i].mac, mac, ESP_NOW_ETH_ALEN) == 0) {
             if (peer_list.peer[i].active) {
                 DEBUG_VERBOSE (PEERLIST_TAG, "Peer " MACSTR " found", MAC2STR (mac));
@@ -471,7 +467,7 @@ bool PeerListClass::update_peer_use (const uint8_t* mac) {
 }
 
 bool PeerListClass::add_peer (const uint8_t* mac) {
-    if (int i = peer_exists (mac)) {
+    if (peer_exists (mac)) {
         DEBUG_VERBOSE (PEERLIST_TAG, "Peer " MACSTR " already exists", MAC2STR (mac));
         return false;
     }
@@ -484,7 +480,7 @@ bool PeerListClass::add_peer (const uint8_t* mac) {
         // delete_peer (); // Delete should happen in higher level
     }
 
-    for (uint8_t i = 0; i < ESP_NOW_MAX_TOTAL_PEER_NUM; i++) {
+    for (int i = 0; i < ESP_NOW_MAX_TOTAL_PEER_NUM; i++) {
         if (!peer_list.peer[i].active) {
             memcpy (peer_list.peer[i].mac, mac, ESP_NOW_ETH_ALEN);
             peer_list.peer[i].active = true;
