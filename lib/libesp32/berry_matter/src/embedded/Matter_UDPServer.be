@@ -39,7 +39,7 @@ class Matter_UDPPacket_sent
   var msg_id                      # (int) message identifier that needs to be acknowledged, or `nil` if no ack needed
   var exchange_id                 # (int) exchange id, to match ack
   var session_id                  # (int) session id, for logging only
-  var retries                     # 0 in first attempts, goes up to RETRIES
+  var retries                     # number of retransmissions already done, from 0 up to RETRIES
   var next_try                    # timestamp (millis) when to try again
 
   def init(msg)
@@ -63,7 +63,7 @@ matter.UDPPacket_sent = Matter_UDPPacket_sent
 #
 #################################################################################
 class Matter_UDPServer
-  static var RETRIES = 5            # 6 transmissions max (5 retries) - 1 more than spec `MRP_MAX_TRANSMISSIONS` 4.11.8 p.146
+  static var RETRIES = 4            # retransmissions after the first send, 5 transmissions max as spec `MRP_MAX_TRANSMISSIONS` 4.11.8 p.146
   static var MAX_PACKETS_READ = 4   # read at most 4 packets per tick
   var addr, port                    # local addr and port
   var device
@@ -212,8 +212,8 @@ class Matter_UDPServer
   # either with direct Ack packet or ack embedded in another packet.
   # Packets with `id`=`nil` are not resent.
   # <BR>
-  # Packets are re-sent at most `RETRIES` (4) times, i.e. sent maximum 5 times.
-  # Exponential backoff is added after each resending.
+  # Packets are re-sent at most `RETRIES` (4) times, i.e. sent maximum 5 times (`MRP_MAX_TRANSMISSIONS`).
+  # Exponential backoff is added after each resending, using the send count of the packet.
   # <BR>
   # If all retries expired, remove packet and log.
   def _resend_packets()
@@ -221,11 +221,11 @@ class Matter_UDPServer
     while (idx < size(self.packets_sent)) && (idx < 4)              # limit to 4 packets in output queue
       var packet = self.packets_sent[idx]
       if tasmota.time_reached(packet.next_try)
-        if packet.retries <= self.RETRIES
+        if packet.retries < self.RETRIES
           log(f"MTR: .          Resending packet id={packet.msg_id} {packet.retries=}", 3)
           self.send(packet)
-          packet.next_try = tasmota.millis() + self._backoff_time(packet.retries)
           packet.retries += 1
+          packet.next_try = tasmota.millis() + self._backoff_time(packet.retries)   # `retries` is now the sendCount of this transmission
           idx += 1
         else
           self.packets_sent.remove(idx)
@@ -276,7 +276,9 @@ class Matter_UDPServer
   end
 
   #############################################################
-  # Compute exponential backoff as per 4.11.2.1 p.137
+  # Compute exponential backoff `mrpBackoffTime` as per 4.11.2.1 p.137
+  # `n` is the sendCount: 0 for the first transmission, 1 for the first retransmission...
+  # Backoff factor is 1.6^max(0, n - MRP_BACKOFF_THRESHOLD (1)), jitter 0..25%
   static def _backoff_time(n)
     def power_int(v, n)
       var r = 1
