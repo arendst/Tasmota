@@ -72,6 +72,11 @@
 # 0x0011 | Reachable             | bool   | all        |         | TRUE    | R V    | M
 # 0x0012 | UniqueID              | string | max 32     |         | MS      | R V    | M
 #
+# EVENTS:
+# ID   | Name             | Priority | Conf
+# -----|------------------|----------|-----
+# 0x03 | ReachableChanged | INFO     | M
+#
 # Quality Flags:
 # - N: Non-volatile (persists across reboots)
 # - MS: Manufacturer specific
@@ -318,7 +323,10 @@ class Matter_Plugin_Device : Matter_Plugin
         else
           return tlv_solo.set(0x08 #-TLV.BOOL-#, 1)     # by default we are reachable
         end
-      elif attribute == 0xFFFA && self.BRIDGE && self.http_remote != nil  # EventList
+      elif attribute == 0xFFFA          #  ---------- EventList ----------
+        # ReachableChanged is mandatory. HTTP and MQTT remotes publish it from
+        # device.http_reachable_changed() / mqtt_reachable_changed(). Local and
+        # Zigbee endpoints are always reachable, so the event never fires.
         var events = matter.TLV.Matter_TLV_array()
         events.add_TLV(nil, 0x06 #-TLV.U4-#, 0x03)     # ReachableChanged
         return events

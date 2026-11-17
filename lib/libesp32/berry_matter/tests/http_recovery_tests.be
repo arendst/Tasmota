@@ -42,6 +42,7 @@ class TestTasmota
   def init() self.now = 0 self.utc = 1700000000 end
   def millis(offset) return self.now + (offset == nil ? 0 : offset) end
   def rtc_utc() return self.utc end
+  def rtc_utc_ms(b) var v = int64(self.utc) * int64(1000) if b == nil return v end b.clear() b.add(v.low32(), 4) b.add(v.high32(), 4) return b end
   def rtc(mode) return self.utc end
   def time_reached(deadline) return self.now >= deadline end
   def loglevel(level) return false end
@@ -72,9 +73,14 @@ class MemoryRemote : matter.HTTP_remote
     self.addr = ""
   end
 end
-class MQTTBoundary
-  var reachable
-  def init() self.reachable = true end
+# Only subscriptions are replaced; device_is_alive() and the Reachable
+# notification path are real.
+class MQTTBoundary : matter.MQTT_remote
+  def init(device)
+    self.device = device
+    self.reachable = true
+    self.info = {}
+  end
   def add_async_cb(cb, cmd) end
 end
 # Only persistent counter reservation is replaced; event queuing and TLV are real.
@@ -102,7 +108,7 @@ class MemoryDevice : matter.Device
     end
     return self.http_remotes[addr]
   end
-  def register_mqtt_remote(topic) return MQTTBoundary() end
+  def register_mqtt_remote(topic) return MQTTBoundary(self) end
   def attribute_updated(endpoint, cluster, attribute, fabric_specific)
     self.notifications.push([endpoint, cluster, attribute])
     super(self).attribute_updated(endpoint, cluster, attribute, fabric_specific)
@@ -151,7 +157,7 @@ class Transport
   end
 end
 class Fixture
-  var device, transport, remote, session, sub
+  var device, transport, remote, mqtt, session, sub
   def init(native)
     tasmota.now = 0
     self.device = MemoryDevice(native)
@@ -168,6 +174,7 @@ class Fixture
                               {"url": "192.0.2.2", "relay": 1}))
     self.device.plugins.push(matter.Plugin_Bridge_OnOff(self.device, 21,
                               {"topic": "other-device", "relay": 1}))
+    self.mqtt = self.device.plugins[-1].mqtt_remote
     self.device.plugins.push(matter.Plugin_OnOff(self.device, 22, {"relay": 1}))
     # Model an established controller subscription to all Reachable attributes.
     # Initial subscription handshakes are outside this recovery test.
@@ -216,11 +223,8 @@ class Fixture
       var plugin = self.device.plugins[index]
       ctx.endpoint = plugin.endpoint
       var events = plugin.read_attribute(self.session, ctx, tlv).val
-      if index <= 4
-        assert(size(events) == 1 && events[0].val == 3, "HTTP EventList must advertise ReachableChanged")
-      else
-        assert(size(events) == 0, "MQTT or local EventList changed")
-      end
+      # HTTP, MQTT and local endpoints all advertise the mandatory ReachableChanged
+      assert(size(events) == 1 && events[0].val == 3, "EventList must advertise ReachableChanged")
     end
   end
   def report(expected, event_states)
@@ -320,6 +324,26 @@ for failure_kind : [0, 1]
   f.assert_events([true, false])
   f.report(false, [true, false])
 end
+# MQTT remote transitions publish ReachableChanged on the MQTT endpoint only.
+f = Fixture()
+f.mqtt.device_is_alive(true)
+assert(size(f.device.notifications) == 0 && size(f.device.events.queue_debug) == 0, "no change, no notification")
+f.mqtt.device_is_alive(false)
+f.mqtt.device_is_alive(false)
+f.mqtt.device_is_alive(true)
+assert(size(f.device.notifications) == 2, "MQTT reachability change must notify its endpoint once per transition")
+for update : f.device.notifications
+  assert(update[0] == 21 && update[1] == 0x0039 && update[2] == 0x0011, "MQTT notification on wrong path")
+end
+var mqtt_queue = f.device.events.queue_debug
+assert(size(mqtt_queue) == 2, "missing or duplicate MQTT ReachableChanged events")
+var mqtt_states = [false, true]
+for index : 0..1
+  var event = mqtt_queue[index]
+  assert(event.endpoint == 21 && event.cluster == 0x0039 && event.event_id == 0x03 && event.priority == 1)
+  assert(event.data0.val == mqtt_states[index] && type(event.data0.val) == 'bool')
+end
+f.assert_event_lists()
 # Native composition hides Bridged Device Basic Information from all endpoints.
 # The backend must still track availability, but cannot report a hidden cluster.
 f = Fixture(true)
@@ -349,4 +373,4 @@ probe.device_is_alive(true)
 probe.device_is_alive(false)
 probe.device_is_alive(false)
 assert(!probe.reachable)
-print("HTTP recovery: shared endpoints, transitions, deduplication, Status 11, nil probes, native composition, EventList, ReachableChanged and encoded reports passed")
+print("HTTP recovery: shared endpoints, transitions, deduplication, Status 11, nil probes, native composition, EventList, HTTP and MQTT ReachableChanged and encoded reports passed")
