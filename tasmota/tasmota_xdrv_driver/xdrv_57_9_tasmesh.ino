@@ -44,15 +44,10 @@
 
 #ifdef ESP32
 
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 5, 0)
 void CB_MESHDataSent(const esp_now_send_info_t *tx_info, esp_now_send_status_t sendStatus);
 void CB_MESHDataSent(const esp_now_send_info_t *tx_info, esp_now_send_status_t sendStatus) {
   if ((nullptr == tx_info) || (nullptr == tx_info->des_addr)) { return; }
   const uint8_t *MAC = tx_info->des_addr;
-#else
-void CB_MESHDataSent(const uint8_t *MAC, esp_now_send_status_t sendStatus);
-void CB_MESHDataSent(const uint8_t *MAC, esp_now_send_status_t sendStatus) {
-#endif
   char _destMAC[18];
   ToHex_P(MAC, 6, _destMAC, 18, ':');
   AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: Sent to %s status %d"), _destMAC, sendStatus);

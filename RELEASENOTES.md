@@ -160,6 +160,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - MPR121 sizeof [#25203](https://github.com/arendst/Tasmota/issues/25203)
 - AHT20/AHT30 stale readings when used with deep sleep, with optional `#define USE_AHT_DIAG` [#25258](https://github.com/arendst/Tasmota/issues/25258)
 - SML ESP8266 serial mode [#25201](https://github.com/arendst/Tasmota/issues/25201)
+- TashMesh and WizMote ESP-NOW support for IDF v5.5.5 [#25289](https://github.com/arendst/Tasmota/issues/25289)
 - Display palette colors on monochrome universal displays [#25260](https://github.com/arendst/Tasmota/issues/25260)
 - DisplayText [pN] command now works when followed by another [pN] [#25188](https://github.com/arendst/Tasmota/issues/25188)
 - Missing NUL terminator for stored `ModbusBridgeSend` command data [#25218](https://github.com/arendst/Tasmota/issues/25218)

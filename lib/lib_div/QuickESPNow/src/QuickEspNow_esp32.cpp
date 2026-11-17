@@ -371,7 +371,7 @@ void QuickEspNow::espnowRxTask_cb (void* param) {
     }
 }
 
-void QuickEspNow::rx_cb(const esp_now_recv_info_t* esp_now_info, const uint8_t* data, int len) {
+void QuickEspNow::rx_cb (const esp_now_recv_info_t* esp_now_info, const uint8_t* data, int len) {
     espnow_frame_format_t* espnow_data = (espnow_frame_format_t*)(data - sizeof(espnow_frame_format_t));
     wifi_promiscuous_pkt_t* promiscuous_pkt = (wifi_promiscuous_pkt_t*)(data - sizeof(wifi_pkt_rx_ctrl_t) - sizeof(espnow_frame_format_t));
     wifi_pkt_rx_ctrl_t* rx_ctrl = &promiscuous_pkt->rx_ctrl;
@@ -400,13 +400,13 @@ void QuickEspNow::rx_cb(const esp_now_recv_info_t* esp_now_info, const uint8_t* 
     }
 }
 
-void QuickEspNow::tx_cb (uint8_t* mac_addr, uint8_t status) {
+void QuickEspNow::tx_cb (const esp_now_send_info_t* info, uint8_t status) {
     quickEspNow.readyToSend = true;
     quickEspNow.sentStatus = status;
     quickEspNow.waitingForConfirmation = false;
     DEBUG_DBG (QESPNOW_TAG, "-------------- Ready to send: true. Status: %d", status);
     if (quickEspNow.sentResult) {
-        quickEspNow.sentResult (mac_addr, status);
+        quickEspNow.sentResult (info->des_addr, status);
     }
 }
 
