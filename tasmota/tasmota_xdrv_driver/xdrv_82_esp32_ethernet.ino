@@ -21,6 +21,10 @@
 #include "sdkconfig.h"
 #ifdef CONFIG_ETH_ENABLED
 #ifdef USE_ETHERNET
+#ifdef USE_SPI
+#include <SPI.h>
+#include "esp32-hal-periman.h"
+#endif
 /*********************************************************************************************\
  * Ethernet support for ESP32
  *
@@ -305,17 +309,37 @@ void EthernetInit(void) {
 #endif // FIRMWARE_MINIMAL
       return;
     }
+
+    SPIClass *eth_spi = nullptr;
+#ifdef USE_SPI
+    int eth_sck = Pin(GPIO_SPI_CLK, spi_bus);
+    if ((eth_sck >= 0) &&
+        (perimanGetPinBusType(eth_sck) == ESP32_BUS_TYPE_SPI_MASTER_SCK)) {
+      if (0 == spi_bus) {
+        eth_spi = &SPI;          // Global instance every bus1 driver shares
+      } else {
+        // Bus2 drivers may use their own SPIClass instance, so the bus cannot be shared safely
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH "SPI bus2 in use, not shared"));
+      }
+    }
+#endif  // USE_SPI
 #ifndef FIRMWARE_MINIMAL
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH "Ethernet using SPI (bus%d)"), spi_bus +1);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH "Ethernet %s SPI (bus%d)"), eth_spi ? PSTR("sharing") : PSTR("using"), spi_bus +1);
 #endif // FIRMWARE_MINIMAL
-    init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address,
-                         eth_mdc, eth_mdio, eth_power,
-#if CONFIG_SOC_SPI_PERIPH_NUM > 2 
-                         (1 == spi_bus) ? SPI3_HOST : SPI2_HOST,
+    if (eth_spi) {
+      // CS is driven by ETH using digitalWrite(), not by the SPI peripheral
+      init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address,
+                           eth_mdc, eth_mdio, eth_power, *eth_spi));
+    } else {
+      init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address,
+                           eth_mdc, eth_mdio, eth_power,
+#if CONFIG_SOC_SPI_PERIPH_NUM > 2
+                           (1 == spi_bus) ? SPI3_HOST : SPI2_HOST,
 #else
-                         SPI2_HOST,
+                           SPI2_HOST,
 #endif
-                         Pin(GPIO_SPI_CLK, spi_bus), Pin(GPIO_SPI_MISO, spi_bus), Pin(GPIO_SPI_MOSI, spi_bus)));
+                           Pin(GPIO_SPI_CLK, spi_bus), Pin(GPIO_SPI_MISO, spi_bus), Pin(GPIO_SPI_MOSI, spi_bus)));
+    }
   }
   if (!init_ok) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad EthType %i or init error"),eth_type);
