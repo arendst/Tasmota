@@ -51,6 +51,7 @@
 # - Bit 3 (WND): Wind - Wind modes (O)
 # - Bit 4 (STEP): Step - Step command (O)
 # - Bit 5 (DIR): AirflowDirection - Airflow direction control (O)
+# - Tasmota FeatureMap: 0 (no optional feature, Auto is not supported)
 #
 # DATA TYPES:
 # - FanModeEnum(enum8):
@@ -106,7 +107,9 @@
 #   * Mode 1 (Low) → ~33%
 #   * Mode 2 (Medium) → ~67%
 #   * Mode 3 (High) → 100%
-# - FanModeSequence: 2 (Off/Low/Med/High/Auto) - Auto not supported
+# - FanModeSequence: 0 (Off/Low/Med/High), the Auto sequences require the AUT feature
+# - Write FanMode: On (4) and Smart (6) are deprecated and set High,
+#   Auto (5) and out of range values are rejected with CONSTRAINT_ERROR
 # - Commands published: FanMode, FanSpeed (0-100), FanSpeed255 (0-255)
 #
 # MODE/SPEED SYNCHRONIZATION:
@@ -157,9 +160,9 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
   #     1: Low
   #     2: Medium
   #     3: High
-  #     4: On -- deprecated
-  #     5: Auto -- not declared as supported
-  #     6: Smart -- deprecated
+  #     4: On -- deprecated, set to High
+  #     5: Auto -- not supported (AUT feature not declared), set to High by `set_fan_mode()`
+  #     6: Smart -- deprecated, set to High since Auto is not supported
 
   #############################################################
   # Constructor
@@ -182,7 +185,7 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
       var new_speed_pct = self.shadow_fan_speed_pct
       if self.shadow_fan_mode == 0            # set to Off, we need to adjust speed to 0 (4.4.6.1.1)
         new_speed_pct = 0
-      elif self.shadow_fan_mode > 3           # Auto mode or unsupported modes, since we don't support AUTO, set speed to max
+      elif self.shadow_fan_mode > 3           # On, Auto, Smart or unsupported modes: Auto is not supported, set to High
         self.shadow_fan_mode = 3              # HIGH
         new_speed_pct = 100
       else                                    # set to value
@@ -232,7 +235,7 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
       if   attribute == 0x0000          #  ---------- FanMode / enum8 ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, self.shadow_fan_mode)
       elif attribute == 0x0001          #  ---------- FanModeSequence / enum8 ----------
-        return tlv_solo.set(0x06 #-TLV.U4-#, 2)  # Off/Low/Med/High/Auto
+        return tlv_solo.set(0x06 #-TLV.U4-#, 0)  # Off/Low/Med/High (no Auto)
       elif attribute == 0x0002          #  ---------- PercentSetting / percent ----------
         return tlv_solo.set(0x06 #-TLV.U4-#, self.shadow_fan_speed_pct)
       elif attribute == 0x0003          #  ---------- PercentCurrent / percent ----------
@@ -259,7 +262,9 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
     if   cluster == 0x0202              # ========== Fan ==========
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- FanMode / enum8 ----------
-        if type(write_data) == 'int'
+        # accept Off/Low/Medium/High, and deprecated On (4) and Smart (6) that set High
+        # Auto (5) is not in FanModeSequence 0 since the AUT feature is not declared
+        if type(write_data) == 'int' && write_data >= 0 && write_data <= 6 && write_data != 5
           self.set_fan_mode(write_data)
           self.publish_command('FanMode', self.shadow_fan_mode, 'FanSpeed', self.shadow_fan_speed_pct, 'FanSpeed255', tasmota.scale_uint(self.shadow_fan_speed_pct, 0, 100, 0, 255))
           return true

@@ -1282,6 +1282,75 @@ def test_boolean_state_events()
 end
 test_boolean_state_events()
 
+# Fan Control (0x0202): the Auto feature is not supported, so FeatureMap does not
+# declare AUT, FanModeSequence has no Auto value and a write of FanMode Auto is rejected.
+# Deprecated On and Smart still set High.
+def test_fan_no_auto()
+  class TestFanDevice : matter.Device
+    var updates
+    def init() self.plugins = [] self.updates = [] end
+    def attribute_updated(endpoint, cluster, attribute, fabric_specific)
+      self.updates.push([endpoint, cluster, attribute])
+    end
+  end
+  class TestFanTasmota : TestTasmota
+    # Tasmota changeUIntScale()
+    def scale_uint(num, from_min, from_max, to_min, to_max)
+      if num > from_max  num = from_max  end
+      if num < from_min  num = from_min  end
+      if num == from_min  return to_min  end
+      if num == from_max  return to_max  end
+      var result
+      if to_max - to_min > from_max - from_min
+        result = (((num - from_min) * (to_max - to_min) * 2) / (from_max - from_min) + 1) / 2 + to_min
+      else
+        result = (((num - from_min) * 2 + 1) * (to_max - to_min + 1)) / ((from_max - from_min + 1) * 2) + to_min
+      end
+      return result > to_max ? to_max : result
+    end
+  end
+  tasmota = TestFanTasmota()
+  var published = []
+  var saved_publish = matter.publish_command
+  matter.publish_command = def (prefix, endpoint, name, payload) published.push(payload) end
+  var dev = TestFanDevice()
+  def read(plugin, attribute)
+    return plugin.read_attribute(nil, matter.Path(plugin.endpoint, 0x0202, attribute), TLV.Matter_TLV_item()).val
+  end
+  def write(plugin, value)
+    var ctx = matter.Path(plugin.endpoint, 0x0202, 0x0000)
+    var res = plugin.write_attribute(nil, ctx, value)
+    return [res, ctx.status]
+  end
+  for cls : [matter.Plugin_Fan, matter.Plugin_Virt_Fan]
+    var fan = cls(dev, 6, {})
+    published.clear()
+    assert(read(fan, 0xFFFC) == 0, "Fan Control FeatureMap must not declare AUT")
+    assert(read(fan, 0x0001) == 0, "FanModeSequence must be Off/Low/Med/High")
+    # Supported modes
+    assert(write(fan, 1)[0] == true && read(fan, 0x0000) == 1 && read(fan, 0x0002) == 33)
+    assert(write(fan, 2)[0] == true && read(fan, 0x0000) == 2 && read(fan, 0x0002) == 67)
+    assert(write(fan, 0)[0] == true && read(fan, 0x0000) == 0 && read(fan, 0x0002) == 0)
+    # Deprecated On (4) and Smart (6) set High
+    assert(write(fan, 4)[0] == true && read(fan, 0x0000) == 3 && read(fan, 0x0002) == 100)
+    assert(write(fan, 1)[0] == true)
+    assert(write(fan, 6)[0] == true && read(fan, 0x0000) == 3 && read(fan, 0x0002) == 100)
+    # Auto (5) and out-of-range values: CONSTRAINT_ERROR, state unchanged, nothing published
+    assert(write(fan, 1)[0] == true)
+    var n = size(published)
+    for bad : [5, 7, 255, -1, "1"]
+      var r = write(fan, bad)
+      assert(r[0] == false && r[1] == 0x87, "FanMode " + str(bad) + " must be rejected")
+    end
+    assert(read(fan, 0x0000) == 1 && read(fan, 0x0002) == 33)
+    assert(size(published) == n)
+  end
+  matter.publish_command = saved_publish
+  tasmota = test_tasmota
+  print("  Fan Control without Auto (FeatureMap, FanModeSequence, FanMode writes): OK")
+end
+test_fan_no_auto()
+
 # ConfigurationVersion changes with endpoint composition and is persisted.
 var config_device = TestConfigurationDevice()
 config_device.signal_endpoints_changed()
