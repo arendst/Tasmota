@@ -431,8 +431,8 @@ void MESHstartBroker(void) {       // Must be called after WiFi is initialized!!
 
   esp_now_deinit();  // in case it was already initialized by disconnected
   esp_err_t init_result = esp_now_init();
-  if (esp_err_t() != ESP_OK) {
-    AddLog(LOG_LEVEL_INFO, PSTR("MSH: Broker init failed with error: %s"), init_result);
+  if (init_result != ESP_OK) {
+    AddLog(LOG_LEVEL_INFO, PSTR("MSH: Broker init failed with error: %d"), init_result);
     return;
   }
 
