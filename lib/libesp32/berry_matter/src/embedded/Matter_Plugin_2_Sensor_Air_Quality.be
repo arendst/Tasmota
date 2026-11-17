@@ -111,12 +111,12 @@
 # - 0x042C: PM1 - µg/m³
 # - 0x042A: PM2.5 - µg/m³
 # - 0x042D: PM10 - µg/m³
-# - 0x042E: Total VOC - PPM
+# - 0x042E: Total VOC - PPB
 # - 0x0413: Nitrogen Dioxide (NO2) - PPM
 #
 # TASMOTA IMPLEMENTATION:
 # - Reads from sensor JSON with configurable prefix (e.g., "SCD40")
-# - MeasurementUnit: 0 (PPM) for all
+# - MeasurementUnit: 4 (UGM3) for PM1, PM2.5, PM10; 1 (PPB) for TVOC; 0 (PPM) for CO2, NO2
 # - MeasurementMedium: 0 (Air) for all
 # - Values as floating point numbers
 # - Update interval: 10 seconds
@@ -413,22 +413,22 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
       end
     # ====================================================================================================
     elif cluster == 0x042C              # ========== PM1 Concentration Measurement ==========
-      if (ret := handle_value(self.shadow_pm1))
+      if (ret := handle_value(self.shadow_pm1, 4))     # 4 = UGM3 (µg/m³)
         return ret
       end
     # ====================================================================================================
     elif cluster == 0x042A              # ========== PM2.5 Concentration Measurement ==========
-      if (ret := handle_value(self.shadow_pm2_5))
+      if (ret := handle_value(self.shadow_pm2_5, 4))   # 4 = UGM3 (µg/m³)
         return ret
       end
     # ====================================================================================================
     elif cluster == 0x042D              # ========== PM10 Concentration Measurement ==========
-      if (ret := handle_value(self.shadow_pm10))
+      if (ret := handle_value(self.shadow_pm10, 4))    # 4 = UGM3 (µg/m³)
         return ret
       end
     # ====================================================================================================
     elif cluster == 0x042E              # ========== TVOC ==========
-      if (ret := handle_value(self.shadow_tvoc))
+      if (ret := handle_value(self.shadow_tvoc, 1))    # 1 = PPB
         return ret
       end
     # ====================================================================================================
