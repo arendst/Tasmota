@@ -1161,6 +1161,34 @@ def test_doorbell()
 end
 test_doorbell()
 
+# Air Quality concentration clusters: MeasurementUnit is UGM3 (4) for PM1, PM2.5
+# and PM10, PPB (1) for TVOC, PPM (0) for CO2 and NO2. MeasurementMedium is Air (0).
+def test_air_quality_units()
+  class TestAirDevice : matter.Device
+    def init() self.plugins = [] end
+    def attribute_updated(endpoint, cluster, attribute, fabric_specific) end
+    def add_read_sensors_schedule(update_time) end
+  end
+  var dev = TestAirDevice()
+  def read(plugin, cluster, attribute)
+    return plugin.read_attribute(nil, matter.Path(plugin.endpoint, cluster, attribute), TLV.Matter_TLV_item()).val
+  end
+  var config = {"co2": "S#CarbonDioxide", "pm1": "S#PM1", "pm2_5": "S#PM2.5", "pm10": "S#PM10",
+                "tvoc": "S#TVOC", "no2": "S#NO2"}
+  var units = {0x040D: 0, 0x042C: 4, 0x042A: 4, 0x042D: 4, 0x042E: 1, 0x0413: 0}
+  # The HTTP bridge variant inherits read_attribute() unchanged and needs a network stack, not tested here
+  for cls : [matter.Plugin_Sensor_Air_Quality, matter.Plugin_Virt_Sensor_Air_Quality]
+    var p = cls(dev, 7, config)
+    for cluster : units.keys()
+      assert(p.get_clusters().contains(cluster))
+      assert(read(p, cluster, 0x0008) == units[cluster], format("cluster 0x%04X MeasurementUnit", cluster))
+      assert(read(p, cluster, 0x0009) == 0)
+    end
+  end
+  print("  Air Quality MeasurementUnit (UGM3 for PM, PPB for TVOC, PPM otherwise): OK")
+end
+test_air_quality_units()
+
 # Boolean State StateChange event (0x0045/0x00): mandatory for Rain Sensor and
 # Water Leak Detector (CHGEVENT feature), optional and enabled for Contact Sensor.
 # Occupancy shares the base class but not Boolean State: no event.
