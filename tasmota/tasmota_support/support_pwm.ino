@@ -173,6 +173,8 @@ void GpioInitPwm(void) {
     }
   }
   PwmApplyGPIO(true);   // apply all changes
+
+  delay(10);          // Need a delay to handle low pwm frequencies (#25155)
 }
 
 /********************************************************************************************/
