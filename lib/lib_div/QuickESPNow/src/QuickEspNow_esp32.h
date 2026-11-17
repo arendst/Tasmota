@@ -150,8 +150,8 @@ protected:
     uint8_t sentStatus;
     int queueSize = ESPNOW_QUEUE_SIZE;
 
-    QueueHandle_t tx_queue;
-    QueueHandle_t rx_queue;
+    QueueHandle_t tx_queue = nullptr;
+    QueueHandle_t rx_queue = nullptr;
     //SemaphoreHandle_t espnow_send_mutex;
     //uint8_t channel;
     bool followWiFiChannel = false;

@@ -63,6 +63,20 @@ void QuickEspNow::stop () {
     esp_now_unregister_recv_cb ();
     esp_now_unregister_send_cb ();
     esp_now_deinit ();
+
+    // Release the FreeRTOS queues created in initComms(). Without this a
+    // stop()/begin() cycle leaks both queues, since begin() unconditionally
+    // creates fresh ones. The tasks that use these queues were just deleted
+    // above, so nothing can be reading or writing them here.
+    if (tx_queue) {
+        vQueueDelete (tx_queue);
+        tx_queue = nullptr;
+    }
+    if (rx_queue) {
+        vQueueDelete (rx_queue);
+        rx_queue = nullptr;
+    }
+
     followWiFiChannel = false;
 }
 
@@ -277,7 +291,15 @@ bool QuickEspNow::addPeer (const uint8_t* peer_addr) {
 
     if (peer_list.peer_exists (peer_addr)) {
         DEBUG_VERBOSE (QESPNOW_TAG, "Peer already exists");
-        ESP_ERROR_CHECK (esp_now_get_peer (peer_addr, &peer));
+
+        error = esp_now_get_peer (peer_addr, &peer);
+        if (error == ESP_ERR_ESPNOW_NOT_FOUND) {
+          peer_list.delete_peer (peer_addr);
+          DEBUG_ERROR (QESPNOW_TAG, "Peer not found. Adding again");
+          return addPeer(peer_addr);
+        } else if (error != ESP_OK) {
+          ESP_ERROR_CHECK (error);
+        }
 
         uint8_t currentChannel = peer.channel;
         DEBUG_DBG (QESPNOW_TAG, "Peer " MACSTR " is using channel %d", MAC2STR (peer_addr), currentChannel);
