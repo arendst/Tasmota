@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - TashMesh and WizMote ESP-NOW support for IDF v5.5.5 (#25289)
 - Matter Fan advertising the unsupported Auto mode
 - Matter Air Quality PM1, PM2.5 and PM10 reported in ppm instead of µg/m³, and TVOC in ppm instead of ppb
+- Matter MRP sending unacknowledged messages 7 times instead of 5
 
 ### Removed
 
