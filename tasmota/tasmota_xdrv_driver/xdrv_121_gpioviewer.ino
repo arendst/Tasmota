@@ -666,7 +666,7 @@ void GVEventDisconnected(void) {
 /*-------------------------------------------------------------------------------------------*/
 
 void GVCloseEvent(void) {
-  if (GV->WebServer) {
+  if (GV->WebServer && GVWebClient.connected()) {
     GVEventSend("{}", "close", millis());                   // Closes web page
     GVEventDisconnected();
   }
