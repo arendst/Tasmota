@@ -115,7 +115,7 @@ class Matter_Plugin
     0x0102: 1 + 4,                          # Window Covering: Lift (bit 0) + PA_LF (bit 2)
     0x0104: 0x01,                           # Closure Control: Positioning (bit 0)
     0x0201: 0x23,                           # Thermostat: HEAT + COOL + AUTO
-    0x0202: 2,                              # Fan Control: Auto (bit 1)
+    # 0x0202: Fan Control: no optional features (Auto is not supported), default `0`
   }
   # `CLUSTER_REVISIONS` contains revision numbers for each cluster, or `1` if not present
   static var CLUSTER_REVISIONS = {

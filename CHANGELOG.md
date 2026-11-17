@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - GPIOViewer fails to execute, regression from platform 2026.11.50 with Framework v3.3.12-2 (#25275)
 - Display palette colors on monochrome universal displays (#25260)
 - TashMesh and WizMote ESP-NOW support for IDF v5.5.5 (#25289)
+- Matter Fan advertising the unsupported Auto mode
 
 ### Removed
 
