@@ -38,17 +38,98 @@ uint8_t     *tcp_buf = nullptr;     // data transfer buffer
 bool         ip_filter_enabled = false;
 IPAddress    ip_filter;
 bool         tcp_serial = false;
+uint16_t     tcp_server_port = 0;
 
 #include <TasmotaSerial.h>
 TasmotaSerial *TCPSerial = nullptr;
 
 const char kTCPCommands[] PROGMEM = "TCP" "|"    // prefix
-  "Start" "|" "Baudrate" "|" "Config" "|" "Connect"
+  "Start" "|" "Baudrate" "|" "Config" "|" "Connect" "|" "Status"
   ;
 
 void (* const TCPCommand[])(void) PROGMEM = {
-  &CmndTCPStart, &CmndTCPBaudrate, &CmndTCPConfig, &CmndTCPConnect
+  &CmndTCPStart, &CmndTCPBaudrate, &CmndTCPConfig, &CmndTCPConnect,
+  &CmndTCPStatus
   };
+
+/*********************************************************************************************\
+ * Public bridge control and status helpers
+\*********************************************************************************************/
+
+uint32_t TCPBridgeClientCount(void) {
+  uint32_t connected = 0;
+  for (uint32_t i = 0; i < nitems(client_tcp); i++) {
+    if (client_tcp[i].connected()) {
+      connected++;
+    }
+  }
+  return connected;
+}
+
+bool TCPBridgeListening(void) {
+  return (nullptr != server_tcp);
+}
+
+uint16_t TCPBridgePort(void) {
+  return tcp_server_port;
+}
+
+uint32_t TCPBridgeBaudrate(void) {
+  return Settings->tcp_baudrate * 300;
+}
+
+void TCPBridgeStop(void) {
+  if (server_tcp) {
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Stopping TCP server"));
+    server_tcp->stop();
+    delete server_tcp;
+    server_tcp = nullptr;
+  }
+
+  for (uint32_t i = 0; i < nitems(client_tcp); i++) {
+    client_tcp[i].stop();
+  }
+  tcp_server_port = 0;
+}
+
+bool TCPBridgeStart(uint16_t port) {
+  TCPBridgeStop();
+  if (!port) { return true; }
+
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Starting TCP server on port %d"), port);
+  if (ip_filter_enabled) {
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Filtering %s"), ip_filter.toString().c_str());
+  }
+
+  server_tcp = new WiFiServer(port);
+  if (!server_tcp) {
+    AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_TCP "Could not allocate TCP server"));
+    return false;
+  }
+  server_tcp->begin();
+  server_tcp->setNoDelay(true);
+  tcp_server_port = port;
+  return true;
+}
+
+bool TCPBridgeSetBaudrate(uint32_t baudrate) {
+  if (!TCPSerial || (baudrate < 300) || (baudrate > (UINT16_MAX * 300UL))) {
+    return false;
+  }
+
+  uint16_t baudrate_div300 = baudrate / 300;
+  if (baudrate_div300 != Settings->tcp_baudrate) {
+    uint16_t previous_baudrate = Settings->tcp_baudrate;
+    Settings->tcp_baudrate = baudrate_div300;
+    if (!TCPSerial->begin(baudrate_div300 * 300, ConvertSerialConfig(0x7F & Settings->tcp_config))) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "failed reinit serial"));
+      Settings->tcp_baudrate = previous_baudrate;
+      TCPSerial->begin(previous_baudrate * 300, ConvertSerialConfig(0x7F & Settings->tcp_config));
+      return false;
+    }
+  }
+  return true;
+}
 
 //
 // Called at event loop, checks for incoming data from the CC2530
@@ -64,13 +145,7 @@ void TCPLoop(void)
     WiFiClient new_client = server_tcp->available();
 
     // count already connected ports
-    uint32_t connected = 0;
-    for (uint32_t i=0; i<nitems(client_tcp); i++) {
-      WiFiClient &client = client_tcp[i];
-      if (client.connected()) {
-        connected++;
-      }
-    }
+    uint32_t connected = TCPBridgeClientCount();
 
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Got connection from %s (%i already connected)"), new_client.remoteIP().toString().c_str(), connected);
     // Check for IP filtering if it's enabled.
@@ -206,41 +281,18 @@ void CmndTCPStart(void) {
     ip_filter_enabled = false;
   }
 
-  if (server_tcp) {
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Stopping TCP server"));
-    server_tcp->stop();
-    delete server_tcp;
-    server_tcp = nullptr;
-
-    for (uint32_t i=0; i<nitems(client_tcp); i++) {
-      WiFiClient &client = client_tcp[i];
-      client.stop();
-    }
+  if ((tcp_port >= 0) && (tcp_port <= UINT16_MAX) && TCPBridgeStart(tcp_port)) {
+    ResponseCmndDone();
+  } else {
+    ResponseCmndFailed();
   }
-  if (tcp_port > 0) {
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Starting TCP server on port %d"), tcp_port);
-    if (ip_filter_enabled) {
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Filtering %s"), ip_filter.toString().c_str());
-    }
-    server_tcp = new WiFiServer(tcp_port);
-    server_tcp->begin(); // start TCP server
-    server_tcp->setNoDelay(true);
-  }
-
-  ResponseCmndDone();
 }
 
 void CmndTCPBaudrate(void) {
   if (XdrvMailbox.payload >= 300) {
-    XdrvMailbox.payload /= 300;  // Make it a valid baudrate
-    if (Settings->tcp_baudrate != XdrvMailbox.payload) {
-      Settings->tcp_baudrate = XdrvMailbox.payload;
-      if (!TCPSerial->begin(Settings->tcp_baudrate * 300, ConvertSerialConfig(0x7F & Settings->tcp_config))) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "failed reinit serial"));
-      }  // Reinitialize serial port with new baud rate
-    }
+    TCPBridgeSetBaudrate(XdrvMailbox.payload);
   }
-  ResponseCmndNumber(Settings->tcp_baudrate * 300);
+  ResponseCmndNumber(TCPBridgeBaudrate());
 }
 
 void CmndTCPConfig(void) {
@@ -293,6 +345,20 @@ void CmndTCPConnect(void) {
   }
 
   ResponseCmndDone();
+}
+
+void CmndTCPStatus(void) {
+  uint32_t clients = TCPBridgeClientCount();
+  Response_P(PSTR("{\"TCPStatus\":{"
+                  "\"Listening\":%s,"
+                  "\"Port\":%u,"
+                  "\"Connected\":%s,"
+                  "\"Clients\":%u,"
+                  "\"Baudrate\":%u,"
+                  "\"Config\":\"%s\"}}"),
+             TCPBridgeListening() ? PSTR("true") : PSTR("false"), TCPBridgePort(),
+             clients ? PSTR("true") : PSTR("false"), clients, TCPBridgeBaudrate(),
+             GetSerialConfig(0x7F & Settings->tcp_config).c_str());
 }
 
 /*********************************************************************************************\
