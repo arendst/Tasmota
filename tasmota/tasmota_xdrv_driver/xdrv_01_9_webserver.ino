@@ -2605,7 +2605,7 @@ void HandleWifiConfiguration(void) {
       // Wait only while the scan runs. WIFI_SCAN_FAILED (-2) is final: scanComplete() keeps returning it,
       // so waiting for n >= 0 never ended and froze the main loop (web, MQTT, rules) until a restart.
       uint32_t scan_started = millis();
-      while ((WIFI_SCAN_RUNNING == n) && ((millis() - scan_started) < 10000)) {
+      while ((WIFI_SCAN_RUNNING == n) && (!TimeReached(scan_started + 10000))) {
         delay(50); // some magic number - maybe non optimal
         n = WiFi.scanComplete();
       }

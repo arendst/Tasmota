@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Matter Air Quality PM1, PM2.5 and PM10 reported in ppm instead of µg/m³, and TVOC in ppm instead of ppb (#25294)
 - Matter MRP sending unacknowledged messages 7 times instead of 5 (#25295)
 - Ethernet share SPI bus 1 with drivers already using it (#25299)
+- Configure Wi-Fi page hang when the Wi-Fi scan cannot start (#25267)
 
 ### Removed
 
@@ -40,7 +41,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - AHT20/AHT30 stale readings when used with deep sleep, with optional `#define USE_AHT_DIAG` (#25258)
-- ESP32 Configure Wi-Fi page hang when the Wi-Fi scan cannot start
 
 ## [16.0.0.3] 20261113
 ### Added
