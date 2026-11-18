@@ -529,7 +529,6 @@ void br_sha384_update(br_sha384_context *cc, const void *data, size_t len) {
     const esp_sha_type mode = SHA2_512;
     const uint8_t *src = (const uint8_t *)data;
     size_t used = (size_t)(cc->count & 127U);
-    uint64_t prior_count = cc->count;
     cc->count += len;
 
     if (used) {
@@ -553,7 +552,6 @@ void br_sha384_update(br_sha384_context *cc, const void *data, size_t len) {
             SHA_EXIT();
             br_range_dec64be(st_be, 8, st_be);
             br_range_enc64le(cc->val, st_be, 8);
-            prior_count += 128;
             used = 0;
         }
     }
@@ -562,18 +560,12 @@ void br_sha384_update(br_sha384_context *cc, const void *data, size_t len) {
         uint64_t st_be[8];
         br_range_dec64le(st_be, 8, cc->val);
         br_range_enc64be(st_be, st_be, 8);
-        bool first = (prior_count == 0);
         SHA_ENTER();
         sha_ll_load(SHA2_512);
         sha_ll_write_digest(SHA2_512, st_be, 16);
         while (len >= 128) {
             sha_ll_fill_text_block(src, 32);
-            if (first) {
-                sha_ll_start_block(SHA2_512);
-                first = false;
-            } else {
-                sha_ll_continue_block(SHA2_512);
-            }
+            sha_ll_continue_block(SHA2_512);
             SHA_WAIT();
             src += 128;
             len -= 128;
