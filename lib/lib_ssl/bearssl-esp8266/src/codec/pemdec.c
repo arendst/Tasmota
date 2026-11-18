@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <pgmspace_bearssl.h>
+#include <pgmspace_bearssl.h>   // TASMOTA: was <pgmspace.h>, also works on ESP32
 
 typedef struct {
 	uint32_t *dp;

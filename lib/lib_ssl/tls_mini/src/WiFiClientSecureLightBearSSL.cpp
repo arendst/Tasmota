@@ -921,7 +921,7 @@ extern "C" {
     // AES CTR/GCM small version, not contstant time (we don't really care here as there is no TPM anyways)
     br_ssl_engine_set_gcm(&cc->eng, &br_sslrec_in_gcm_vtable, &br_sslrec_out_gcm_vtable);
     br_ssl_engine_set_aes_ctr(&cc->eng, &br_aes_small_ctr_vtable);
-    br_ssl_engine_set_ghash(&cc->eng, &br_ghash_ctmul32);
+    br_ssl_engine_set_ghash(&cc->eng, &br_ghash_tasmota);
 
     // Use all supported EC curves (P-256, P-384, P-521, Curve25519) for ECDHE key exchange.
     // Some servers (e.g. with ECDSA P-384 certificates) refuse P-256 for key exchange

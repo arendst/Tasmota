@@ -1,3 +1,4 @@
+// TASMOTA: new file, not part of BearSSL
 // do not delete
 
 #ifndef BEARSSL_TASMOTA_CONFIG

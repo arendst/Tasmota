@@ -1,3 +1,4 @@
+// TASMOTA: new file, not part of BearSSL
 /*
  * _ec_c25519_m15.c — BearSSL Curve25519 (X25519) implementation using ESP32 ROM-backed Montgomery arithmetic
  *

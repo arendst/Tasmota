@@ -91,12 +91,15 @@ static const uint64_t K[80] PROGMEM = {
 	0x5FCB6FAB3AD6FAEC, 0x6C44198C4A475817
 };
 
+// TASMOTA: one step per loop iteration (instead of 8 unrolled steps) and a 16-word
+// circular message schedule (instead of w[80]): about half the code and 512 bytes
+// less stack, for about 20% more time per block
 static void
 sha2big_round(const unsigned char *buf, uint64_t *val)
 {
 	int i;
 	uint64_t a, b, c, d, e, f, g, h;
-	uint64_t w[16];
+	uint64_t w[16];   // TASMOTA: was w[80]
 
 	br_range_dec64be(w, 16, buf);
 	a = val[0];
@@ -111,7 +114,7 @@ sha2big_round(const unsigned char *buf, uint64_t *val)
 		uint64_t T1, T2;
 
 		if (i >= 16) {
-			/* message schedule, computed in place in a 16-word window */
+			// TASMOTA: message schedule, computed in place in a 16-word window
 			w[i & 15] += SSG5_1(w[(i - 2) & 15]) + w[(i - 7) & 15]
 				+ SSG5_0(w[(i - 15) & 15]);
 		}

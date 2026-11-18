@@ -24,6 +24,18 @@
 
 #include "t_inner.h"
 
+// TASMOTA: on ESP32, ESP-IDF always links the mbedtls software SHA-256 (bootloader_support
+// needs it for OTA image checks), so we reuse its compression function instead of
+// linking a second implementation and its K[] table. Only when mbedtls uses its
+// generic implementation (no MBEDTLS_SHA256_ALT, i.e. CONFIG_MBEDTLS_HARDWARE_SHA off);
+// with hardware SHA enabled, the BearSSL code below is used.
+#if defined(ESP_PLATFORM) && !defined(ESP8266) && __has_include("mbedtls/sha256.h")   // TASMOTA
+#include "mbedtls/sha256.h"
+#if !defined(MBEDTLS_SHA256_ALT)   // TASMOTA
+#define BR_SHA256_MBEDTLS   1
+#endif   // TASMOTA
+#endif   // TASMOTA
+
 #define CH(X, Y, Z)    ((((Y) ^ (Z)) & (X)) ^ (Z))
 #define MAJ(X, Y, Z)   (((Y) & (Z)) | (((Y) | (Z)) & (X)))
 
@@ -46,6 +58,7 @@ const uint32_t br_sha256_IV[8] PROGMEM = {
 	0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19
 };
 
+#ifndef BR_SHA256_MBEDTLS   // TASMOTA
 static const uint32_t K[64] PROGMEM = {
 	0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5,
 	0x3956C25B, 0x59F111F1, 0x923F82A4, 0xAB1C5ED5,
@@ -65,6 +78,21 @@ static const uint32_t K[64] PROGMEM = {
 	0x90BEFFFA, 0xA4506CEB, 0xBEF9A3F7, 0xC67178F2
 };
 
+#endif   // TASMOTA !BR_SHA256_MBEDTLS
+
+#ifdef BR_SHA256_MBEDTLS   // TASMOTA
+/* see inner.h */
+void
+br_sha2small_round(const unsigned char *buf, uint32_t *val)
+{
+	mbedtls_sha256_context ctx;
+
+	// TASMOTA: both keep the 8 state words as native uint32_t values
+	memcpy(ctx.MBEDTLS_PRIVATE(state), val, 8 * sizeof(uint32_t));
+	mbedtls_internal_sha256_process(&ctx, buf);
+	memcpy(val, ctx.MBEDTLS_PRIVATE(state), 8 * sizeof(uint32_t));
+}
+#else   // TASMOTA BR_SHA256_MBEDTLS
 /* see inner.h */
 void
 br_sha2small_round(const unsigned char *buf, uint32_t *val)
@@ -95,15 +123,18 @@ br_sha2small_round(const unsigned char *buf, uint32_t *val)
 	f = val[5];
 	g = val[6];
 	h = val[7];
-	for (i = 0; i < 64; i += 8) {
+	for (i = 0; i < 64; i += 4) {   // TASMOTA: 4 steps per iteration instead of 8, same speed
+		uint32_t t;
+
 		SHA2_STEP(a, b, c, d, e, f, g, h, i + 0);
 		SHA2_STEP(h, a, b, c, d, e, f, g, i + 1);
 		SHA2_STEP(g, h, a, b, c, d, e, f, i + 2);
 		SHA2_STEP(f, g, h, a, b, c, d, e, i + 3);
-		SHA2_STEP(e, f, g, h, a, b, c, d, i + 4);
-		SHA2_STEP(d, e, f, g, h, a, b, c, i + 5);
-		SHA2_STEP(c, d, e, f, g, h, a, b, i + 6);
-		SHA2_STEP(b, c, d, e, f, g, h, a, i + 7);
+		// TASMOTA: the roles of the variables are now rotated by 4: swap them back
+		t = a; a = e; e = t;
+		t = b; b = f; f = t;
+		t = c; c = g; g = t;
+		t = d; d = h; h = t;
 	}
 	val[0] += a;
 	val[1] += b;
@@ -198,6 +229,7 @@ br_sha2small_round(const unsigned char *buf, uint32_t *val)
 	val[7] += H;
 #endif
 }
+#endif   // TASMOTA BR_SHA256_MBEDTLS
 
 static void
 sha2small_update(br_sha224_context *cc, const void *data, size_t len)
