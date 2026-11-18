@@ -758,6 +758,24 @@ void br_sha256_set_state(br_sha256_context *ctx,
 #define br_sha256_set_state   br_sha224_set_state
 #endif
 
+/*
+ * Tasmota: on ESP8266 the Arduino core also ships BearSSL (libbearssl.a) with the
+ * same symbol names, and the linker takes SHA-384/SHA-512 from the core instead of
+ * this library. Renaming the symbols makes sure our smaller sha2big.c is used.
+ * Not done on ESP32: there is no other copy, and ESP-Mail-Client uses the plain names.
+ */
+#ifdef ESP8266
+#define br_sha384_vtable      t_br_sha384_vtable
+#define br_sha384_init        t_br_sha384_init
+#define br_sha384_update      t_br_sha384_update
+#define br_sha384_out         t_br_sha384_out
+#define br_sha384_state       t_br_sha384_state
+#define br_sha384_set_state   t_br_sha384_set_state
+#define br_sha512_vtable      t_br_sha512_vtable
+#define br_sha512_init        t_br_sha512_init
+#define br_sha512_out         t_br_sha512_out
+#endif
+
 /**
  * \brief Symbolic identifier for SHA-384.
  */

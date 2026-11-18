@@ -493,6 +493,8 @@
 // Using TLS starting with version v6.5.0.16 compilation will only work using Core 2.4.2 and 2.5.2. No longer supported: 2.3.0
 //#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
  #define USE_MQTT_TLS_ECDSA                     // (ESP8266 only, always on for ESP32) enable ECDSA in addition to RSA (+11.5k code)
+ #define USE_MQTT_TLS_SHA384                    // Validate certificates signed with SHA-384, used by most ECDSA P-384 CAs like LetsEncrypt ISRG Root X2 and E5..E9
+                                                //   (+5.5k code on ESP8266, +2.3k code on ESP32, requires USE_MQTT_TLS_ECDSA on ESP8266)
 //  #define USE_MQTT_TLS_CA_CERT                   // [DEPRECATED] Now TLS supports dual mode using SetOption132 - this flag is now ignored
 //  #define USE_MQTT_AWS_IOT_LIGHT                 // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
 //  #define USE_MQTT_CLIENT_CERT                   // Enable MQTT with custom client certificate - requires a private key (+11.9k code, +0.4k mem)
@@ -500,6 +502,7 @@
                                                    //   Note: you need to generate a private key + certificate per device and update 'tasmota/tasmota_aws_iot.cpp'
                                                    //   Full documentation here: https://github.com/arendst/Tasmota/wiki/AWS-IoT
 //  for USE_4K_RSA (support for 4096 bits certificates, instead of 2048), you need to uncommend `-DUSE_4K_RSA` in `build_flags` from `platform.ini` or `platform_override.ini`
+//  without USE_MQTT_TLS_SHA384, certificates signed with SHA-384 fail with BR_ERR_X509_UNSUPPORTED and SHA-384 code is not linked
 
 // -- MQTT - TLS - Azure IoT & IoT Central ---------
 // Starting with version v9.4.0.3 added support for both Azure IoT Hub and IoT Central

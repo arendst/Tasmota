@@ -987,6 +987,11 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 #if defined(ESP32) || (defined(ESP8266) && defined(USE_MQTT_TLS_ECDSA))
       if (!_rsa_only) {
         br_x509_minimal_set_ecdsa(x509_minimal, &br_ec_all_m15, &br_ecdsa_i15_vrfy_asn1);
+        // ECDSA P-384 CAs (e.g. LetsEncrypt YE1/E5..E9 and ISRG Root X2) sign with ecdsa-with-SHA384.
+        // Without SHA384 certificate validation fails with BR_ERR_X509_UNSUPPORTED (49)
+#ifdef USE_MQTT_TLS_SHA384
+        br_x509_minimal_set_hash(x509_minimal, br_sha384_ID, &br_sha384_vtable);
+#endif // USE_MQTT_TLS_SHA384
       }
 #endif
       br_ssl_engine_set_x509(_eng, &x509_minimal->vtable);
