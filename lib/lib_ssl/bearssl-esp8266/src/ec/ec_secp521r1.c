@@ -24,6 +24,9 @@
 
 #include "t_inner.h"
 
+// TASMOTA: P-521 only if BR_MAX_EC_SIZE >= 521, the i15 buffers are too small otherwise
+#if BR_MAX_EC_SIZE >= 521   // TASMOTA
+
 static const unsigned char P521_N[] PROGMEM = {
 	0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -62,3 +65,5 @@ const br_ec_curve_def br_secp521r1 PROGMEM = {
 	P521_N, sizeof P521_N,
 	P521_G, sizeof P521_G
 };
+
+#endif   // TASMOTA

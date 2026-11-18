@@ -91,27 +91,17 @@ static const uint64_t K[80] PROGMEM = {
 	0x5FCB6FAB3AD6FAEC, 0x6C44198C4A475817
 };
 
+// TASMOTA: one step per loop iteration (instead of 8 unrolled steps) and a 16-word
+// circular message schedule (instead of w[80]): about half the code and 512 bytes
+// less stack, for about 20% more time per block
 static void
 sha2big_round(const unsigned char *buf, uint64_t *val)
 {
-
-#define SHA2BIG_STEP(A, B, C, D, E, F, G, H, j)   do { \
-		uint64_t T1, T2; \
-		T1 = H + BSG5_1(E) + CH(E, F, G) + K[j] + w[j]; \
-		T2 = BSG5_0(A) + MAJ(A, B, C); \
-		D += T1; \
-		H = T1 + T2; \
-	} while (0)
-
 	int i;
 	uint64_t a, b, c, d, e, f, g, h;
-	uint64_t w[80];
+	uint64_t w[16];   // TASMOTA: was w[80]
 
 	br_range_dec64be(w, 16, buf);
-	for (i = 16; i < 80; i ++) {
-		w[i] = SSG5_1(w[i - 2]) + w[i - 7]
-			+ SSG5_0(w[i - 15]) + w[i - 16];
-	}
 	a = val[0];
 	b = val[1];
 	c = val[2];
@@ -120,15 +110,24 @@ sha2big_round(const unsigned char *buf, uint64_t *val)
 	f = val[5];
 	g = val[6];
 	h = val[7];
-	for (i = 0; i < 80; i += 8) {
-		SHA2BIG_STEP(a, b, c, d, e, f, g, h, i + 0);
-		SHA2BIG_STEP(h, a, b, c, d, e, f, g, i + 1);
-		SHA2BIG_STEP(g, h, a, b, c, d, e, f, i + 2);
-		SHA2BIG_STEP(f, g, h, a, b, c, d, e, i + 3);
-		SHA2BIG_STEP(e, f, g, h, a, b, c, d, i + 4);
-		SHA2BIG_STEP(d, e, f, g, h, a, b, c, i + 5);
-		SHA2BIG_STEP(c, d, e, f, g, h, a, b, i + 6);
-		SHA2BIG_STEP(b, c, d, e, f, g, h, a, i + 7);
+	for (i = 0; i < 80; i ++) {
+		uint64_t T1, T2;
+
+		if (i >= 16) {
+			// TASMOTA: message schedule, computed in place in a 16-word window
+			w[i & 15] += SSG5_1(w[(i - 2) & 15]) + w[(i - 7) & 15]
+				+ SSG5_0(w[(i - 15) & 15]);
+		}
+		T1 = h + BSG5_1(e) + CH(e, f, g) + K[i] + w[i & 15];
+		T2 = BSG5_0(a) + MAJ(a, b, c);
+		h = g;
+		g = f;
+		f = e;
+		e = d + T1;
+		d = c;
+		c = b;
+		b = a;
+		a = T1 + T2;
 	}
 	val[0] += a;
 	val[1] += b;

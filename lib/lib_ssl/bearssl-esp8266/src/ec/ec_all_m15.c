@@ -110,21 +110,19 @@ api_muladd(unsigned char *A, const unsigned char *B, size_t len,
 }
 
 /* see bearssl_ec.h */
-/*
- * Tasmota: only advertise curves that fit in BR_MAX_EC_SIZE, since the
- * i15 big-integer buffers (ec_prime_i15, ecdsa_i15_*) are statically
- * sized from it. Advertising a larger curve would let the peer select
- * it and overflow those stack buffers.
- * Curve id bits: secp256r1=23, secp384r1=24, secp521r1=25, curve25519=29
- */
+// TASMOTA: only advertise curves that fit in BR_MAX_EC_SIZE, since the
+// i15 big-integer buffers (ec_prime_i15, ecdsa_i15_*) are statically
+// sized from it. Advertising a larger curve would let the peer select
+// it and overflow those stack buffers.
+// Curve id bits: secp256r1=23, secp384r1=24, secp521r1=25, curve25519=29
 const br_ec_impl br_ec_all_m15 PROGMEM = {
-#if BR_MAX_EC_SIZE >= 521
+#if BR_MAX_EC_SIZE >= 521   // TASMOTA
 	(uint32_t)0x23800000,	/* P-256, P-384, P-521, Curve25519 */
-#elif BR_MAX_EC_SIZE >= 384
+#elif BR_MAX_EC_SIZE >= 384   // TASMOTA
 	(uint32_t)0x21800000,	/* P-256, P-384, Curve25519 */
-#else
+#else   // TASMOTA
 	(uint32_t)0x20800000,	/* P-256, Curve25519 */
-#endif
+#endif   // TASMOTA
 	&api_generator,
 	&api_order,
 	&api_xoff,

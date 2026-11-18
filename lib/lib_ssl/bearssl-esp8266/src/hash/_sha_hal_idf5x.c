@@ -1,3 +1,4 @@
+// TASMOTA: new file, not part of BearSSL
 /*
  * _sha_hal_idf5x.c — BearSSL drop‑in with ESP32 HAL SHA acceleration
  *

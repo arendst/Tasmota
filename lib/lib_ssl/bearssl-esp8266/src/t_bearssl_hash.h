@@ -555,6 +555,34 @@ uint64_t br_sha1_state(const br_sha1_context *ctx, void *out);
  */
 void br_sha1_set_state(br_sha1_context *ctx, const void *stb, uint64_t count);
 
+// TASMOTA: on ESP8266 the Arduino core also ships BearSSL (libbearssl.a) with the
+// same symbol names, and the linker takes SHA-224/256 and SHA-384/512 from the core
+// instead of this library. Renaming the symbols makes sure our smaller versions are used.
+// Not done on ESP32: there is no other copy, and ESP-Mail-Client uses the plain names.
+#ifdef ESP8266   // TASMOTA
+#define br_sha224_vtable      t_br_sha224_vtable
+#define br_sha224_init        t_br_sha224_init
+#define br_sha224_update      t_br_sha224_update
+#define br_sha224_out         t_br_sha224_out
+#define br_sha224_state       t_br_sha224_state
+#define br_sha224_set_state   t_br_sha224_set_state
+#define br_sha256_vtable      t_br_sha256_vtable
+#define br_sha256_init        t_br_sha256_init
+#define br_sha256_out         t_br_sha256_out
+#define br_sha224_IV          t_br_sha224_IV
+#define br_sha256_IV          t_br_sha256_IV
+#define br_sha2small_round    t_br_sha2small_round
+#define br_sha384_vtable      t_br_sha384_vtable
+#define br_sha384_init        t_br_sha384_init
+#define br_sha384_update      t_br_sha384_update
+#define br_sha384_out         t_br_sha384_out
+#define br_sha384_state       t_br_sha384_state
+#define br_sha384_set_state   t_br_sha384_set_state
+#define br_sha512_vtable      t_br_sha512_vtable
+#define br_sha512_init        t_br_sha512_init
+#define br_sha512_out         t_br_sha512_out
+#endif
+
 /**
  * \brief Symbolic identifier for SHA-224.
  */
@@ -679,9 +707,9 @@ typedef struct {
 	 */
 	const br_hash_class *vtable;
 } br_sha256_context;
-#else
+#else   // TASMOTA
 typedef br_sha224_context br_sha256_context;
-#endif
+#endif   // TASMOTA
 
 /**
  * \brief SHA-256 context initialisation.
@@ -1251,6 +1279,15 @@ typedef void (*br_ghash)(void *y, const void *h, const void *data, size_t len);
  * \param len    the input data length (in bytes).
  */
 void br_ghash_ctmul(void *y, const void *h, const void *data, size_t len);
+
+// TASMOTA: GHASH implementation to use. ESP32 cores (Xtensa LX6/LX7 and RISC-V)
+// have a 32x32->64 multiplier, so br_ghash_ctmul is both smaller and faster.
+// The ESP8266 has no such instruction (br_ghash_ctmul would call __umulsidi3).
+#ifdef ESP8266   // TASMOTA
+#define br_ghash_tasmota   br_ghash_ctmul32
+#else   // TASMOTA
+#define br_ghash_tasmota   br_ghash_ctmul
+#endif   // TASMOTA
 
 /**
  * \brief GHASH implementation using multiplications (strict 32-bit).

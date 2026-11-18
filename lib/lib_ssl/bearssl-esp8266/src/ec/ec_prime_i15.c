@@ -76,6 +76,8 @@ static const uint16_t P384_B[] PROGMEM = {
 	0x0452, 0x0084
 };
 
+// TASMOTA: P-521 only if BR_MAX_EC_SIZE >= 521, the i15 buffers are too small otherwise
+#if BR_MAX_EC_SIZE >= 521   // TASMOTA
 static const uint16_t P521_P[] PROGMEM = {
 	0x022B,
 	0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF,
@@ -102,6 +104,7 @@ static const uint16_t P521_B[] PROGMEM = {
 	0x2725, 0x545B, 0x503B, 0x5B42, 0x21A0, 0x2534, 0x687E, 0x70E4,
 	0x1618, 0x27D7, 0x0465
 };
+#endif   // TASMOTA
 
 typedef struct {
 	const uint16_t *p;
@@ -117,7 +120,9 @@ id_to_curve(int curve)
 	static const curve_params pp[] = {
 		{ P256_P, P256_B, P256_R2, 0x0001,  65 },
 		{ P384_P, P384_B, P384_R2, 0x0001,  97 },
+#if BR_MAX_EC_SIZE >= 521   // TASMOTA
 		{ P521_P, P521_B, P521_R2, 0x0001, 133 }
+#endif   // TASMOTA
 	};
 
 	return &pp[curve - BR_EC_secp256r1];
@@ -692,8 +697,10 @@ id_to_curve_def(int curve)
 		return &br_secp256r1;
 	case BR_EC_secp384r1:
 		return &br_secp384r1;
+#if BR_MAX_EC_SIZE >= 521   // TASMOTA
 	case BR_EC_secp521r1:
 		return &br_secp521r1;
+#endif   // TASMOTA
 	}
 	return NULL;
 }
@@ -816,7 +823,11 @@ api_muladd(unsigned char *A, const unsigned char *B, size_t len,
 
 /* see bearssl_ec.h */
 const br_ec_impl br_ec_prime_i15 PROGMEM = {
-	(uint32_t)0x03800000,
+#if BR_MAX_EC_SIZE >= 521   // TASMOTA
+	(uint32_t)0x03800000,	/* P-256, P-384, P-521 */
+#else   // TASMOTA
+	(uint32_t)0x01800000,	/* P-256, P-384 */   // TASMOTA
+#endif   // TASMOTA
 	&api_generator,
 	&api_order,
 	&api_xoff,

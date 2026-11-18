@@ -68,9 +68,11 @@ br_ecdsa_i15_sign_raw(const br_ec_impl *impl,
 	case BR_EC_secp384r1:
 		cd = &br_secp384r1;
 		break;
+#if BR_MAX_EC_SIZE >= 521   // TASMOTA
 	case BR_EC_secp521r1:
 		cd = &br_secp521r1;
 		break;
+#endif   // TASMOTA
 	default:
 		return 0;
 	}

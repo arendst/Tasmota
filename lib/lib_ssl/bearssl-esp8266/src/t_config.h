@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include "t_bearssl_tasmota_config.h"
+#include "t_bearssl_tasmota_config.h"   // TASMOTA: Tasmota settings (BR_MAX_RSA_SIZE, BR_MAX_EC_SIZE...)
 
 #ifndef CONFIG_H__
 #define CONFIG_H__

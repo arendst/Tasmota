@@ -29,10 +29,21 @@
 #include <limits.h>
 #include <alloca.h>
 
-#include "pgmspace_bearssl.h"
+#include "pgmspace_bearssl.h"   // TASMOTA: was "pgmspace.h", also works on ESP32
 
 #include "t_config.h"
 #include "t_bearssl.h"
+
+// TASMOTA: small helpers that GCC sometimes keeps out of line. On ESP8266 (no LTO),
+// "static inline" gives every source file its own private copy; as C99 "inline"
+// functions the inlining decisions are the same, but all out-of-line calls share
+// one copy, defined in codec/shared_inline.c (measured: -156 bytes flash, -92 bytes
+// IRAM). On ESP32 LTO already handles this, and the change made the code larger.
+#ifdef ESP8266   // TASMOTA
+#define BR_SHARED_INLINE   inline
+#else   // TASMOTA
+#define BR_SHARED_INLINE   static inline
+#endif   // TASMOTA
 
 /*
  * On MSVC, disable the warning about applying unary minus on an
@@ -132,7 +143,7 @@
  * Set BR_LOMUL on platforms where it makes sense.
  */
 #ifndef BR_LOMUL
-#if BR_ARMEL_CORTEXM_GCC || ((defined(ESP8266) || defined(ESP32)) && !defined(ESP8266M32))
+#if BR_ARMEL_CORTEXM_GCC || ((defined(ESP8266) || defined(ESP32)) && !defined(ESP8266M32))   // TASMOTA: added ESP32
 #define BR_LOMUL   1
 #endif
 #endif
@@ -315,7 +326,7 @@
  * Use ESP8266 hardware random generator when possible.
  */
 #ifndef BR_USE_ESP8266_RAND
-#if (defined(ESP8266) || defined(ESP32))
+#if (defined(ESP8266) || defined(ESP32))   // TASMOTA: added ESP32
 #define BR_USE_ESP8266_RAND 1
 #endif
 #endif
@@ -454,7 +465,7 @@
 
 #ifndef BR_USE_UNIX_TIME
 /*#if defined __unix__ || defined __linux__ || defined ESP8266 || defined ESP32\*/
-// Tasmota now uses its own NTP client so we need to pass explicitly the current time
+// TASMOTA: Tasmota now uses its own NTP client so we need to pass explicitly the current time (ESP8266 removed)
 #if defined __unix__ || defined __linux__ || defined ESP32\
 	|| defined _POSIX_SOURCE || defined _POSIX_C_SOURCE \
 	|| (defined __APPLE__ && defined __MACH__)
@@ -572,7 +583,7 @@ br_enc32le(void *dst, uint32_t x)
 #endif
 }
 
-static inline void
+BR_SHARED_INLINE void   // TASMOTA: was static inline
 br_enc32be(void *dst, uint32_t x)
 {
 #if BR_BE_UNALIGNED
@@ -604,7 +615,7 @@ br_dec32le(const void *src)
 #endif
 }
 
-static inline uint32_t
+BR_SHARED_INLINE uint32_t   // TASMOTA: was static inline
 br_dec32be(const void *src)
 {
 #if BR_BE_UNALIGNED
@@ -634,7 +645,7 @@ br_enc64le(void *dst, uint64_t x)
 #endif
 }
 
-static inline void
+BR_SHARED_INLINE void   // TASMOTA: was static inline
 br_enc64be(void *dst, uint64_t x)
 {
 #if BR_BE_UNALIGNED
@@ -775,7 +786,7 @@ br_multihash_copyimpl(br_multihash_context *dst,
 /*
  * Negate a boolean.
  */
-static inline uint32_t
+BR_SHARED_INLINE uint32_t   // TASMOTA: was static inline
 NOT(uint32_t ctl)
 {
 	return ctl ^ 1;
@@ -793,7 +804,7 @@ MUX(uint32_t ctl, uint32_t x, uint32_t y)
 /*
  * Equality check: returns 1 if x == y, 0 otherwise.
  */
-static inline uint32_t
+BR_SHARED_INLINE uint32_t   // TASMOTA: was static inline
 EQ(uint32_t x, uint32_t y)
 {
 	uint32_t q;
@@ -817,7 +828,7 @@ NEQ(uint32_t x, uint32_t y)
 /*
  * Comparison: returns 1 if x > y, 0 otherwise.
  */
-static inline uint32_t
+BR_SHARED_INLINE uint32_t   // TASMOTA: was static inline
 GT(uint32_t x, uint32_t y)
 {
 	/*
@@ -1551,7 +1562,7 @@ uint32_t br_i31_moddiv(uint32_t *x, const uint32_t *y,
  * FIXME: document "i15" functions.
  */
 
-static inline void
+BR_SHARED_INLINE void   // TASMOTA: was static inline
 br_i15_zero(uint16_t *x, uint16_t bit_len)
 {
 	*x ++ = bit_len;
@@ -2590,18 +2601,18 @@ br_cpuid(uint32_t mask_eax, uint32_t mask_ebx,
 
 #endif
 
-#if (defined(ESP8266)|| defined(ESP32))
+#if (defined(ESP8266)|| defined(ESP32))   // TASMOTA: added ESP32
 
   #ifdef __cplusplus
   extern "C" {
   #endif
 
   #define _debugBearSSL (0)
-  #ifdef ESP8266
+  #ifdef ESP8266   // TASMOTA
     extern void stack_thunk_yield(void);
-  #else
+  #else   // TASMOTA: no stack thunk on ESP32
     #define stack_thunk_yield(ignored)
-  #endif
+  #endif   // TASMOTA
   #ifdef __cplusplus
   }
   #endif
@@ -2611,7 +2622,7 @@ br_cpuid(uint32_t mask_eax, uint32_t mask_ebx,
 #endif
 
 #ifdef ESP32
-#define memcpy_P memcpy
+#define memcpy_P memcpy   // TASMOTA: ESP32
 #endif
 
 /* ==================================================================== */

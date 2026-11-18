@@ -30,6 +30,16 @@
 
 #include "t_bearssl_rand.h"
 
+// TASMOTA: on ESP8266 the Arduino core also ships BearSSL (libbearssl.a) with the
+// same symbol names, and the linker takes these EC implementations from the core
+// instead of this library. Renaming them makes sure our versions (compiled with
+// BR_SLOW_MUL15, smaller) are used. Not done on ESP32: there is no other copy.
+#ifdef ESP8266   // TASMOTA
+#define br_ec_all_m15      t_br_ec_all_m15
+#define br_ec_p256_m15     t_br_ec_p256_m15
+#define br_ec_c25519_m15   t_br_ec_c25519_m15
+#endif   // TASMOTA
+
 #ifdef __cplusplus
 extern "C" {
 #endif

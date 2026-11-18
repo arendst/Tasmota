@@ -1,3 +1,4 @@
+// TASMOTA: new file, not part of BearSSL
 /* PGMSPACE.H - Accessor utilities/types for accessing PROGMEM data */
 
 #ifndef _PGMSPACEWRAPPER_H_
