@@ -40,6 +40,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - AHT20/AHT30 stale readings when used with deep sleep, with optional `#define USE_AHT_DIAG` (#25258)
+- ESP32 Configure Wi-Fi page hang when the Wi-Fi scan cannot start
 
 ## [16.0.0.3] 20261113
 ### Added
