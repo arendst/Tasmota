@@ -21,10 +21,6 @@
 #include "sdkconfig.h"
 #ifdef CONFIG_ETH_ENABLED
 #ifdef USE_ETHERNET
-#ifdef USE_SPI
-#include <SPI.h>
-#include "esp32-hal-periman.h"
-#endif
 /*********************************************************************************************\
  * Ethernet support for ESP32
  *
@@ -92,6 +88,11 @@
 */
 
 #include <ETH.h>
+
+#ifdef USE_SPI
+#include <SPI.h>
+#include "esp32-hal-periman.h"
+#endif
 
 #define ETH_USES_SPI    0x80                    // Use the highest significant bit to mark SPI Ethernet
 
@@ -317,9 +318,11 @@ void EthernetInit(void) {
         (perimanGetPinBusType(eth_sck) == ESP32_BUS_TYPE_SPI_MASTER_SCK)) {
       if (0 == spi_bus) {
         eth_spi = &SPI;          // Global instance every bus1 driver shares
+#ifndef FIRMWARE_MINIMAL
       } else {
         // Bus2 drivers may use their own SPIClass instance, so the bus cannot be shared safely
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH "SPI bus2 in use, not shared"));
+#endif // FIRMWARE_MINIMAL
       }
     }
 #endif  // USE_SPI

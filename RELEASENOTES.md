@@ -148,6 +148,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - OpenTherm use RMT on ESP32, add command `ot_report` [#25254](https://github.com/arendst/Tasmota/issues/25254)
 - ESP32 web login uses own Basic auth instead Arduino [#25210](https://github.com/arendst/Tasmota/issues/25210)
 - BLE EQ3-TRV avoid sending of empty status [#25182](https://github.com/arendst/Tasmota/issues/25182)
+- Matter cluster and device type revisions aligned with Matter 1.6.1, fixed ReachableChanged for MQTT [#25292](https://github.com/arendst/Tasmota/issues/25292)
 
 ### Fixed
 - Security issues caused by buffer overflows
@@ -169,6 +170,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 `PWMFrequency` < 8 result in WDT exception after restart [#25155](https://github.com/arendst/Tasmota/issues/25155)
 - ESP32 steady 38 kHz IR carrier (fixes [#25168](https://github.com/arendst/Tasmota/issues/25168)) [#25176](https://github.com/arendst/Tasmota/issues/25176)
 - ESP32 `UfsServe` (`UFILESYS_STATIC_SERVING`) compilation, and reject `..` in served paths [#25211](https://github.com/arendst/Tasmota/issues/25211)
+- Ethernet share SPI bus 1 with drivers already using it [#25299](https://github.com/arendst/Tasmota/issues/25299)
 - MiEL HVAC Modbus no response timeouts now serves the RS485 slave from its own task [#25157](https://github.com/arendst/Tasmota/issues/25157)
 - MiEL HVAC Modbus mirror total energy to holding register 40027 [#25214](https://github.com/arendst/Tasmota/issues/25214)
 - ESP32-S3 RGB display permanent image shift after flash writes, DMA sync guard [#25194](https://github.com/arendst/Tasmota/issues/25194)
@@ -176,6 +178,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - WebAsync rare crash and race conditions [#25209](https://github.com/arendst/Tasmota/issues/25209)
 - Berry `lv.start()` raises an error instead of crashing when the display can't start [#25193](https://github.com/arendst/Tasmota/issues/25193)
 - Matter event EpochTimestamp sent as seconds instead of milliseconds, using new Berry `tasmota.rtc_utc_ms()` [#25234](https://github.com/arendst/Tasmota/issues/25234)
+- Matter Fan advertising the unsupported Auto mode [#25293](https://github.com/arendst/Tasmota/issues/25293)
+- Matter Air Quality PM1, PM2.5 and PM10 reported in ppm instead of µg/m³, and TVOC in ppm instead of ppb [#25294](https://github.com/arendst/Tasmota/issues/25294)
+- Matter MRP sending unacknowledged messages 7 times instead of 5 [#25295](https://github.com/arendst/Tasmota/issues/25295)
 - LVGL Panel extension crash [#25165](https://github.com/arendst/Tasmota/issues/25165)
 - LVGL Panel improved click handling [#25171](https://github.com/arendst/Tasmota/issues/25171)
 - LVGL touch more responsive [#25172](https://github.com/arendst/Tasmota/issues/25172)
