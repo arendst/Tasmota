@@ -538,6 +538,7 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_CANVAS,
                          SET_TELEGRAM_FINGERPRINT,
                          SET_APBSSID1, SET_APBSSID2,  // MAX_SSIDS
+                         SET_WEBUSER,
                          SET_MAX, // limit of texts stored in Settings
                          // Index above are not stored in Settings and should be handled specifically in SettingText()
                          SET_BUTTON17, SET_BUTTON18, SET_BUTTON19, SET_BUTTON20, SET_BUTTON21, SET_BUTTON22, SET_BUTTON23, SET_BUTTON24,

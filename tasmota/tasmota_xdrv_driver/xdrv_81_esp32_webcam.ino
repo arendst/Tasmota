@@ -835,7 +835,7 @@ pcopy:
 bool WebcamAuthenticate(void)
 {
   if (strlen(SettingsText(SET_WEBPWD)) && (HTTP_MANAGER_RESET_ONLY != Web.state)) {
-    return Wc.CamServer->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD));
+    return Wc.CamServer->authenticate(WebUserName(), SettingsText(SET_WEBPWD));
   } else {
     return true;
   }

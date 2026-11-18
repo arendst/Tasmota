@@ -536,7 +536,7 @@
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and Wi-Fi Manager (+66k code, +8k mem)
   #define WEB_PORT             80                // Web server Port for User and Admin mode
-  #define WEB_USERNAME         "admin"           // Web server Admin mode user name
+  #define WEB_USERNAME         "admin"           // Web server Admin mode user name used while [WebUser] is empty
 //  #define DISABLE_REFERER_CHK                     // [SetOption128] Disable HTTP API
   #define USE_ENHANCED_GUI_WIFI_SCAN             // Enable Wi-Fi scan output with BSSID (+0k5 code)
   #define USE_WEB_STATUS_LINE                      // Enable upper status line in web UI (+0k5 code)

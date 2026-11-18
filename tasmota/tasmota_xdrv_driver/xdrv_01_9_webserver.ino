@@ -343,6 +343,7 @@ const char HTTP_FORM_OTHER[] PROGMEM =
   "<p><label><input id='t2' type='checkbox'%s><b>" D_ACTIVATE "</b></label></p>"
   "</fieldset>"
   "<br>"
+  "<label><b>" D_USER "</b></label><br><input id='wu' maxlength='32' placeholder=\"" WEB_USERNAME "\" value=\"%s\"><br>"
   "<label><b>" D_WEB_ADMIN_PASSWORD "</b><input type='checkbox' onclick='sp(\"wp\")'></label><br><input id='wp' type='password' placeholder=\"" D_WEB_ADMIN_PASSWORD "\" value=\"" D_ASTERISK_PWD "\"><br>"
   "<br>"
   "<label><input id='b3' type='checkbox'%s><b>" D_HTTP_API_ENABLE "</b></label><br>"
@@ -774,9 +775,14 @@ void PollDnsWebserver(void) {
 
 /*********************************************************************************************/
 
+const char* WebUserName(void) {
+  // [WebUser] - empty means the compile time default WEB_USERNAME ("admin")
+  return (strlen(SettingsText(SET_WEBUSER))) ? SettingsText(SET_WEBUSER) : WEB_USERNAME;
+}
+
 bool WebAuthenticate(void) {
   if (strlen(SettingsText(SET_WEBPWD)) && (HTTP_MANAGER_RESET_ONLY != Web.state)) {
-    return Webserver->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD));
+    return Webserver->authenticate(WebUserName(), SettingsText(SET_WEBPWD));
   } else {
     return true;
   }
@@ -1454,7 +1460,7 @@ void HandleRoot(void) {
       HandleWifiLogin();
     } else {
       if (!strlen(SettingsText(SET_WEBPWD)) || 
-          (((Webserver->arg(F("USER1")) == WEB_USERNAME ) &&
+          (((Webserver->arg(F("USER1")) == WebUserName() ) &&
             (Webserver->arg(F("PASS1")) == SettingsText(SET_WEBPWD) )) ||
             HTTP_MANAGER_RESET_ONLY == Web.state)) {
         HandleWifiConfiguration();
@@ -2904,6 +2910,7 @@ void HandleOtherConfiguration(void) {
   WSContentSend_P(HTTP_FORM_OTHER, 
     HtmlEscape(ResponseData()).c_str(),
     (USER_MODULE == Settings->module) ? PSTR(" checked disabled") : "",
+    SettingsTextEscaped(SET_WEBUSER).c_str(),
     (Settings->flag5.disable_referer_chk) ? PSTR(" checked") : "",   // SetOption128 - Enable HTTP API
     (Settings->flag.mqtt_enabled) ? PSTR(" checked") : "",   // SetOption3 - Enable MQTT
     SettingsTextEscaped(SET_FRIENDLYNAME1).c_str(),
@@ -2969,6 +2976,7 @@ bool OtherSaveSettings(void) {
   }
 
   String cmnd = F(D_CMND_BACKLOG "0 ");
+  cmnd += AddWebCommand(PSTR(D_CMND_WEBUSER), PSTR("wu"), PSTR("\""));
   cmnd += AddWebCommand(PSTR(D_CMND_WEBPASSWORD "2"), PSTR("wp"), PSTR("\""));
   cmnd += F(";" D_CMND_SO "3 ");
   cmnd += Webserver->hasArg(F("b1"));
@@ -3937,7 +3945,7 @@ void HandleHttpCommand(void) {
     char tmp2[strlen(SettingsText(SET_WEBPWD)) + 2];  // Need space for an entered password longer than set password
     WebGetArg(PSTR("password"), tmp2, sizeof(tmp2));
 
-    if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, SettingsText(SET_WEBPWD)))) {
+    if (!(!strcmp(tmp1, WebUserName()) && !strcmp(tmp2, SettingsText(SET_WEBPWD)))) {
       WSContentBegin(401, CT_APP_JSON);
       WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_NEED_USER_AND_PASSWORD "\"}"));
       WSContentEnd();
@@ -4301,7 +4309,7 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_SENDMAIL
   D_CMND_SENDMAIL "|"
 #endif
-  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBQUERY "|"
+  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBUSER "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBQUERY "|"
   D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON "|" D_CMND_WEBCANVAS
 #ifdef USE_WEBGETCONFIG
   "|" D_CMND_WEBGETCONFIG
@@ -4323,7 +4331,7 @@ void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_SENDMAIL
   &CmndSendmail,
 #endif
-  &CmndWebServer, &CmndWebPassword, &CmndWebRefresh, &CmndWebSend, &CmndWebQuery,
+  &CmndWebServer, &CmndWebPassword, &CmndWebUser, &CmndWebRefresh, &CmndWebSend, &CmndWebQuery,
   &CmndWebColor, &CmndWebSensor, &CmndWebButton, &CmndWebCanvas
 #ifdef USE_WEBGETCONFIG
   , &CmndWebGetConfig
@@ -4426,6 +4434,27 @@ void CmndWebPassword(void) {
   if (show_asterisk) {
     Response_P(S_JSON_COMMAND_ASTERISK, XdrvMailbox.command);
   }
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
+void CmndWebUser(void) {
+  // WebUser          - show user name
+  // WebUser <name>   - set user name (max 32 chars, no colon as it separates user and password in Basic auth)
+  // WebUser "  or  WebUser 1  - back to default WEB_USERNAME
+  if (XdrvMailbox.data_len > 0) {
+    if ((SC_CLEAR == Shortcut()) || (SC_DEFAULT == Shortcut())) {
+      SettingsUpdateText(SET_WEBUSER, "");
+    }
+    else if ((XdrvMailbox.data_len > 32) || strchr(XdrvMailbox.data, ':')) {
+      ResponseCmndError();
+      return;
+    }
+    else {
+      SettingsUpdateText(SET_WEBUSER, XdrvMailbox.data);
+    }
+  }
+  ResponseCmndChar(WebUserName());
 }
 
 /*-------------------------------------------------------------------------------------------*/
