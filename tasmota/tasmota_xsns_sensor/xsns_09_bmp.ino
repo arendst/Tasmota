@@ -332,7 +332,9 @@ void Bme280ReadFailed(uint8_t bmp_idx) {
     bmp_sensors[bmp_idx].bmp_temperature = NAN;
     bmp_sensors[bmp_idx].bmp_pressure = NAN;
     bmp_sensors[bmp_idx].bmp_humidity = NAN;
+#ifdef USE_BME68X
     bmp_sensors[bmp_idx].bmp_gas_resistance = NAN;
+#endif  // USE_BME68X
   }
 }
 
