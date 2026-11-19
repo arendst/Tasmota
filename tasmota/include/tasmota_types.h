@@ -776,8 +776,9 @@ typedef struct {
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
   uint8_t       user_template_base;        // 71F
+  uint32_t      sensors2[2];               // 720  Disable individual (0) sensor drivers 129..160 / (1) GUI sensor 129..160 output
 
-  uint8_t       free_720[15];              // 720
+  uint8_t       free_728[7];               // 728
 #ifdef ESP8266
   uint8_t       free_esp8266_72F[5];       // 72F
 #endif  // ESP8266
@@ -798,7 +799,7 @@ typedef struct {
   uint16_t      baudrate;                  // 778
   uint16_t      sbaudrate;                 // 77A
   EnergyUsage   energy_usage;              // 77C
-  uint32_t      sensors[2][4];             // 794  Disable individual (0) sensor drivers / (1) GUI sensor output
+  uint32_t      sensors[2][4];             // 794  Disable individual (0) sensor drivers 1..128 / (1) GUI sensor 1..128 output
   uint32_t      energy_kWhtotal_time;      // 7B4
   uint32_t      weight_item;               // 7B8  Weight of one item in gram * 10
   uint16_t      ledmask;                   // 7BC
@@ -838,7 +839,7 @@ typedef struct {
 #if CONFIG_IDF_TARGET_ESP32S31
   uint8_t       ws_color[4][3];            // EB0
 #else
-  uint8_t       free_eb0[12];              // EB0
+  uint8_t       free_no_esp32s31eb0[12];   // EB0
 #endif
 
   uint16_t      bme680_iaq_baseline[4];    // EBC

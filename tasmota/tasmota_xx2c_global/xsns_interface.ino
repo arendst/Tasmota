@@ -528,7 +528,139 @@ bool (* const xsns_func_ptr[])(uint32_t) = {  // Sensor Function Pointers for si
 #endif
 
 #ifdef XSNS_127
-  &Xsns127
+  &Xsns127,
+#endif
+
+#ifdef XSNS_128
+  &Xsns128,
+#endif
+
+#ifdef XSNS_129
+  &Xsns129,
+#endif
+
+#ifdef XSNS_130
+  &Xsns130,
+#endif
+
+#ifdef XSNS_131
+  &Xsns131,
+#endif
+
+#ifdef XSNS_132
+  &Xsns132,
+#endif
+
+#ifdef XSNS_133
+  &Xsns133,
+#endif
+
+#ifdef XSNS_134
+  &Xsns134,
+#endif
+
+#ifdef XSNS_135
+  &Xsns135,
+#endif
+
+#ifdef XSNS_136
+  &Xsns136,
+#endif
+
+#ifdef XSNS_137
+  &Xsns137,
+#endif
+
+#ifdef XSNS_138
+  &Xsns138,
+#endif
+
+#ifdef XSNS_139
+  &Xsns139,
+#endif
+
+#ifdef XSNS_140
+  &Xsns140,
+#endif
+
+#ifdef XSNS_141
+  &Xsns141,
+#endif
+
+#ifdef XSNS_142
+  &Xsns142,
+#endif
+
+#ifdef XSNS_143
+  &Xsns143,
+#endif
+
+#ifdef XSNS_144
+  &Xsns144,
+#endif
+
+#ifdef XSNS_145
+  &Xsns145,
+#endif
+
+#ifdef XSNS_146
+  &Xsns146,
+#endif
+
+#ifdef XSNS_147
+  &Xsns147,
+#endif
+
+#ifdef XSNS_148
+  &Xsns148,
+#endif
+
+#ifdef XSNS_149
+  &Xsns149,
+#endif
+
+#ifdef XSNS_150
+  &Xsns150,
+#endif
+
+#ifdef XSNS_151
+  &Xsns151,
+#endif
+
+#ifdef XSNS_152
+  &Xsns152,
+#endif
+
+#ifdef XSNS_153
+  &Xsns153,
+#endif
+
+#ifdef XSNS_154
+  &Xsns154,
+#endif
+
+#ifdef XSNS_155
+  &Xsns155,
+#endif
+
+#ifdef XSNS_156
+  &Xsns156,
+#endif
+
+#ifdef XSNS_157
+  &Xsns157,
+#endif
+
+#ifdef XSNS_158
+  &Xsns158,
+#endif
+
+#ifdef XSNS_159
+  &Xsns159,
+#endif
+
+#ifdef XSNS_160
+  &Xsns160
 #endif
 };
 
@@ -1049,7 +1181,139 @@ const uint8_t kXsnsList[] = {
 #endif
 
 #ifdef XSNS_127
-  XSNS_127
+  XSNS_127,
+#endif
+
+#ifdef XSNS_128
+  XSNS_128,
+#endif
+
+#ifdef XSNS_129
+  XSNS_129,
+#endif
+
+#ifdef XSNS_130
+  XSNS_130,
+#endif
+
+#ifdef XSNS_131
+  XSNS_131,
+#endif
+
+#ifdef XSNS_132
+  XSNS_132,
+#endif
+
+#ifdef XSNS_133
+  XSNS_133,
+#endif
+
+#ifdef XSNS_134
+  XSNS_134,
+#endif
+
+#ifdef XSNS_135
+  XSNS_135,
+#endif
+
+#ifdef XSNS_136
+  XSNS_136,
+#endif
+
+#ifdef XSNS_137
+  XSNS_137,
+#endif
+
+#ifdef XSNS_138
+  XSNS_138,
+#endif
+
+#ifdef XSNS_139
+  XSNS_139,
+#endif
+
+#ifdef XSNS_140
+  XSNS_140,
+#endif
+
+#ifdef XSNS_141
+  XSNS_141,
+#endif
+
+#ifdef XSNS_142
+  XSNS_142,
+#endif
+
+#ifdef XSNS_143
+  XSNS_143,
+#endif
+
+#ifdef XSNS_144
+  XSNS_144,
+#endif
+
+#ifdef XSNS_145
+  XSNS_145,
+#endif
+
+#ifdef XSNS_146
+  XSNS_146,
+#endif
+
+#ifdef XSNS_147
+  XSNS_147,
+#endif
+
+#ifdef XSNS_148
+  XSNS_148,
+#endif
+
+#ifdef XSNS_149
+  XSNS_149,
+#endif
+
+#ifdef XSNS_150
+  XSNS_150,
+#endif
+
+#ifdef XSNS_151
+  XSNS_151,
+#endif
+
+#ifdef XSNS_152
+  XSNS_152,
+#endif
+
+#ifdef XSNS_153
+  XSNS_153,
+#endif
+
+#ifdef XSNS_154
+  XSNS_154,
+#endif
+
+#ifdef XSNS_155
+  XSNS_155,
+#endif
+
+#ifdef XSNS_156
+  XSNS_156,
+#endif
+
+#ifdef XSNS_157
+  XSNS_157,
+#endif
+
+#ifdef XSNS_158
+  XSNS_158,
+#endif
+
+#ifdef XSNS_159
+  XSNS_159,
+#endif
+
+#ifdef XSNS_160
+  XSNS_160
 #endif
 };
 
@@ -1064,8 +1328,11 @@ bool XsnsEnabled(uint32_t sensor_list, uint32_t sns_index) {
 #else
     uint32_t index = kXsnsList[sns_index];
 #endif
-    if (index < MAX_XSNS_DRIVERS) {
+    if (index < 128) {
       return bitRead(Settings->sensors[sensor_list][index / 32], index % 32);
+    }
+    else if (index < MAX_XSNS_DRIVERS) {
+      return bitRead(Settings->sensors2[sensor_list], index % 32);
     }
   }
   return true;
@@ -1082,12 +1349,29 @@ void XsnsSensorState(uint32_t sensor_list) {
     uint32_t sensorid = kXsnsList[i];
 #endif
     bool disabled = false;
-    if (sensorid < MAX_XSNS_DRIVERS) {
+    if (sensorid < 128) {
       disabled = !bitRead(Settings->sensors[sensor_list][sensorid / 32], sensorid % 32);
+    }
+    else if (sensorid < MAX_XSNS_DRIVERS) {
+      disabled = !bitRead(Settings->sensors2[sensor_list], sensorid % 32);
     }
     ResponseAppend_P(PSTR("%s%s%d"), (i) ? "," : "", (disabled) ? "!" : "", sensorid);
   }
   ResponseAppend_P(PSTR("\""));
+}
+
+void XsnsSensorSet(uint32_t sensor_list, uint32_t sensorid, uint32_t state) {
+  // sensor_list 0 = sensors
+  // sensor_list 1 = web_sensors
+  if (sensorid < 128) {
+    bitWrite(Settings->sensors[sensor_list][sensorid / 32], sensorid % 32, state);
+  }
+  else if (sensorid < MAX_XSNS_DRIVERS) {
+    bitWrite(Settings->sensors2[sensor_list], sensorid % 32, state);
+  }
+  if ((0 == sensor_list) && (1 == state)) {
+    TasmotaGlobal.restart_flag = 2;  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
+  }
 }
 
 /*********************************************************************************************\

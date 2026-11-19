@@ -1,5 +1,5 @@
 /*
-  xdrv_127_debug.ino - debug support for Tasmota
+  xdrv_159_debug.ino - debug support for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
@@ -32,7 +32,7 @@
  * Needs file zzzz_debug.ino due to DEFINE processing
 \*********************************************************************************************/
 
-#define XDRV_127            127
+#define XDRV_159            159
 
 #ifndef CPU_LOAD_CHECK
 #define CPU_LOAD_CHECK      1                 // Seconds between each CPU_LOAD log
@@ -795,7 +795,7 @@ void CmndSoSet(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv127(uint32_t function)
+bool Xdrv159(uint32_t function)
 {
   bool result = false;
 

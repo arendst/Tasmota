@@ -532,7 +532,135 @@ bool (* const xdrv_func_ptr[])(uint32_t) = {   // Driver Function Pointers
 #endif
 
 #ifdef XDRV_128
-  &Xdrv128
+  &Xdrv128,
+#endif
+
+#ifdef XDRV_129
+  &Xdrv129,
+#endif
+
+#ifdef XDRV_130
+  &Xdrv130,
+#endif
+
+#ifdef XDRV_131
+  &Xdrv131,
+#endif
+
+#ifdef XDRV_132
+  &Xdrv132,
+#endif
+
+#ifdef XDRV_133
+  &Xdrv133,
+#endif
+
+#ifdef XDRV_134
+  &Xdrv134,
+#endif
+
+#ifdef XDRV_135
+  &Xdrv135,
+#endif
+
+#ifdef XDRV_136
+  &Xdrv136,
+#endif
+
+#ifdef XDRV_137
+  &Xdrv137,
+#endif
+
+#ifdef XDRV_138
+  &Xdrv138,
+#endif
+
+#ifdef XDRV_139
+  &Xdrv139,
+#endif
+
+#ifdef XDRV_140
+  &Xdrv140,
+#endif
+
+#ifdef XDRV_141
+  &Xdrv141,
+#endif
+
+#ifdef XDRV_142
+  &Xdrv142,
+#endif
+
+#ifdef XDRV_143
+  &Xdrv143,
+#endif
+
+#ifdef XDRV_144
+  &Xdrv144,
+#endif
+
+#ifdef XDRV_145
+  &Xdrv145,
+#endif
+
+#ifdef XDRV_146
+  &Xdrv146,
+#endif
+
+#ifdef XDRV_147
+  &Xdrv147,
+#endif
+
+#ifdef XDRV_148
+  &Xdrv148,
+#endif
+
+#ifdef XDRV_149
+  &Xdrv149,
+#endif
+
+#ifdef XDRV_150
+  &Xdrv150,
+#endif
+
+#ifdef XDRV_151
+  &Xdrv151,
+#endif
+
+#ifdef XDRV_152
+  &Xdrv152,
+#endif
+
+#ifdef XDRV_153
+  &Xdrv153,
+#endif
+
+#ifdef XDRV_154
+  &Xdrv154,
+#endif
+
+#ifdef XDRV_155
+  &Xdrv155,
+#endif
+
+#ifdef XDRV_156
+  &Xdrv156,
+#endif
+
+#ifdef XDRV_157
+  &Xdrv157,
+#endif
+
+#ifdef XDRV_158
+  &Xdrv158,
+#endif
+
+#ifdef XDRV_159
+  &Xdrv159,
+#endif
+
+#ifdef XDRV_160
+  &Xdrv160
 #endif
 };
 
@@ -1057,13 +1185,142 @@ const uint8_t kXdrvList[] = {
 #endif
 
 #ifdef XDRV_128
-  XDRV_128
+  XDRV_128,
 #endif
+
+#ifdef XDRV_129
+  XDRV_129,
+#endif
+
+#ifdef XDRV_130
+  XDRV_130,
+#endif
+
+#ifdef XDRV_131
+  XDRV_131,
+#endif
+
+#ifdef XDRV_132
+  XDRV_132,
+#endif
+
+#ifdef XDRV_133
+  XDRV_133,
+#endif
+
+#ifdef XDRV_134
+  XDRV_134,
+#endif
+
+#ifdef XDRV_135
+  XDRV_135,
+#endif
+
+#ifdef XDRV_136
+  XDRV_136,
+#endif
+
+#ifdef XDRV_137
+  XDRV_137,
+#endif
+
+#ifdef XDRV_138
+  XDRV_138,
+#endif
+
+#ifdef XDRV_139
+  XDRV_139,
+#endif
+
+#ifdef XDRV_140
+  XDRV_140,
+#endif
+
+#ifdef XDRV_141
+  XDRV_141,
+#endif
+
+#ifdef XDRV_142
+  XDRV_142,
+#endif
+
+#ifdef XDRV_143
+  XDRV_143,
+#endif
+
+#ifdef XDRV_144
+  XDRV_144,
+#endif
+
+#ifdef XDRV_145
+  XDRV_145,
+#endif
+
+#ifdef XDRV_146
+  XDRV_146,
+#endif
+
+#ifdef XDRV_147
+  XDRV_147,
+#endif
+
+#ifdef XDRV_148
+  XDRV_148,
+#endif
+
+#ifdef XDRV_149
+  XDRV_149,
+#endif
+
+#ifdef XDRV_150
+  XDRV_150,
+#endif
+
+#ifdef XDRV_151
+  XDRV_151,
+#endif
+
+#ifdef XDRV_152
+  XDRV_152,
+#endif
+
+#ifdef XDRV_153
+  XDRV_153,
+#endif
+
+#ifdef XDRV_154
+  XDRV_154,
+#endif
+
+#ifdef XDRV_155
+  XDRV_155,
+#endif
+
+#ifdef XDRV_156
+  XDRV_156,
+#endif
+
+#ifdef XDRV_157
+  XDRV_157,
+#endif
+
+#ifdef XDRV_158
+  XDRV_158,
+#endif
+
+#ifdef XDRV_159
+  XDRV_159,
+#endif
+
+#ifdef XDRV_160
+  XDRV_160
+#endif
+
 };
 
 /*********************************************************************************************/
 
-uint32_t Xdrv_active[4] = { 0 };
+uint32_t Xdrv_active[5] = { 0 };
 
 bool XdrvActive(uint32_t drv_index) {
   return bitRead(Xdrv_active[drv_index / 32], drv_index % 32);

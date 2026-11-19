@@ -120,7 +120,7 @@ constexpr uint32_t feature[] = {
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_POWER_LIMIT)
   0x80000000 |  // xdrv_03_energy.ino
 #endif
-  0,
+  0x00000000,
 #ifdef USE_CONFIG_OVERRIDE
   0x00000001 |  // user_config(_override).h
 #endif
@@ -220,7 +220,7 @@ constexpr uint32_t feature[] = {
 #ifdef USE_DEBUG_DRIVER
   0x80000000 |  // xdrv_99_debug.ino
 #endif
-  0,
+  0x00000000,
 #ifdef USE_COUNTER
   0x00000001 |  // xsns_01_counter.ino
 #endif
@@ -317,7 +317,7 @@ constexpr uint32_t feature[] = {
 #ifdef USE_TM1638
   0x80000000 |  // xdrv_66_tm1638.ino
 #endif
-  0,
+  0x00000000,
 #if defined(USE_I2C) && defined(USE_MCP230xx)
   0x00000001 |  // xsns_29_mcp230xx.ino
 #endif
@@ -414,7 +414,7 @@ constexpr uint32_t feature[] = {
 #if defined(USE_I2C) && defined(USE_PAJ7620)
   0x80000000 |  // xsns_50_paj7620.ino
 #endif
-  0,
+  0x00000000,
 #ifdef USE_BUZZER
   0x00000001 |  // xdrv_24_buzzer.ino
 #endif
@@ -511,7 +511,7 @@ constexpr uint32_t feature[] = {
 #ifdef USE_PWM_DIMMER
   0x80000000 |  // xdrv_35_pwm_dimmer
 #endif
-  0,
+  0x00000000,
 #ifdef USE_KEELOQ
   0x00000001 |  // xdrv_36_keeloq.ino
 #endif
@@ -608,7 +608,7 @@ constexpr uint32_t feature[] = {
 #if defined(ESP32) && defined(USE_WEBCAM)
   0x80000000 |  // xdrv_81_webcam.ino
 #endif
-  0,
+  0x00000000,
 #if defined(USE_I2C) && defined(USE_EZOORP)
   0x00000001 |  // xsns_78_ezoorp.ino
 #endif
@@ -706,7 +706,7 @@ constexpr uint32_t feature[] = {
 #ifdef USE_PROJECTOR_CTRL
   0x80000000 |  // xdrv_53_projector_ctrl.ino
 #endif
-  0,
+  0x00000000,
 #if defined(USE_I2C) && defined(USE_MPU_ACCEL)
   0x00000001 |  // xsns_85_mpu6886.ino
 #endif
@@ -803,7 +803,7 @@ constexpr uint32_t feature[] = {
 #ifdef USE_DISPLAY_TM1621_SONOFF
   0x80000000 |  // xdrv_87_esp32_sonoff_tm1621.ino
 #endif
-  0,
+  0x00000000,
 #if defined(USE_I2C) && defined(USE_SGP40)
   0x00000001 |  // xsns_98_sgp40.ino
 #endif
@@ -900,7 +900,7 @@ constexpr uint32_t feature[] = {
 #ifdef USE_MATTER_DEVICE
   0x80000000 |  // xdrv_52_9_berry.ino
 #endif
-  0,
+  0x00000000,
 #ifdef USE_MAGIC_SWITCH
   0x00000001 |  // xdrv_71_magic_switch.ino
 #endif
@@ -987,7 +987,43 @@ constexpr uint32_t feature[] = {
 //  0x20000000 |  //
 //  0x40000000 |  //
 //  0x80000000 |  //
-  0 };
+  0x00000000,
+/*
+//  0x00000001 |  //
+//  0x00000002 |  //
+//  0x00000004 |  //
+//  0x00000008 |  //
+//  0x00000010 |  //
+//  0x00000020 |  //
+//  0x00000040 |  //
+//  0x00000080 |  //
+//  0x00000100 |  //
+//  0x00000200 |  //
+//  0x00000400 |  //
+//  0x00000800 |  //
+//  0x00001000 |  //
+//  0x00002000 |  //
+//  0x00004000 |  //
+//  0x00008000 |  //
+//  0x00010000 |  //
+//  0x00020000 |  //
+//  0x00040000 |  //
+//  0x00080000 |  //
+//  0x00100000 |  //
+//  0x00200000 |  //
+//  0x00400000 |  //
+//  0x00800000 |  //
+//  0x01000000 |  //
+//  0x02000000 |  //
+//  0x04000000 |  //
+//  0x08000000 |  //
+//  0x10000000 |  //
+//  0x20000000 |  //
+//  0x40000000 |  //
+//  0x80000000 |  //
+  0x00000000
+*/  
+   };
 
 /*********************************************************************************************/
 
