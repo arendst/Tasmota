@@ -57,6 +57,9 @@ enum ZnpCommandType : uint8_t {
 
 #ifdef USE_ZIGBEE_EZSP
 
+// EZSP v8 (EmberZNet 6.9.x) and v13 (EmberZNet 7.4.x) are both supported.
+// The protocol version is negotiated with the NCP at startup, see EZ_ReceiveCheckVersion().
+
 enum EZSPNodeType {
   EMBER_UNKNOWN_DEVICE = 0x00,
   EMBER_COORDINATOR = 0x01,
@@ -448,6 +451,20 @@ enum EZSP_EmberKeyType {
   EMBER_APPLICATION_LINK_KEY = 5
 };
 
+// sl_zb_sec_man_key_type_t (EZSP v13, replaces EmberKeyType for security manager frames)
+enum EZSP_SecManKeyType {
+  SL_ZB_SEC_MAN_KEY_TYPE_NONE = 0,
+  SL_ZB_SEC_MAN_KEY_TYPE_NETWORK = 1,
+  SL_ZB_SEC_MAN_KEY_TYPE_TC_LINK = 2,
+  SL_ZB_SEC_MAN_KEY_TYPE_TC_LINK_WITH_TIMEOUT = 3,
+  SL_ZB_SEC_MAN_KEY_TYPE_APP_LINK = 4,
+  SL_ZB_SEC_MAN_KEY_TYPE_ZLL_ENCRYPTION_KEY = 6,
+  SL_ZB_SEC_MAN_KEY_TYPE_ZLL_PRECONFIGURED_KEY = 7,
+  SL_ZB_SEC_MAN_KEY_TYPE_GREEN_POWER_PROXY_TABLE_KEY = 8,
+  SL_ZB_SEC_MAN_KEY_TYPE_GREEN_POWER_SINK_TABLE_KEY = 9,
+  SL_ZB_SEC_MAN_KEY_TYPE_INTERNAL = 10
+};
+
 // inspired from https://github.com/zigpy/zigpy/blob/dev/zigpy/zdo/types.py
 enum EZSP_ZDO {
   ZDO_NWK_addr_req = 0x0000,
@@ -626,7 +643,10 @@ enum EZSP_Commands {
   EZSP_sendTrustCenterLinkKey = 0x0067,
   EZSP_setInitialSecurityState = 0x0068,
   EZSP_getCurrentSecurityState = 0x0069,
-  EZSP_getKey = 0x006A,
+  EZSP_getKey = 0x006A,        // EZSP v8 only, removed in v13
+  // [EZSP V13 MIGRATION: replaced getKey with exportKey]
+  EZSP_exportKey = 0x0114,
+  EZSP_importKey = 0x0115,
   EZSP_clearTransientLinkKeys = 0x006B,
   EZSP_updateTcLinkKey = 0x006C,
   EZSP_getTransientKeyTableEntry = 0x006D,

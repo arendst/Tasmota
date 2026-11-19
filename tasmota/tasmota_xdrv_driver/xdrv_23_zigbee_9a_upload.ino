@@ -279,8 +279,17 @@ bool ZigbeeUploadBootloaderPrompt(void) {
 }
 
 bool ZigbeeUploadXmodem(void) {
+  if (ZBU_IDLE == ZbUpload.ota_step) { return false; }   // *** Upload disabled
+
+  if (nullptr == ZigbeeSerial) {                         // Zigbee serial not initialized (wrong GPIO configuration)
+    AddLog(LOG_LEVEL_ERROR, PSTR("XMD: No Zigbee serial, upload aborted"));
+    ZbUpload.state = ZBU_ERROR;                          // Tell the web page the transfer failed
+    ZbUpload.ota_step = ZBU_IDLE;                        // Do not retry on every loop iteration
+    return true;
+  }
+
   switch (ZbUpload.ota_step) {
-    case ZBU_IDLE: {                     // *** Upload disabled
+    case ZBU_IDLE: {                     // *** Upload disabled (already handled above)
       return false;
     }
 #ifdef ZIGBEE_BOOTLOADER_SOFTWARE_RESET_FIRST
@@ -307,6 +316,7 @@ bool ZigbeeUploadXmodem(void) {
       if (EZSP_Serial.to_send == EZSP_Serial.to_end) {
         ZbUpload.bootloader = ZBU_SOFTWARE_RESET;
         XModem.timeout = millis() + (10 * 1000);  // Allow 10 seconds to receive EBL prompt
+        XModem.flush_delay = 0xFFFFFFFF;          // Allow CR probing for the bootloader prompt again
         XModem.delay = millis() + (2 * XMODEM_FLUSH_DELAY);
         ZbUpload.byte_counter = 0;
         ZbUpload.sector_counter = -1;
@@ -318,6 +328,7 @@ bool ZigbeeUploadXmodem(void) {
       ZbUpload.bootloader = ZBU_HARDWARE_RESET;
       ZigbeeUploadSetBootloader(0);      // Reboot MCU EFR32 which returns below text
       XModem.timeout = millis() + (30 * 1000);  // Allow 30 seconds to receive EBL prompt
+      XModem.flush_delay = 0xFFFFFFFF;          // Allow CR probing for the bootloader prompt again
       XModem.delay = millis() + (2 * XMODEM_FLUSH_DELAY);
       ZbUpload.byte_counter = 0;
       ZbUpload.sector_counter = -1;
@@ -340,6 +351,7 @@ bool ZigbeeUploadXmodem(void) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Init bootloader"));
       ZigbeeUploadSetBootloader(0);      // Reboot MCU EFR32 which returns below text
       XModem.timeout = millis() + (30 * 1000);  // Allow 30 seconds to receive EBL prompt
+      XModem.flush_delay = 0xFFFFFFFF;          // Allow CR probing for the bootloader prompt again
       XModem.delay = millis() + (2 * XMODEM_FLUSH_DELAY);
       ZbUpload.byte_counter = 0;
       ZbUpload.sector_counter = -1;
@@ -484,15 +496,25 @@ bool ZigbeeUploadXmodem(void) {
       }
       break;
     }
-    case ZBU_ERROR:
-      ZbUpload.state = ZBU_ERROR;
+    case ZBU_ERROR: {                    // *** Transfer failed - release the MCU and allow a new attempt
+      ZbUpload.state = ZBU_ERROR;        // Signal the web page that the transfer failed
       AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: " D_FAILED));
+      ZigbeeUploadSetBootloader(1);      // Release bootloader pin and reboot the MCU
+      if (1 == TasmotaGlobal.sleep) {
+        TasmotaGlobal.sleep = Settings->sleep;         // Restore loop sleep
+      }
+      if (ZbUpload.buffer) { free(ZbUpload.buffer); ZbUpload.buffer = nullptr; }
+      // Go back to idle instead of ZBU_FINISH so a retry doesn't require a power cycle.
+      // zigbee.active is handled separately, the upload path is not gated by it anymore.
+      ZbUpload.ota_step = ZBU_IDLE;
+      break;
+    }
     case ZBU_DONE: {                     // *** Clean up and restart to disable bootloader and use new firmware
       ZigbeeUploadSetBootloader(1);      // Disable bootloader and reset MCU - should happen at restart
       if (1 == TasmotaGlobal.sleep) {
         TasmotaGlobal.sleep = Settings->sleep;         // Restore loop sleep
       }
-//      TasmotaGlobal.restart_flag = 2;    // Restart to disable bootloader and use new firmware
+      TasmotaGlobal.restart_flag = 2;    // Restart to disable bootloader and use new firmware
       if (ZbUpload.buffer) { free(ZbUpload.buffer); ZbUpload.buffer = nullptr; }
       ZbUpload.ota_step = ZBU_FINISH;    // Never return to zero without a restart to get a sane Zigbee environment
       break;
@@ -512,7 +534,18 @@ bool ZigbeeUploadXmodem(void) {
 #ifdef USE_WEBSERVER
 
 uint8_t ZigbeeUploadStep1Init(void) {
-  if (!PinUsed(GPIO_ZIGBEE_RST) && (ZigbeeSerial == nullptr)) { return 1; }  // Wrong pin configuration - No file selected
+  if (nullptr == ZigbeeSerial) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("XMD: Zigbee serial not initialized, upload aborted"));
+    return 11;                                            // Zigbee serial not initialized
+  }
+#ifdef ESP32
+  // ESP32 has no default bootloader pin (PIN_ZIGBEE_DEFAULT_BOOTLOADER is the
+  // ESP8266 Sonoff ZBBridge GPIO5), blindly driving it could hit a flash pin.
+  if (!PinUsed(GPIO_ZIGBEE_RST)) {
+    AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "No Zigbee reset pin configured, upload aborted"));
+    return 11;                                            // No reset pin to enter the MCU bootloader
+  }
+#endif  // ESP32
 
   ZbUpload.ota_step = ZBU_IDLE;
   ZbUpload.state = ZBU_IDLE;

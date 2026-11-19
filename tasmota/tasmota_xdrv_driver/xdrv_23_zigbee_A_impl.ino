@@ -2458,6 +2458,26 @@ bool Xdrv23(uint32_t function) {
     ZigbeeInit();
   }
 
+#ifdef USE_ZIGBEE_EZSP
+  // The MCU (EFR32) xmodem firmware upload must stay reachable even when the
+  // Zigbee driver is no longer active. Since the ZGB_INSTR_STOP instruction
+  // clears zigbee.active on abort, any state machine timeout (very likely while
+  // the web upload keeps the loop busy erasing/writing flash) used to kill the
+  // upload path: the .gbl was already stored in ESP flash and the browser polled
+  // /zx, but ZigbeeUploadXmodem() was never called again, so not a single byte
+  // was sent to the MCU and no error was ever raised.
+  if (FUNC_LOOP == function) {
+    if (ZigbeeUploadXmodem()) {     // returns false when no upload is pending
+      return false;
+    }
+  }
+#ifdef USE_WEBSERVER
+  if (FUNC_WEB_ADD_HANDLER == function) {
+    WebServer_on(PSTR("/" WEB_HANDLE_ZIGBEE_XFER), HandleZigbeeXfer);
+  }
+#endif  // USE_WEBSERVER
+#endif  // USE_ZIGBEE_EZSP
+
   if (zigbee.active) {
     switch (function) {
       case FUNC_EVERY_50_MSECOND:
@@ -2466,11 +2486,6 @@ bool Xdrv23(uint32_t function) {
         }
         break;
       case FUNC_LOOP:
-#ifdef USE_ZIGBEE_EZSP
-        if (ZigbeeUploadXmodem()) {
-          return false;
-        }
-#endif
         if (ZigbeeSerial) {
           ZigbeeInputLoop();
           ZigbeeOutputLoop();   // send any outstanding data
@@ -2486,9 +2501,6 @@ bool Xdrv23(uint32_t function) {
         break;
       // GUI xmodem
       case FUNC_WEB_ADD_HANDLER:
-#ifdef USE_ZIGBEE_EZSP
-        WebServer_on(PSTR("/" WEB_HANDLE_ZIGBEE_XFER), HandleZigbeeXfer);
-#endif  // USE_ZIGBEE_EZSP
         WebServer_on(PSTR("/zbm"), ZigbeeShowMap, HTTP_GET);     // add web handler for Zigbee map
         WebServer_on(PSTR("/zbr"), ZigbeeMapRefresh, HTTP_GET);     // add web handler for Zigbee map refresh
         break;
