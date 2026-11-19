@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - Matter MRP sending unacknowledged messages 7 times instead of 5 (#25295)
 - Ethernet share SPI bus 1 with drivers already using it (#25299)
 - Configure Wi-Fi page hang when the Wi-Fi scan cannot start (#25267)
+- OpenTherm no silent cooldown after a lost connection (default 0) (#25296)
 
 ### Removed
 
