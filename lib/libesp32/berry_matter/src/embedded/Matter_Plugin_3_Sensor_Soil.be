@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Soil.be - implements the behavior for a Soil Sensor
+# Matter_Plugin_3_Sensor_Soil.be - implements the behavior for a Soil Sensor
 #
 # Copyright (C) 2026  Ludovic BOUÉ
 #

@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Virt_Light2.be - implements the behavior for a virtual Light with 2 channel (CT)
+# Matter_Plugin_9_Virt_Light2.be - implements the behavior for a virtual Light with 2 channel (CT)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

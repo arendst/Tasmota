@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Bridge_Sensor_Air_Quality.be - implements Air Quality Sensor via HTTP to Tasmota
+# Matter_Plugin_8_Bridge_Sensor_Air_Quality.be - implements Air Quality Sensor via HTTP to Tasmota
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

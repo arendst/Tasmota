@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Bridge_Sensor_Occupancy.be - implements Occupancy Sensor via HTTP to Tasmota
+# Matter_Plugin_8_Bridge_Sensor_Occupancy.be - implements Occupancy Sensor via HTTP to Tasmota
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Bridge_OnOff_Power.be - implements the behavior for a remote
+# Matter_Plugin_8_Bridge_OnOff_Power.be - implements the behavior for a remote
 # Relay (OnOff) with Electrical Power Measurement via HTTP
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends

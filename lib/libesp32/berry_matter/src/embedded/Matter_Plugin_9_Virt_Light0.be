@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Virt_Light0.be - implements the behavior for a virtual Light (OnOff only)
+# Matter_Plugin_9_Virt_Light0.be - implements the behavior for a virtual Light (OnOff only)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Virt_Light5.be - implements the behavior for a virtual Light with 5 channels (RGB+CT)
+# Matter_Plugin_9_Virt_Light5.be - implements the behavior for a virtual Light with 5 channels (RGB+CT)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

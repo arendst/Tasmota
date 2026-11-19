@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Bridge_OnOff.be - implements the behavior for a Relay via HTTP (OnOff)
+# Matter_Plugin_8_Bridge_OnOff.be - implements the behavior for a Relay via HTTP (OnOff)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

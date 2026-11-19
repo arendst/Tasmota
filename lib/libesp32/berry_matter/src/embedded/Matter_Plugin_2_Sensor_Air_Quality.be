@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Air_Quality.be - implements the behavior for a Air_Quality sensor
+# Matter_Plugin_2_Sensor_Air_Quality.be - implements the behavior for a Air_Quality sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Boolean.be - implements the behavior for an abstract boolean sensor - to be inherited
+# Matter_Plugin_2_Sensor_Boolean.be - implements the behavior for an abstract boolean sensor - to be inherited
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

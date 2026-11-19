@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Shutter.be - implements the behavior for shutters
+# Matter_Plugin_2_Shutter.be - implements the behavior for shutters
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

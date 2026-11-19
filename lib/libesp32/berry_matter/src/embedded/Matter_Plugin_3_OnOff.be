@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_OnOff.be - implements the behavior for a Relay (OnOff)
+# Matter_Plugin_3_OnOff.be - implements the behavior for a Relay (OnOff)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

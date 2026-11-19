@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Light0.be - implements the behavior for a generic Lighting (OnOff only)
+# Matter_Plugin_2_Light0.be - implements the behavior for a generic Lighting (OnOff only)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Flow.be - implements the behavior for a Flow Sensor
+# Matter_Plugin_3_Sensor_Flow.be - implements the behavior for a Flow Sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
