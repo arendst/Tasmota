@@ -1413,7 +1413,8 @@ void SettingsDefaultSet2(void) {
 
   SettingsDefaultWebColor();
 
-  memset(&Settings->sensors, 0xFF, 32);  // Enable all possible sensors
+  memset(&Settings->sensors, 0xFF, 32);  // Enable all possible sensors 1..128
+  memset(&Settings->sensors2, 0xFF, 8);  // Enable all possible sensors 128..160
 #ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   SettingsEnableAllI2cDrivers();
 #endif // FIRMWARE_MINIMAL
@@ -1711,13 +1712,16 @@ void SettingsDelta(void) {
         }
       }
     }
-    if (Settings->version < 0x10000004) {  // 16.0.0.4
 #ifdef ESP8266
+    if (Settings->version < 0x10000004) {  // 16.0.0.4
       // Ex gpio16_converted and free_esp8266_3D0 now hold the packed device local pose (USE_LOCATION).
       // Clear once as it may hold the gpio16 conversion marker or ex_friendlyname text from before v9.1.
       // Kept on downgrade and re-upgrade
       memset(Settings->location_packed, 0, sizeof(Settings->location_packed));
+    }
 #endif  // ESP8266
+    if (Settings->version < 0x10000006) {  // 16.0.0.6
+      memset(&Settings->sensors2, 0xFF, 8);  // Enable all possible sensors 128..160
     }
 
     Settings->version = TASMOTA_VERSION;

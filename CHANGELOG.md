@@ -3,7 +3,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [16.0.0.5]
+## [16.0.0.6]
+### Added
+- Add support for drivers and sensors up to 159
+
+### Breaking Changed
+
+
+### Changed
+
+
+### Fixed
+
+
+### Removed
+
+
+## [16.0.0.5] 20261119
 ### Added
 - IR receive optional check every loop (`#define IR_RCV_IN_LOOP`)  and configurable save buffer (`#define IR_FULL_RCV_SAVE_BUFFER`) (#25268)
 - MQTT optional FileDownload and FileUpload transferring a file system file (`#define USE_UFILESYS_MQTT`) (#25278)
@@ -29,9 +45,6 @@ All notable changes to this project will be documented in this file.
 - Ethernet share SPI bus 1 with drivers already using it (#25299)
 - Configure Wi-Fi page hang when the Wi-Fi scan cannot start (#25267)
 - OpenTherm no silent cooldown after a lost connection (default 0) (#25296)
-
-### Removed
-
 
 ## [16.0.0.4] 20261115
 ### Added
