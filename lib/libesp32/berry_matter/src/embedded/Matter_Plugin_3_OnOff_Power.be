@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_OnOff_Power.be - implements the behavior for a Relay (OnOff) with
+# Matter_Plugin_3_OnOff_Power.be - implements the behavior for a Relay (OnOff) with
 # Electrical Power Measurement (smart plug with power monitoring)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends

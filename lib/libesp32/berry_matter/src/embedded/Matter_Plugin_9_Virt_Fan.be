@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Virt_Fan.be - implements the behavior for a Virtual Fan
+# Matter_Plugin_9_Virt_Fan.be - implements the behavior for a Virtual Fan
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Light3.be - implements the behavior for a Light with 3 channels (RGB)
+# Matter_Plugin_4_Light3.be - implements the behavior for a Light with 3 channels (RGB)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

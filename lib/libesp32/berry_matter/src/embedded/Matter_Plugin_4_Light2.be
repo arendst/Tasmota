@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Light2.be - implements the behavior for a Light with 2 channel (CT)
+# Matter_Plugin_4_Light2.be - implements the behavior for a Light with 2 channel (CT)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

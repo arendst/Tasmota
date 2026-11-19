@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Bridge_Light3.be - implements the behavior for a remote generic Lighting (RGB) via HTTP
+# Matter_Plugin_8_Bridge_Light3.be - implements the behavior for a remote generic Lighting (RGB) via HTTP
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

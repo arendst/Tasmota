@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Virt_Light3.be - implements the behavior for a virtual Light with 3 channels (RGB)
+# Matter_Plugin_9_Virt_Light3.be - implements the behavior for a virtual Light with 3 channels (RGB)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

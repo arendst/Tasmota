@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Humidity.be - implements the behavior for a Humidity Sensor
+# Matter_Plugin_3_Sensor_Humidity.be - implements the behavior for a Humidity Sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

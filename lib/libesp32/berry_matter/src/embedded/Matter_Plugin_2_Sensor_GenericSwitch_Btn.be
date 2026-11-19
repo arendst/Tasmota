@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_GenericSwitch_Btn.be - implements the behavior for a Generic Switch mapped to a Tasmota Button
+# Matter_Plugin_2_Sensor_GenericSwitch_Btn.be - implements the behavior for a Generic Switch mapped to a Tasmota Button
 #
 # Copyright (C) 2023-2024  Stephan Hadinger & Theo Arends
 #

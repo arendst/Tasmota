@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Light1.be - implements the behavior for a Light with 1 channel (Dimmer)
+# Matter_Plugin_3_Light1.be - implements the behavior for a Light with 1 channel (Dimmer)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

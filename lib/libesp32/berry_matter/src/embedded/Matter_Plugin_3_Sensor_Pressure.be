@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Pressure.be - implements the behavior for a Pressure Sensor
+# Matter_Plugin_3_Sensor_Pressure.be - implements the behavior for a Pressure Sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

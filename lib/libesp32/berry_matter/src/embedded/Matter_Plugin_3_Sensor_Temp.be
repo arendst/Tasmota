@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Temp.be - implements the behavior for a Temperature Sensor
+# Matter_Plugin_3_Sensor_Temp.be - implements the behavior for a Temperature Sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Virt_OnOff.be - implements the behavior for a Virtual Relay
+# Matter_Plugin_9_Virt_OnOff.be - implements the behavior for a Virtual Relay
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

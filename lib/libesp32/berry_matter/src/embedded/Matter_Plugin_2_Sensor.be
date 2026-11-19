@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor.be - implements the behavior for a generic Sensor
+# Matter_Plugin_2_Sensor.be - implements the behavior for a generic Sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

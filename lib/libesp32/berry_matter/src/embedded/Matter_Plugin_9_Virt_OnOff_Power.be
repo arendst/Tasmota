@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Virt_OnOff_Power.be - implements the behavior for a Virtual Relay
+# Matter_Plugin_9_Virt_OnOff_Power.be - implements the behavior for a Virtual Relay
 # with Electrical Power Measurement
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends

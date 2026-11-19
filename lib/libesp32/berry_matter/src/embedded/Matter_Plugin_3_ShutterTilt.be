@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_ShutterTilt.be - implements the behavior for shutters with tilt control
+# Matter_Plugin_3_ShutterTilt.be - implements the behavior for shutters with tilt control
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
