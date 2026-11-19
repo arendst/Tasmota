@@ -332,6 +332,9 @@ void Bme280ReadFailed(uint8_t bmp_idx) {
     bmp_sensors[bmp_idx].bmp_temperature = NAN;
     bmp_sensors[bmp_idx].bmp_pressure = NAN;
     bmp_sensors[bmp_idx].bmp_humidity = NAN;
+#ifdef USE_BME68X
+    bmp_sensors[bmp_idx].bmp_gas_resistance = NAN;
+#endif  // USE_BME68X
   }
 }
 
@@ -684,6 +687,19 @@ void Bme680Read(uint8_t bmp_idx) {
 
   if (BME680_CHIPID == bmp_sensors[bmp_idx].bmp_type) {
     if (0 == bmp_sensors[bmp_idx].bme680_state) {
+      uint8_t ctrl;
+      if (!I2cValidRead8(&ctrl, bmp_sensors[bmp_idx].bmp_address, BME68X_REG_CTRL_MEAS, bmp_sensors[bmp_idx].bmp_bus)) {
+        Bme280ReadFailed(bmp_idx);
+        return;
+      }
+      uint8_t expect = (bme_conf[bmp_idx].os_temp << 5) | (bme_conf[bmp_idx].os_pres << 2);
+      if ((ctrl & 0xFC) != expect) {                      // T/P oversampling lost (e.g. supply glitch): values would freeze
+        AddLog(LOG_LEVEL_INFO, PSTR("BMP: %s lost config (ctrl_meas %02X), re-init"), bmp_sensors[bmp_idx].bmp_name, ctrl);
+        Bme680Init(bmp_idx);
+        Bme280ReadFailed(bmp_idx);
+        return;
+      }
+
       // Trigger the next measurement if you would like to read data out continuously
       rslt = bme68x_set_op_mode(BME68X_FORCED_MODE, &bme_dev[bmp_idx]);
       if (rslt != BME68X_OK) { return; }
@@ -699,7 +715,11 @@ bmp_sensors[bmp_idx].bme680_state = 0;
       struct bme68x_data data;
       uint8_t n_fields;
       rslt = bme68x_get_data(BME68X_FORCED_MODE, &data, &n_fields, &bme_dev[bmp_idx]);
-      if (rslt != BME68X_OK) { return; }
+      if ((rslt != BME68X_OK) || !n_fields) {             // error or no new data: do not keep stale values forever
+        Bme280ReadFailed(bmp_idx);
+        return;
+      }
+      bmp_sensors[bmp_idx].bmp_fail = 0;
 
 #ifdef BME68X_DO_NOT_USE_FPU
       bmp_sensors[bmp_idx].bmp_temperature = data.temperature / 100.0f;  // Temperature in degree celsius x100
