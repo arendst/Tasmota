@@ -29,10 +29,11 @@
 #include <stdint.h>
 
 // TASMOTA: on ESP8266 the Arduino core also ships BearSSL with the same symbol names.
-// The core PRF references the core SHA-256, so it must be renamed as well for our
-// SHA-256 (see t_bearssl_hash.h) to be the only one linked.
+// The core PRFs reference the core SHA-256 and SHA-384, so they must be renamed as well
+// for our SHA-256 and SHA-384 (see t_bearssl_hash.h) to be the only ones linked.
 #ifdef ESP8266   // TASMOTA
 #define br_tls12_sha256_prf   t_br_tls12_sha256_prf
+#define br_tls12_sha384_prf   t_br_tls12_sha384_prf
 #endif   // TASMOTA
 
 #ifdef __cplusplus

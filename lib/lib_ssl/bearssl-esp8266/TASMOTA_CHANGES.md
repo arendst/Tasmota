@@ -104,6 +104,7 @@ smaller code is used:
 | SHA-384/512 | −3,012 (IRAM +92) | the core copy was 8 steps unrolled |
 | `br_ec_all_m15`, `br_ec_p256_m15`, `br_ec_c25519_m15` | −3,052 | `BR_SLOW_MUL15`; P-521 no longer accepted, like ESP32 |
 | SHA-224/256 and `br_tls12_sha256_prf` | −700 | the core SHA-256 needed 3,942 instructions per block, ours 3,399 |
+| `br_tls12_sha384_prf` | −5,368 when the `*_SHA384` cipher suites are enabled | otherwise the core PRF pulls in the core SHA-384 (unrolled) next to ours |
 
 Not done on ESP32, where there is no second copy (and ESP-Mail-Client uses the plain names).
 The speed of the `BR_SLOW_MUL15` curve code on ESP8266 has not been measured.
