@@ -388,7 +388,7 @@ PrivacyKey = Crypto_KDF(
 
 #### Privacy Nonce (13 bytes)
 ```
-PrivacyNonce = SessionID || MIC[0..10]
+PrivacyNonce = SessionID (2 bytes, big-endian) || MIC[5..15] (last 11 bytes of the 16-byte MIC)
 ```
 
 #### Privacy Encryption

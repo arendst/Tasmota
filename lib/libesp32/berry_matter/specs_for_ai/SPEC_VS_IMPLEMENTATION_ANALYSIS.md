@@ -25,13 +25,13 @@ This document compares the Matter 1.4.1 Core Specification (March 2025) against 
 - Protocol header (exchange flags I/A/R/SX/V, opcode, exchange ID, protocol ID, vendor ID, ack counter) — correct per §4.4
 - Nonce construction for encryption/decryption (SecurityFlags || MessageCounter || SourceNodeID, 13 bytes) — correct per §4.7
 - AES-128-CCM encryption/decryption with 16-byte MIC — correct per §4.7
-- Privacy flag handling with AES-CTR decryption — present (§4.8)
+- Privacy flag (P): frames with P=1 are dropped in `MessageHandler.msg_received`. Privacy is only used on group messages, which are not supported (§4.8)
 - Message version check (bits 3-7 of flags must be 0x00 for Matter 1.0) — correct
 
 #### Gaps:
 | # | Gap | Spec Reference | Severity | Notes |
 |---|-----|---------------|----------|-------|
-| M1 | Privacy encryption nonce uses `session_id` in big-endian but spec says little-endian for the 2-byte session ID in the privacy nonce | §4.8 | Low | The privacy nonce is `SessionID(2) || MIC[0..10]`. Current code uses `self.local_session_id` with `-2` (big-endian). Should verify byte order. |
+| M1 | ~~Privacy nonce byte order~~ Not a gap | §4.8 | None | The privacy nonce is `SessionID (2 bytes, big-endian) || MIC[5..15]`, as in CHIP `CryptoContext::BuildPrivacyNonce`. The privacy code was later removed because P=1 frames are dropped before decryption. |
 | M2 | Message Extensions (MX flag) are skipped but never generated | §4.4 | None | Correct behavior for a device that doesn't use MX. Parsing correctly skips them. |
 | M3 | Secured Extensions (SX flag) are skipped but never generated | §4.4 | None | Same as above, correct. |
 
