@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [16.0.0.6]
 ### Added
 - Add support for drivers and sensors up to 159
+- Berry `crypto.SHA384` hash class
 
 ### Breaking Changed
 

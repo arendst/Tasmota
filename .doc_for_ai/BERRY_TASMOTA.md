@@ -417,6 +417,7 @@ crypto.PBKDF2_HMAC_SHA256().derive(pwd:bytes, salt:bytes, iter:int, out_len:int)
 
 # Hashing
 crypto.SHA256().update(data:bytes).out() -> bytes(32)
+crypto.SHA384().update(data:bytes).out() -> bytes(48)
 crypto.MD5().update(data:bytes).finish() -> bytes(16)
 crypto.HMAC_SHA256(key:bytes).update(data:bytes).out() -> bytes(32)
 
