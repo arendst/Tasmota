@@ -495,6 +495,7 @@
  #define USE_MQTT_TLS_ECDSA                     // (ESP8266 only, always on for ESP32) enable ECDSA in addition to RSA (+11.5k code)
  #define USE_MQTT_TLS_SHA384                    // Validate certificates signed with SHA-384, used by most ECDSA P-384 CAs like LetsEncrypt ISRG Root X2 and E5..E9
                                                 //   (+5.5k code on ESP8266, +2.3k code on ESP32, requires USE_MQTT_TLS_ECDSA on ESP8266)
+ #define TLS_HANDSHAKE_TIMEOUT  10000           // [ms] Maximum time for a TLS handshake. ECDSA P-384 chains (e.g. LetsEncrypt) need more than 10 s on ESP8266 at 80 MHz, use 15000 there
 //  #define USE_MQTT_TLS_CA_CERT                   // [DEPRECATED] Now TLS supports dual mode using SetOption132 - this flag is now ignored
 //  #define USE_MQTT_AWS_IOT_LIGHT                 // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
 //  #define USE_MQTT_CLIENT_CERT                   // Enable MQTT with custom client certificate - requires a private key (+11.9k code, +0.4k mem)

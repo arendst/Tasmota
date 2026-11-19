@@ -143,7 +143,7 @@ class WiFiClientSecure_light : public WiFiClient {
     }
 
   private:
-    uint32_t _loopTimeout=15000;    // TLS handshake limit, ECDSA P-384 chains need more than 10 s on ESP8266 at 80 MHz
+    uint32_t _loopTimeout;            // TLS handshake limit in ms, set from TLS_HANDSHAKE_TIMEOUT
     void _clear();
     bool _ctx_present;
     std::shared_ptr<br_ssl_client_context> _sc;
