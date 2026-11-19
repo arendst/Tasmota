@@ -31,7 +31,6 @@ class Matter_Device
   static var PRODUCT_ID = 0x8000
   static var FILENAME = "_matter_device.json"
   static var EP = 2                   # first available endpoint number for devices
-  var started                         # is the Matter Device started (configured, mDNS and UDPServer started) - 'nil' means that we wait for Wifi to connect, 'false' means that the start is scheduled but not yet triggered
   var plugins                         # list of plugins instances
   var plugins_persist                 # true if plugins configuration needs to be saved
   static var plugins_classes = matter.plugins_classes                # map of registered classes by type name
@@ -359,31 +358,6 @@ class Matter_Device
     ctx.cluster = cluster
     ctx.attribute = attribute
     self.message_handler.im.subs_shop.attribute_updated_ctx(ctx, fabric_specific)
-  end
-
-  #############################################################
-  # Proceed to attribute expansion (used for Attribute Read/Write/Subscribe)
-  #
-  # calls `cb(pi, ctx, direct)` for each attribute expanded.
-  # `pi`: plugin instance targeted by the attribute (via endpoint). Note: nothing is sent if the attribute is not declared in supported attributes in plugin.
-  # `ctx`: context object with `endpoint`, `cluster`, `attribute` (no `command`)
-  # `direct`: `true` if the attribute is directly targeted, `false` if listed as part of a wildcard
-  # returns: `true` if processed succesfully, `false` if error occured. If `direct`, the error is returned to caller, but if expanded the error is silently ignored and the attribute skipped.
-  # In case of `direct` but the endpoint/cluster/attribute is not suppported, it calls `cb(nil, ctx, true)` so you have a chance to encode the exact error (UNSUPPORTED_ENDPOINT/UNSUPPORTED_CLUSTER/UNSUPPORTED_ATTRIBUTE/UNREPORTABLE_ATTRIBUTE)
-  def process_attribute_expansion(ctx, cb)
-    var endpoint = ctx.endpoint
-    var cluster = ctx.cluster
-    var attribute = ctx.attribute
-
-    # build the generator for all endpoint/cluster/attributes candidates
-    var path_generator = matter.PathGenerator(self)
-    path_generator.start(endpoint, cluster, attribute)
-
-    var direct = path_generator.is_direct()
-    var concrete_path
-    while ((concrete_path := path_generator.next_attribute()) != nil)
-      var finished = cb(path_generator.get_pi(), concrete_path)   # call the callback with the plugin and the context
-    end
   end
 
   #############################################################

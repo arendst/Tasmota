@@ -117,13 +117,6 @@ class Matter_PathGenerator
     return nil
   end
 
-  ################################################################################
-  # is_finished
-  #
-  # Returns `true` if we have exhausted the generator
-  def is_finished()
-    return (self.pi != false)
-  end
 
   ################################################################################
   # get_pi

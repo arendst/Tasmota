@@ -357,18 +357,13 @@ class Matter_Frame
     # decrypt the message with `i2r` key
     var i2r = session.get_i2r()
 
-    # check privacy flag, p.127
-    if self.sec_p
-      # compute privacy key, p.71
-      log("MTR: >>>>>>>>>>>>>>>>>>>> Compute Privacy TODO", 2)
-      var k = session.get_i2r_privacy()
-      var mic = raw[-16..]      # take last 16 bytes as signature
-      var n = bytes().add(self.local_session_id, -2) + mic[5..15]   # session in Big Endian
-      var m = self.raw[4 .. self.payload_idx-1]
-      var m_clear = crypto.AES_CTR(k).decrypt(m, n, 2)
-      # replace in-place
-      self.raw = self.raw[0..3] + m_clear + m[self.payload_idx .. ]
-    end
+    # Privacy (P flag) is not handled here. MessageHandler.msg_received drops
+    # P=1 frames before the session lookup, so decrypt() never sees one.
+    # This is not a problem: privacy is only used on group messages (CHIP sets
+    # P on every outgoing group message and drops P=1 on unicast), and Tasmota
+    # does not support group transport. Group support will need to remove
+    # privacy before decode_header() reads the message counter and node IDs,
+    # using the group privacy key.
 
     # recompute nonce
     var n = self.message_handler._n_bytes     # use cached bytes() object to avoid allocation

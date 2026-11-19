@@ -302,7 +302,6 @@ class Matter_HTTP_async : Matter_TCP_async
   # event_available:   incoming data is ready to be retrieved with `read()` or `readbytes()`
   # event_listening:    outgoing buffer is empty, ready to send data with `write()`
   #   From HTTP
-  # event_http_status_code: received HTTP status code (stored in `status_code`)
   # event_http_header:      received HTTP header (not stored except `is_chunked`)
   # event_http_headers_end: all HTTP headers received
   #   Always finishes with one of:
@@ -327,13 +326,6 @@ class Matter_HTTP_async : Matter_TCP_async
     self.receive()
   end
 
-  #############################################################
-  # event_http_status_code
-  #
-  # Received status_code
-  def event_http_status_code(status_code, status_message)
-    self.status_code = status_code
-  end
 
   #############################################################
   # event_http_header
