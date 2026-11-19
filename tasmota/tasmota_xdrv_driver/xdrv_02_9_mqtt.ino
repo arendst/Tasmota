@@ -1811,11 +1811,10 @@ void MqttReconnect(void) {
 #ifdef USE_MQTT_TLS
   if (Mqtt.mqtt_tls && (tlsClient != NULL)) {
     int32_t cipher_suite = tlsClient->getLastCipherSuite();
-    if (BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 == cipher_suite) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "TLS cipher suite: %s"), PSTR("ECDHE_RSA_AES_128_GCM_SHA256"));
-    } else if (BR_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 == cipher_suite) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "TLS cipher suite: %s"), PSTR("ECDHE_ECDSA_AES_128_GCM_SHA256"));
-    } else if (0 != cipher_suite) {
+    if ((cipher_suite >= 0xC02B) && (cipher_suite <= 0xC030)) {   // offered: 0xC02B/0xC02C ECDSA, 0xC02F/0xC030 RSA, odd = AES-128
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "TLS cipher suite: ECDHE_%s_AES_%s"),
+        (cipher_suite < 0xC02F) ? PSTR("ECDSA") : PSTR("RSA"), (cipher_suite & 1) ? PSTR("128_GCM_SHA256") : PSTR("256_GCM_SHA384"));
+    } else if (cipher_suite) {
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "TLS cipher suite: 0x%04X"), cipher_suite);
     }
   }
