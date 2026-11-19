@@ -1327,6 +1327,7 @@
   // #define USE_BERRY_CRYPTO_EC_P256               // enable EC P256r1
   // #define USE_BERRY_CRYPTO_EC_C25519             // enable Elliptic Curve C C25519
   #define USE_BERRY_CRYPTO_SHA256                // enable SHA256 hash function
+  #define USE_BERRY_CRYPTO_SHA384                // enable SHA384 hash function (+0.4k, the SHA384 code is shared with TLS)
   #define USE_BERRY_CRYPTO_HMAC_SHA256           // enable HMAC SHA256 hash function
   // #define USE_BERRY_CRYPTO_PBKDF2_HMAC_SHA256    // PBKDF2 with HMAC SHA256, used in Matter protocol
   // #define USE_BERRY_CRYPTO_HKDF_SHA256      // HKDF with HMAC SHA256, used in Matter protocol

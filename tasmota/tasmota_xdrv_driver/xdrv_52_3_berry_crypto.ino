@@ -759,6 +759,73 @@ extern "C" {
 }
 
 /*********************************************************************************************\
+ * SHA384 class
+ * 
+\*********************************************************************************************/
+extern "C" {
+
+  // `SHA384.init() -> nil`
+  int32_t m_hash_sha384_init(struct bvm *vm);
+  int32_t m_hash_sha384_init(struct bvm *vm) {
+    // Initialize a SHA384 context
+    br_sha384_context * ctx = (br_sha384_context *) be_os_malloc(sizeof(br_sha384_context));
+    if (!ctx) {
+      be_throw(vm, BE_MALLOC_FAIL);
+    }
+    br_sha384_init(ctx);
+
+    be_newcomobj(vm, ctx, &be_commonobj_destroy_generic);
+    be_setmember(vm, 1, ".p");
+    be_return_nil(vm);
+  }
+
+  // `<instance:SHA384>.update(content:bytes()) -> self`
+  //
+  // Add raw bytes to the hash calculation
+  int32_t m_hash_sha384_update(struct bvm *vm);
+  int32_t m_hash_sha384_update(struct bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isinstance(vm, 2)) {
+      do {
+        be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
+        if (!be_isderived(vm, 2)) break;
+        size_t length = 0;
+        const void * bytes = be_tobytes(vm, 2, &length);
+        if (!bytes) break;
+
+        be_getmember(vm, 1, ".p");
+        br_sha384_context * ctx;
+        ctx = (br_sha384_context *) be_tocomptr(vm, -1);
+        if (!ctx) break;
+
+        if (length > 0) {
+          br_sha384_update(ctx, bytes, length);
+        }
+        be_pushvalue(vm, 1);    // return self
+        be_return(vm);
+        // success
+      } while (0);
+    }
+    be_raise(vm, "value_error", NULL);
+  }
+
+  // `<instance:SHA384>.out() -> bytes(48)`
+  //
+  // Return the hash of all bytes added so far; more bytes can be added afterwards
+  int32_t m_hash_sha384_out(struct bvm *vm);
+  int32_t m_hash_sha384_out(struct bvm *vm) {
+    be_getmember(vm, 1, ".p");
+    br_sha384_context * ctx;
+    ctx = (br_sha384_context *) be_tocomptr(vm, -1);
+
+    uint8_t output[48];
+    br_sha384_out(ctx, output);
+    be_pushbytes(vm, output, sizeof(output));
+    be_return(vm);
+  }
+}
+
+/*********************************************************************************************\
  * HMAC_SHA256 class
  * 
 \*********************************************************************************************/

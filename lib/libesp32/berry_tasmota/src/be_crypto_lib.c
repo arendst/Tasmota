@@ -56,6 +56,9 @@ extern int m_ed25519_secret_key(bvm *vm);
 extern int m_hash_sha256_init(bvm *vm);
 extern int m_hash_sha256_update(bvm *vm);
 extern int m_hash_sha256_out(bvm *vm);
+extern int m_hash_sha384_init(bvm *vm);
+extern int m_hash_sha384_update(bvm *vm);
+extern int m_hash_sha384_out(bvm *vm);
 
 extern int m_hmac_sha256_init(bvm *vm);
 extern int m_hmac_sha256_update(bvm *vm);
@@ -80,6 +83,7 @@ extern const bclass be_class_md5;
 #include "be_fixed_be_class_ec_c25519.h"
 #include "be_fixed_be_class_ed25519.h"
 #include "be_fixed_be_class_sha256.h"
+#include "be_fixed_be_class_sha384.h"
 #include "be_fixed_be_class_hmac_sha256.h"
 #include "be_fixed_be_class_pbkdf2_hmac_sha256.h"
 #include "be_fixed_be_class_hkdf_sha256.h"
@@ -141,6 +145,9 @@ const be_const_member_t be_crypto_members[] = {
 #ifdef USE_BERRY_CRYPTO_SHA256
   { "/SHA256", (intptr_t) &be_class_sha256 },
 #endif // USE_BERRY_CRYPTO_SHA256
+#ifdef USE_BERRY_CRYPTO_SHA384
+  { "/SHA384", (intptr_t) &be_class_sha384 },
+#endif // USE_BERRY_CRYPTO_SHA384
 
 #ifdef USE_BERRY_CRYPTO_SPAKE2P_MATTER
   { "/SPAKE2P_Matter", (intptr_t) &be_class_SPAKE2P_Matter },
@@ -227,6 +234,13 @@ class be_class_sha256 (scope: global, name: SHA256) {
     init, func(m_hash_sha256_init)
     update, func(m_hash_sha256_update)
     out, func(m_hash_sha256_out)
+}
+
+class be_class_sha384 (scope: global, name: SHA384) {
+    .p, var
+    init, func(m_hash_sha384_init)
+    update, func(m_hash_sha384_update)
+    out, func(m_hash_sha384_out)
 }
 
 class be_class_hmac_sha256 (scope: global, name: HMAC_SHA256) {
