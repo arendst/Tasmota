@@ -175,6 +175,7 @@ struct BerryMqttClient {
         wifi_tls = new BearSSL::WiFiClientSecure_light(2048,2048);
       #endif
       wifi_tls->setTrustAnchor(Tasmota_TA, nitems(Tasmota_TA));
+      wifi_tls->setECDSA(true);
       wifi_tls->setDomainName(cfg_host);
 
       // Auto-detect AWS IoT: look for ".iot." and ".amazonaws.com" in hostname (same as xdrv_02_9_mqtt.ino)
@@ -252,6 +253,11 @@ struct BerryMqttClient {
 #endif
       return MQTT_CONNECTED;
     }
+#ifdef USE_TLS
+    if (use_tls) {
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BMQTT "TLS connection error: %d"), wifi_tls->getLastError());
+    }
+#endif
     // failure logged by caller with retry info
     return mqtt->state();
   }
