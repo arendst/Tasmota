@@ -217,12 +217,9 @@ void UfsCheckSDCardInit(void) {
     if (SD.begin(cs)) {
 #endif // ESP8266
 #ifdef ESP32
-    if (1 == spi_bus) {
-      SPI_HSPI.begin(Pin(GPIO_SPI_CLK, spi_bus), Pin(GPIO_SPI_MISO, spi_bus), Pin(GPIO_SPI_MOSI, spi_bus), -1);
-    } else {
-      SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
-    }
-    if (SD.begin(cs, (1 == spi_bus) ? SPI_HSPI : SPI)) {
+    SPIClass &bus = (1 == spi_bus) ? SPI_HSPI : SPI;
+    bus.begin(Pin(GPIO_SPI_CLK, spi_bus), Pin(GPIO_SPI_MISO, spi_bus), Pin(GPIO_SPI_MOSI, spi_bus), -1);
+    if (SD.begin(cs, bus)) {
 #endif // ESP32
 #ifdef ESP8266
       ufsp = &SDFS;
@@ -243,8 +240,11 @@ void UfsCheckSDCardInit(void) {
 #ifdef ESP32
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "SDCard mounted (SPI bus%d) with %d kB free"), spi_bus +1, UfsInfo(1, 0));
 #endif // ESP32
+    } else {
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "SDCard mount failed (SPI bus%d)"), spi_bus +1);
     }
   }
+
 #if defined(ESP32) && defined(SOC_SDMMC_HOST_SUPPORTED)     // ESP32 and SDMMC supported (not Esp32C3)
   // check if SDIO is configured
   else if (PinUsed(GPIO_SDIO_CLK) && PinUsed(GPIO_SDIO_CMD) && PinUsed(GPIO_SDIO_D0)) {
@@ -549,6 +549,16 @@ bool TfsRenameFile(const char *fname1, const char *fname2) {
 #define FILE_LOG_COUNT 16                // Number of log files (max 16 as four bits are reserved for index)
 #define FILE_LOG_NAME  "/log%02d"        // Log file name
 
+// Log goes to the SD card when one is mounted, otherwise to the flash (as now)
+FS *FileLogFs(void) {
+  return (UFS_TSDC == ufs_type) ? ufsp : ffsp;
+}
+
+// Free space of exactly that file system (UfsInfo type 0 = ufsp, 1 = ffsp)
+uint32_t FileLogFree(void) { 
+  return UfsInfo(1, (FileLogFs() == ufsp) ? 0 : 1);
+}
+
 void FileLoggingAsync(bool refresh) {
   static uint32_t index = 1;             // Rotating log buffer entry pointer
 
@@ -562,9 +572,9 @@ void FileLoggingAsync(bool refresh) {
   uint32_t log_file_idx = Settings->mbflag2.log_file_idx;       // 0..15
   for (uint32_t retry = 0; retry <= 1; retry++) {
     snprintf_P(fname, sizeof(fname), PSTR(FILE_LOG_NAME), log_file_idx +1);  // /log01
-    file = ffsp->open(fname, "a");       // Append to existing log file
+    file = FileLogFs()->open(fname, "a");  // Append to existing log file
     if (!file) { 
-      file = ffsp->open(fname, "w");     // Make new log file
+      file = FileLogFs()->open(fname, "w");  // Make new log file
       if (!file) { 
         Settings->filelog_level = 0;     // [FileLog] disable
         AddLog(LOG_LEVEL_INFO, PSTR("FLG: Logging disabled. Save failed"));
@@ -572,7 +582,7 @@ void FileLoggingAsync(bool refresh) {
       }
     }
 
-    bool fs_full = (UfsFree() < FILE_LOG_FREE);
+    bool fs_full = (FileLogFree() < FILE_LOG_FREE);
     if (!fs_full && (file.size() < (FILE_LOG_SIZE * 1000))) { break; }
 
     file.close();
@@ -604,12 +614,12 @@ void FileLoggingAsync(bool refresh) {
       uint32_t idx = log_file_idx;       // Next log file index
       do {                               // Need free space around FILE_LOG_SIZE so find oldest log file(s) and remove it
         snprintf_P(fname, sizeof(fname), PSTR(FILE_LOG_NAME), idx +1);
-        if (ffsp->remove(fname)) {       // Remove oldest (non-)sequential log file(s)
+        if (FileLogFs()->remove(fname)) {  // Remove oldest (non-)sequential log file(s)
           AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("FLG: Delete file %s"), fname +1);  // Skip leading slash
         }
         idx++;
         if (idx >= FILE_LOG_COUNT) { idx = 0; }
-      } while ((UfsFree() < FILE_LOG_FREE) && (idx != last_log_file_idx));
+      } while ((FileLogFree() < FILE_LOG_FREE) && (idx != last_log_file_idx));
     }
   }
 
@@ -638,7 +648,7 @@ void FileLoggingDelete(void) {
   char fname[14];
   for (uint32_t idx = 0; idx < FILE_LOG_COUNT; idx++) {
     snprintf_P(fname, sizeof(fname), PSTR(FILE_LOG_NAME), idx +1);
-    ffsp->remove(fname);                 // Remove all log file(s)
+    FileLogFs()->remove(fname);          // Remove all log file(s)
   }
   Settings->mbflag2.log_file_idx = 0;
   AddLog(LOG_LEVEL_INFO, PSTR("FLG: Log files deleted"));
