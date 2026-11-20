@@ -279,6 +279,33 @@ String GetBinary8(uint8_t value, size_t count) {
   return result;
 }
 
+// Release the heap buffer of a String now, and leave it empty but valid.
+// Use it when a String may hold a large buffer (e.g. a downloaded HTTP body)
+// that must go back to the heap before the String object itself is destroyed.
+// Works for subclasses too, e.g. StreamString: only the String part is moved.
+//
+// Why the usual ways keep the memory on ESP32 (arduino-esp32 WString.cpp):
+// - `s.clear()` only sets the length to 0.
+// - `s = ""` calls copy(), which keeps the buffer when reserve() finds it
+//   large enough. An empty string always fits.
+// - `s = String()` is a move assignment. String::move() keeps the buffer of
+//   `s` when it is large enough for the new content (on purpose: it saves a
+//   realloc after a reserve()). Again, an empty string always fits.
+// - The function that actually frees the buffer, invalidate(), is protected.
+// In all cases the length goes to 0 but the whole allocation stays in place.
+//
+// Why this works:
+// - `String drop(std::move(s))` calls the move constructor, not the move
+//   assignment. It starts from an empty object with no buffer (init()), so
+//   String::move() cannot reuse a buffer: `drop` takes over the buffer of `s`
+//   without copying, then resets `s` with init(), i.e. empty, no heap memory.
+// - `drop` is a local variable: its destructor runs when the function returns
+//   and frees the buffer.
+// - On ESP8266, assignment already frees the old buffer; this is harmless there.
+void StringFree(String &s) {
+  String drop(std::move(s));    // drop takes over the buffer, s is left empty
+}                               // ~String() of drop frees the buffer here
+
 // Get span until single character in string
 size_t strchrspn(const char *str1, int character)
 {
