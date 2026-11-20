@@ -17,10 +17,10 @@ Redirects (strict): 301/307 for GET/HEAD; 302/303 switch to GET; configurable li
 Chunked & identity decoding; reuse honored unless prior body wasn’t drained (auto reconnect).
 FreeRTOS worker (WDT-friendly): asyncGETStart(), asyncPOSTStart(...), asyncState(), asyncAbort().
 Error codes aligned with HTTPClientLight (−1..−11).
-Async in-RAM body buffer capped ~16 KB (heap safety). Use sync streaming for larger bodies.
+Async in-RAM body buffer defaults to 16 KB (heap safety); set a per-client limit up to 1 MB with async_set_body_limit(bytes) when larger responses are needed.
 Berry webclient (updated bindings)
 
-New methods: async_get_start(), async_post_start(str|bytes), async_state(), async_abort().
+New methods: async_get_start(), async_post_start(str|bytes), async_state(), async_abort(), async_set_body_limit(bytes).
 async_state() publishes last_code (HTTP or negative error) and last_rx (received bytes), and frees hidden holds for byte payloads.
 Headers added via add_header() persist per instance; they reset on begin() and after redirects (re-add if needed).
 Sync API unchanged: GET/POST/PUT/PATCH/DELETE, get_string/bytes, write_file/flash.
@@ -73,7 +73,7 @@ Here is the complete manual for the webclient (Berry) + the underlying AsyncHttp
 
 Protocols: HTTP (raw lwIP socket) / HTTPS (BearSSL light)
 Modes: sync (GET/POST/...) and async (async_get_start / async_post_start)
-Buffer: in async mode, the response body is stored in internal RAM (cap 16 KB)
+Buffer: in async mode, the response body is stored in RAM (16 KB default, configurable up to 1 MB per client)
 Keep-Alive: default ON (HTTP/1.1). begin() resets headers.
 
 2) State machine (async)
@@ -108,6 +108,7 @@ Negative return values (aside from HTTP 1xx..5xx):
 -9 HTTPC_ERROR_ENCODING (e.g. unsupported TE)
 -10 HTTPC_ERROR_STREAM_WRITE
 -11 HTTPC_ERROR_READ_TIMEOUT
+-13 HTTPC_ERROR_BODY_TOO_LARGE
 
 4) API (Berry – webclient)
 Initialization and security
@@ -143,6 +144,7 @@ d.async_get_start() -> int (1=started, 0=busy, <0=error)
 d.async_post_start(str|bytes) -> int (1=started, 0=busy, <0=error)
 d.async_state() -> int (returns state 0..4 and fills last_code, last_rx)
 d.async_abort() -> nil (signal to the worker; completion is observed via async_state())
+d.async_set_body_limit(bytes) -> self (1..1048576; call before starting a request)
 
 Accessing the response
 
@@ -229,9 +231,9 @@ d.begin("https://example.com/api/v1/telemetry")
 d.add_header("Content-Type","application/json")
 end
 
-7) What is NOT limited to 16 KB
+7) Async response buffer limit
 
-The 16 KB cap applies only to the response in async mode (internal buffer).
+The async response buffer defaults to 16 KB and can be increased per client up to 1 MB with async_set_body_limit(bytes).
 
 POST payload can be larger (sent in chunks); watch RAM and throughput.
 

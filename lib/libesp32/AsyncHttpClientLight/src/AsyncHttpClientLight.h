@@ -16,7 +16,7 @@
  * - asyncGETStart(), asyncPOSTStart(): launch a request in the background (FreeRTOS worker), non-blocking for the caller
  * - asyncState(): query status; after ASYNC_DONE you can use getString()/getSize()/writeToStream() without further I/O
  * - asyncAbort(): best-effort cancellation of an in-flight async request
- * Note: in async mode the response body is stored in an internal RAM buffer (hard cap kAsyncBodyLimit).
+ * Note: in async mode the response body is stored in a bounded RAM buffer (16 KB by default, configurable per client).
  *
  * Acknowledgments: API/error-code compatibility inspired by Arduino HTTPClient / Tasmota HTTPClientLight.
  * This file contains an independent implementation; no source code was copied.
@@ -74,6 +74,10 @@
 // sync call refused: an async job of this client is still running
 #ifndef HTTPC_ERROR_ASYNC_BUSY
 #define HTTPC_ERROR_ASYNC_BUSY           (-12)
+#endif
+
+#ifndef HTTPC_ERROR_BODY_TOO_LARGE
+#define HTTPC_ERROR_BODY_TOO_LARGE       (-13)
 #endif
 
 #ifndef HTTP_TCP_BUFFER_SIZE
@@ -168,6 +172,12 @@ public:
   int  asyncGETStart();
   int  asyncPOSTStart(uint8_t* payload, size_t size);
   int  asyncPOSTStart(const String& payload);
+
+  bool setAsyncBodyLimit(size_t limit) {
+    if (_asyncState == ASYNC_RUNNING || limit == 0 || limit > kMaxAsyncBodyLimit) return false;
+    _asyncBodyLimit = limit;
+    return true;
+  }
 
   AsyncState_t asyncState(int* httpCodeOut = nullptr, int* bytesOut = nullptr) const;
 
@@ -336,8 +346,10 @@ private:
   int           _asyncHttpCode = HTTPC_ERROR_NOT_CONNECTED;
   int           _asyncRxBytes  = -1;
 
-  // RAM buffer for the response body in async mode (hard cap to protect the heap)
-  static constexpr size_t kAsyncBodyLimit = 16384;
+  // RAM buffer for the response body in async mode (bounded to protect the heap)
+  static constexpr size_t kDefaultAsyncBodyLimit = 16384;
+  static constexpr size_t kMaxAsyncBodyLimit = 1024 * 1024;
+  size_t        _asyncBodyLimit = kDefaultAsyncBodyLimit;
   StreamString  _asyncBody;
 
 #ifdef ESP32
