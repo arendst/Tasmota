@@ -656,11 +656,7 @@ bool (* const xdrv_func_ptr[])(uint32_t) = {   // Driver Function Pointers
 #endif
 
 #ifdef XDRV_159
-  &Xdrv159,
-#endif
-
-#ifdef XDRV_160
-  &Xdrv160
+  &Xdrv159
 #endif
 };
 
@@ -1309,13 +1305,8 @@ const uint8_t kXdrvList[] = {
 #endif
 
 #ifdef XDRV_159
-  XDRV_159,
+  XDRV_159
 #endif
-
-#ifdef XDRV_160
-  XDRV_160
-#endif
-
 };
 
 /*********************************************************************************************/

@@ -656,11 +656,7 @@ bool (* const xsns_func_ptr[])(uint32_t) = {  // Sensor Function Pointers for si
 #endif
 
 #ifdef XSNS_159
-  &Xsns159,
-#endif
-
-#ifdef XSNS_160
-  &Xsns160
+  &Xsns159
 #endif
 };
 
@@ -1309,11 +1305,7 @@ const uint8_t kXsnsList[] = {
 #endif
 
 #ifdef XSNS_159
-  XSNS_159,
-#endif
-
-#ifdef XSNS_160
-  XSNS_160
+  XSNS_159
 #endif
 };
 

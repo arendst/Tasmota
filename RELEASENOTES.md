@@ -131,6 +131,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - LVGL add logging before crash when heap allocation fails [#25170](https://github.com/arendst/Tasmota/issues/25170)
 - LVGL/HASPmota visual touch pointer (dot under finger) [#25158](https://github.com/arendst/Tasmota/issues/25158)
 - Berry `tasmota.wakeup_cause()` mapped to `esp_sleep_get_wakeup_cause()` [#25251](https://github.com/arendst/Tasmota/issues/25251)
+- Berry `crypto.SHA384` hash class [#25311](https://github.com/arendst/Tasmota/issues/25311)
 - Matter Boolean State StateChange event for Contact, Rain and Water Leak sensors [#25286](https://github.com/arendst/Tasmota/issues/25286)
 - Matter Doorbell (0x0148) device type mapped to a Button, with fabric-scoped Binding storage (Chime client not yet implemented) [#25187](https://github.com/arendst/Tasmota/issues/25187)
 
@@ -149,6 +150,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Refactor JPEG size retrieval function [#25226](https://github.com/arendst/Tasmota/issues/25226)
 - OpenTherm use RMT on ESP32, add command `ot_report` [#25254](https://github.com/arendst/Tasmota/issues/25254)
 - ESP32 web login uses own Basic auth instead Arduino [#25210](https://github.com/arendst/Tasmota/issues/25210)
+- Allow larger AsyncHttpClientLight response bodies [#25291](https://github.com/arendst/Tasmota/issues/25291)
 - BLE EQ3-TRV avoid sending of empty status [#25182](https://github.com/arendst/Tasmota/issues/25182)
 - Matter cluster and device type revisions aligned with Matter 1.6.1, fixed ReachableChanged for MQTT [#25292](https://github.com/arendst/Tasmota/issues/25292)
 
