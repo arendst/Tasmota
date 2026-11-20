@@ -642,6 +642,8 @@ int AsyncHttpClientLight::writeToStream(Stream * stream) {
     return _asyncHttpCode < 0 ? _asyncHttpCode : HTTPC_ERROR_CONNECTION_LOST;
   }
 #endif
+  // after end(): no response to read (Berry get_string() already called end())
+  if (!_transport) return HTTPC_ERROR_NOT_CONNECTED;
 
   _lastStream = stream;
   IntOpArg a{ this };
@@ -677,6 +679,11 @@ String AsyncHttpClientLight::getString(int* errorOut) {
     return String();
   }
 #endif
+  // after end(): no response to read (Berry get_string() already called end())
+  if (!_transport) {
+    if (errorOut) *errorOut = HTTPC_ERROR_NOT_CONNECTED;
+    return String();
+  }
 
   _lastString = String();
   IntOpArg a{ this };
@@ -1233,7 +1240,7 @@ int AsyncHttpClientLight::Job_WriteToStream(void* arg) {
   a->self->_bodyPending = false;
 
   if (!a->self->_reuse || !a->self->_canReuse) {
-    a->self->_transport->stop();
+    if (a->self->_transport) a->self->_transport->stop();
   }
   return ret;
 }
@@ -1348,7 +1355,7 @@ int AsyncHttpClientLight::Job_GetString(void* arg) {
   a->self->_bodyPending = false;
 
   if (!a->self->_reuse || !a->self->_canReuse) {
-    a->self->_transport->stop();
+    if (a->self->_transport) a->self->_transport->stop();
   }
 
   a->self->_lastString = (String)s;
@@ -1713,7 +1720,9 @@ AsyncHttpClientLight::asyncState(int* httpCodeOut, int* bytesOut) const {
     }
   }
 
-  if (httpCodeOut) *httpCodeOut = self->_asyncHttpCode;
+  // documented contract (Berry last_code): HTTP status, or a negative error
+  // code when the body read failed after a valid status line
+  if (httpCodeOut) *httpCodeOut = self->_asyncBodyError ? self->_asyncRxBytes : self->_asyncHttpCode;
   if (bytesOut)    *bytesOut    = self->_asyncRxBytes;
   return self->_asyncState;
 #else
