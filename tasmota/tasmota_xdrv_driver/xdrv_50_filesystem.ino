@@ -197,6 +197,7 @@ char *fileOnly(char *fname){
 bool sdcard_init = false;
 
 void UfsCheckSDCardInit(void) {
+  if (sdcard_init) { return; }
   // Try SPI mode first
   // SPI mode requires SDCARD_CS to be configured
 /*
@@ -219,8 +220,6 @@ void UfsCheckSDCardInit(void) {
     if (SD.begin(cs)) {
 #endif // ESP8266
 #ifdef ESP32
-    if (sdcard_init) { return; }
-
     SPIClass &bus = (1 == spi_bus) ? SPI_HSPI : SPI;
     bus.begin(Pin(GPIO_SPI_CLK, spi_bus), Pin(GPIO_SPI_MISO, spi_bus), Pin(GPIO_SPI_MOSI, spi_bus), -1);
     if (SD.begin(cs, bus)) {
@@ -281,6 +280,7 @@ void UfsCheckSDCardInit(void) {
       if (ffsp) {ufs_dir = 1;}
       // make sd card the global filesystem
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "SDCard mounted (SDIO %i-bit) with %d kB free"), bit_4_mode ? 4 : 1, UfsInfo(1, 0));
+      sdcard_init = true;
     }
   }
 #endif
