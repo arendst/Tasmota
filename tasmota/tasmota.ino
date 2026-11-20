@@ -742,6 +742,12 @@ void setup(void) {
   HEAP_MAP(PSTR("berry"))
 #endif  // USE_BERRY
 
+#ifdef USE_UFILESYS
+#ifdef USE_SDCARD
+  UfsCheckSDCardInit();
+#endif  // USE_SDCARD
+#endif  // USE_UFILESYS
+
   XdrvXsnsCall(FUNC_PRE_INIT);   // FUNC_PRE_INIT
   HEAP_MAP(PSTR("preinit"))
 
