@@ -1536,6 +1536,80 @@ void SettingsEnableAllI2cDrivers(void) {
 
 void SettingsDelta(void) {
   if (Settings->version != TASMOTA_VERSION) {  // Fix version dependent changes
+    if (Settings->version < 0x09020003) {
+      Settings->flag3.use_wifi_rescan = true;  // As a result of #10395
+    }
+    if (Settings->version < 0x09020006) {
+      for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) {
+        Settings->switchmode[i] = SWITCH_MODE;
+      }
+      for (uint32_t i = 0; i < MAX_INTERLOCKS_SET; i++) {
+        Settings->interlock[i] = (i < 4) ? Settings->ds3502_state[i] : 0;
+      }
+    }
+    if (Settings->version < 0x09020007) {
+      *(uint32_t *)&Settings->device_group_tie = 0x04030201;
+    }
+    if (Settings->version < 0x09030102) {
+      Settings->mqtt_keepalive = MQTT_KEEPALIVE;
+      Settings->mqtt_socket_timeout = MQTT_SOCKET_TIMEOUT;
+    }
+    if (Settings->version < 0x09030104) {
+      Settings->mbflag2.data = 0;
+    }
+    if (Settings->version < 0x09040002) {
+      Settings->sbflag1.data = 0;
+    }
+    if (Settings->version < 0x09040006) {
+      Settings->mqtt_wifi_timeout = MQTT_WIFI_CLIENT_TIMEOUT / 100;
+    }
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+    if (Settings->version < 0x09050002) {
+      if (Settings->cfg_size != sizeof(TSettings)) {
+        // Fix onetime Settings layout due to changed ESP32-C3 myio and mytmplt types sizes
+        memmove((uint8_t*)&Settings->user_template, (uint8_t*)&Settings->free_esp32c3_3D8, sizeof(TSettings) - 0x3FC);
+        memmove((uint8_t*)&Settings->eth_type, (uint8_t*)&Settings->free_esp32c3_42A, sizeof(TSettings) - 0x446);
+        // Reset for future use
+        memset(&Settings->free_esp32c3_3D8, 0x00, sizeof(Settings->free_esp32c3_3D8));
+        memset(&Settings->free_esp32c3_42A, 0x00, sizeof(Settings->free_esp32c3_42A));
+      }
+    }
+#endif
+    if (Settings->version < 0x09050003) {
+      memset(&Settings->sensors, 0xFF, 16);  // Enable all possible sensors
+    }
+    if (Settings->version < 0x09050004) {
+      Settings->power_lock = Settings->ipv4_address[4];
+      ParseIPv4(&Settings->ipv4_address[4], PSTR(WIFI_DNS2));
+    }
+    if (Settings->version < 0x09050005) {
+      Settings->sbflag1.range_extender = WIFI_RGX_STATE;
+      Settings->sbflag1.range_extender_napt = WIFI_RGX_NAPT;
+      ParseIPv4(&Settings->ipv4_rgx_address, PSTR(WIFI_RGX_IP_ADDRESS));
+      ParseIPv4(&Settings->ipv4_rgx_subnetmask, PSTR(WIFI_RGX_SUBNETMASK));
+      SettingsUpdateText(SET_RGX_SSID, PSTR(WIFI_RGX_SSID));
+      SettingsUpdateText(SET_RGX_PASSWORD, PSTR(WIFI_RGX_PASSWORD));
+      if ((8883 == Settings->mqtt_port) || (8884 == Settings->mqtt_port) || (443 == Settings->mqtt_port)) {
+        // Turn on TLS for port 8883 (TLS), 8884 (TLS, client certificate), 443 (TLS, user/password)
+        Settings->flag4.mqtt_tls = true;
+      }
+    }
+    if (Settings->version < 0x09050007) {
+#ifdef DISABLE_REFERER_CHK
+      Settings->flag5.disable_referer_chk = 1;
+#else
+      Settings->flag5.disable_referer_chk = 0;
+#endif
+    }
+    if (Settings->version < 0x09050009) {  // 9.5.0.9
+      memset(&Settings->energy_kWhtoday_ph, 0, 36);
+      memset(&RtcSettings.energy_kWhtoday_ph, 0, 24);
+      Settings->energy_kWhtotal_ph[0] = Settings->power_lock;
+      Settings->energy_kWhtoday_ph[0] = Settings->energy_power_calibration2;  // = ex_energy_kWhtoday
+      Settings->energy_kWhyesterday_ph[0] = Settings->energy_voltage_calibration2;  // = ex_energy_kWhyesterday
+      RtcSettings.energy_kWhtoday_ph[0] = RtcSettings.ex_energy_kWhtoday;
+      RtcSettings.energy_kWhtotal_ph[0] = RtcSettings.ex_energy_kWhtotal;
+    }
     if (Settings->version < 0x0A000003) {  // 10.0.0.3
       if (0 == Settings->param[P_ARP_GRATUITOUS]) {
         Settings->param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
