@@ -172,11 +172,12 @@ class Matter_Plugin_ShutterTilt : Matter_Plugin_Shutter
   # Update the min and max tilt values from Status 13
   def update_tilt_min_max()
     # get the min/max tilt values
-    var r_st13 = tasmota.cmd("Status 13", true)     # issue `Status 13`
-    if r_st13.contains('StatusSHT')
+    var r_st13 = tasmota.cmd("Status 13", true)     # issue `Status 13`, returns nil when SetOption80 is off
+    if isinstance(r_st13, map) && isinstance(r_st13.find('StatusSHT'), map)
       r_st13 = r_st13['StatusSHT']        # skip root
-      var d = r_st13.find("SHT"+str(self.tasmota_shutter_index), {}).find('TiltConfig')
-      if d != nil
+      var sht = r_st13.find("SHT"+str(self.tasmota_shutter_index))
+      var d = isinstance(sht, map) ? sht.find('TiltConfig') : nil
+      if isinstance(d, list) && size(d) >= 2
         self.tilt_min = int(d[0])
         self.tilt_max = int(d[1])
       end
