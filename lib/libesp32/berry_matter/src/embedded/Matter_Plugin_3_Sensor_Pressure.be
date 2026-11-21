@@ -89,6 +89,8 @@
 # - MinMeasuredValue: 500 (50 kPa / 500 hPa)
 # - MaxMeasuredValue: 1500 (150 kPa / 1500 hPa)
 # - Supports multiple pressure units via PressureUnit setting
+# - Virtual (`v_pressure`) MtrUpdate: numbers are raw hPa, strings may carry
+#   a `hPa`/`kPa`/`mmHg`/`inHg` suffix and are converted (see update_virtual)
 #################################################################################
 
 import matter
@@ -130,6 +132,34 @@ class Matter_Plugin_Sensor_Pressure : Matter_Plugin_Sensor
     elif unit == self.PRESSURE_INHG   val = val * 33.86389
     end
     return int(val)
+  end
+
+  #############################################################
+  # update_virtual
+  #
+  # Parse values received from `MtrUpdate {"Name":"...", "Pressure":...}`
+  # - number or string without unit: raw Matter value in hPa (`1013`)
+  # - string with unit suffix: `"1013.2hPa"`, `"101.3kPa"`, `"760mmHg"`, `"29.92inHg"`
+  # Local SetOption24/139 are ignored, the value does not come from a local sensor.
+  # Returns an error string if the value is not a number or outside int16 range
+  def update_virtual(payload)
+    var val = payload.find(self.JSON_NAME)
+    if val != nil
+      var r = self._parse_virtual_number(val, [self.PRESSURE_HPA, "kPa", self.PRESSURE_MMHG, self.PRESSURE_INHG])
+      val = nil
+      if r != nil
+        val = r[0]
+        var unit = r[1]
+        if   unit == "kPa"                val = val * 10
+        elif unit == self.PRESSURE_MMHG   val = val * 1.3332239     # same factors as `pre_value()`
+        elif unit == self.PRESSURE_INHG   val = val * 33.86389
+        end
+        val = self._round_virtual(val, -32767, 32767)
+      end
+      if val == nil   return f"Invalid '{self.JSON_NAME}'"   end
+      payload[self.JSON_NAME] = val
+    end
+    return super(self).update_virtual(payload)
   end
 
   #############################################################

@@ -97,6 +97,8 @@
 # - Values below 1 lx (including negative) are reported as 0 ("too low to be measured")
 # - MinMeasuredValue: 1 (minimum detectable light)
 # - MaxMeasuredValue: 0xFFFE (65534, maximum range)
+# - Virtual (`v_illuminance`) MtrUpdate: numbers are the raw encoded value,
+#   strings may carry a `lx`/`lux` suffix ("350lx") and are encoded (see update_virtual)
 #################################################################################
 
 import matter
@@ -134,6 +136,28 @@ class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
     var mv = int(10000 * math.log10(val) + 1 + 0.5)    # round to nearest
     if mv > 0xFFFE    mv = 0xFFFE   end
     return mv
+  end
+
+  #############################################################
+  # update_virtual
+  #
+  # Parse values received from `MtrUpdate {"Name":"...", "Illuminance":...}`
+  # - number or string without unit: raw Matter value `10000 × log10(lux) + 1` (0..65534)
+  # - string with `lx` or `lux` suffix: lux, encoded with `pre_value()` (`"350lx"`)
+  # Returns an error string if the value is not a number or outside 0..65534
+  def update_virtual(payload)
+    var val = payload.find(self.JSON_NAME)
+    if val != nil
+      var r = self._parse_virtual_number(val, ["lux", "lx"])
+      val = nil
+      if r != nil
+        val = (r[1] != nil) ? self.pre_value(real(r[0])) : r[0]
+        val = self._round_virtual(val, 0, 0xFFFE)
+      end
+      if val == nil   return f"Invalid '{self.JSON_NAME}'"   end
+      payload[self.JSON_NAME] = val
+    end
+    return super(self).update_virtual(payload)
   end
 
   #############################################################

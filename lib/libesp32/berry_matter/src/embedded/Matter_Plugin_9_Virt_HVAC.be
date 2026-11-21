@@ -158,7 +158,8 @@ class Matter_Plugin_Virt_HVAC : Matter_Plugin_Thermostat
   end
 
   def update_virtual(payload)
-    super(self).update_virtual(payload)
+    var err = super(self).update_virtual(payload)
+    if err != nil   return err   end              # invalid value, nothing changed: don't send IR
     self.send_irhvac()
   end
 
