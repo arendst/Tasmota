@@ -231,7 +231,6 @@ def esp32_safeboot_platform(tasmota_platform):
 
 def esp32_fetch_safeboot_bin(tasmota_platform):
     safeboot_platform = esp32_safeboot_platform(tasmota_platform)
-    safeboot_fw_url = "http://ota.tasmota.com/tasmota32/release/" + safeboot_platform + "-safeboot.bin"
     safeboot_fw_name = os.path.normpath(join(variants_dir, safeboot_platform + "-safeboot.bin"))
     if(exists(safeboot_fw_name)):
         try:
@@ -242,24 +241,33 @@ def esp32_fetch_safeboot_bin(tasmota_platform):
         except OSError:
             pass
         print(Fore.YELLOW + "Existing safeboot file is not a valid ESP firmware image; downloading a replacement")
-    print()
-    print(Fore.GREEN + "Will download safeboot binary from URL:")
-    print(Fore.BLUE + safeboot_fw_url)
-    try:
-        response = requests.get(safeboot_fw_url)
-        if not response.ok:
-            print(Fore.RED + "Safeboot download failed with HTTP status", response.status_code)
-        elif not response.content.startswith(b"\xE9"):
-            print(Fore.RED + "Downloaded file is not a valid ESP firmware image")
-        else:
+
+    urls_to_try = [
+        ("release",     "http://ota.tasmota.com/tasmota32/release/" + safeboot_platform + "-safeboot.bin"),
+        ("development", "https://ota.tasmota.com/tasmota32/" + safeboot_platform + "-safeboot.bin"),
+    ]
+
+    for label, safeboot_fw_url in urls_to_try:
+        print()
+        print(Fore.GREEN + f"Will download safeboot binary from URL ({label}):")
+        print(Fore.BLUE + safeboot_fw_url)
+        try:
+            response = requests.get(safeboot_fw_url)
+            if not response.ok:
+                print(Fore.YELLOW + f"Safeboot download ({label}) failed with HTTP status {response.status_code} – trying next source...")
+                continue
+            if not response.content.startswith(b"\xE9"):
+                print(Fore.YELLOW + f"Downloaded file from {label} is not a valid ESP firmware image – trying next source...")
+                continue
             with open(safeboot_fw_name, "wb") as safeboot_file:
                 safeboot_file.write(response.content)
             print(Fore.GREEN + "Safeboot binary written to variants path:")
             print(Fore.BLUE + safeboot_fw_name)
             return True
-    except Exception:
-        pass
-    print(Fore.RED + "Download of safeboot binary failed. Please check your Internet connection.")
+        except Exception as e:
+            print(Fore.YELLOW + f"Exception while downloading safeboot from {label}: {e} – trying next source...")
+
+    print(Fore.RED + "Download of safeboot binary failed from all sources. Please check your Internet connection.")
     print(Fore.RED + "Creation of " + tasmota_platform + "-factory.bin not possible")
     print(Fore.YELLOW + "Without download from Internet " + Fore.GREEN + safeboot_platform + "-safeboot.bin" + Fore.YELLOW + " needs to be compiled before " + Fore.GREEN + tasmota_platform)
     return False
