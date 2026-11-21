@@ -41,6 +41,8 @@ jobs:
           - tasmota32p4ser-safeboot
           - tasmota32p4r3-safeboot
           - tasmota32p4r3ser-safeboot
+          - tasmota32s31-safeboot
+          - tasmota32s31ser-safeboot
     steps:
       - uses: actions/checkout@v6
         with:
@@ -56,7 +58,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add "release" to footer
         run: |
@@ -104,7 +106,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add "release" to footer
         run: |
@@ -147,6 +149,7 @@ jobs:
           - tasmota32s2cdc
           - tasmota32s3
           - tasmota32solo1
+          - tasmota32s31
     steps:
       - uses: actions/checkout@v6
         with:
@@ -162,7 +165,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v8
@@ -209,7 +212,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
       - name: Add "release" to footer
         run: |
           sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
@@ -247,7 +250,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v8
