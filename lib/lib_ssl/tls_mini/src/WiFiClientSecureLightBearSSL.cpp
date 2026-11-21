@@ -183,6 +183,7 @@ namespace BearSSL {
 void WiFiClientSecure_light::_clear() {
   // TLS handshake may take more than the 5 second default timeout
   _timeout = 10000; // 10 seconds max, it should never go over 6 seconds
+  _loopTimeout = TLS_HANDSHAKE_TIMEOUT;
 
   _sc = nullptr;
   _ctx_present = false;
