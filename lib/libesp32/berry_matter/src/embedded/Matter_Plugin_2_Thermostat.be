@@ -210,27 +210,42 @@ class Matter_Plugin_Thermostat : Matter_Plugin_Device
   def thermostat_state_changed()
   end
 
+  #############################################################
+  # update_virtual
+  #
+  # Temperatures (`CoolSetpoint`, `HeatSetpoint`, `Temp`, `LocalTemperature`)
+  # are numbers in hundredths of °C (`2250`), or strings with a `C` or `F`
+  # suffix (`"22.5C"`, `"72.5F"`). All temperatures are validated before
+  # any change is applied; returns an error string if one is invalid.
   def update_virtual(payload)
+    var temps = {}
+    for k: ["CoolSetpoint", "HeatSetpoint", "Temp", "LocalTemperature"]
+      var v = payload.find(k)
+      if v != nil
+        v = self._parse_virtual_temperature(v)
+        if v == nil   return f"Invalid '{k}'"   end
+        temps[k] = v
+      end
+    end
     var val_mode = payload.find("SystemMode")
     if val_mode != nil
       self.set_system_mode(int(val_mode))
     end
-    var val_cool = payload.find("CoolSetpoint")
+    var val_cool = temps.find("CoolSetpoint")
     if val_cool != nil
-      self.set_cooling_setpoint(int(val_cool))
+      self.set_cooling_setpoint(val_cool)
     end
-    var val_heat = payload.find("HeatSetpoint")
+    var val_heat = temps.find("HeatSetpoint")
     if val_heat != nil
-      self.set_heating_setpoint(int(val_heat))
+      self.set_heating_setpoint(val_heat)
     end
-    var val_temp = payload.find("Temp")
+    var val_temp = temps.find("Temp")
     if val_temp != nil
-      self.set_cooling_setpoint(int(val_temp))
-      self.set_heating_setpoint(int(val_temp))
+      self.set_cooling_setpoint(val_temp)
+      self.set_heating_setpoint(val_temp)
     end
-    var val_local = payload.find("LocalTemperature")
+    var val_local = temps.find("LocalTemperature")
     if val_local != nil
-      val_local = int(val_local)
       if val_local != self.shadow_local_temperature
         self.shadow_local_temperature = val_local
         self.attribute_updated(0x0201, 0x0000)

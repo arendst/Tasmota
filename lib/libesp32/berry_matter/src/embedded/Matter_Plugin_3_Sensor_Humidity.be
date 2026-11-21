@@ -87,6 +87,8 @@
 # - Typical range: 0-100% (0-10000 in Matter units)
 # - Sensor readings are filtered and matched from Tasmota's JSON sensor data
 # - Value is stored in shadow_value as int (0-10000)
+# - Virtual (`v_humidity`) MtrUpdate: numbers are raw 0.01%, strings may carry
+#   a `%` suffix ("45.5%") and are converted (see update_virtual)
 #################################################################################
 
 import matter
@@ -112,6 +114,28 @@ class Matter_Plugin_Sensor_Humidity : Matter_Plugin_Sensor
   # This allows to convert the raw sensor value to the target one, typically int
   def pre_value(val)
     return val != nil ? int(val * 100) : nil    # 1/100th of percentage
+  end
+
+  #############################################################
+  # update_virtual
+  #
+  # Parse values received from `MtrUpdate {"Name":"...", "Humidity":...}`
+  # - number or string without unit: raw Matter value in hundredths of percent (`4550`)
+  # - string with `%` suffix: percent (`"45.5%"`)
+  # Returns an error string if the value is not a number or outside 0..10000
+  def update_virtual(payload)
+    var val = payload.find(self.JSON_NAME)
+    if val != nil
+      var r = self._parse_virtual_number(val, ["%"])
+      val = nil
+      if r != nil
+        val = (r[1] != nil) ? r[0] * 100 : r[0]
+        val = self._round_virtual(val, 0, 10000)
+      end
+      if val == nil   return f"Invalid '{self.JSON_NAME}'"   end
+      payload[self.JSON_NAME] = val
+    end
+    return super(self).update_virtual(payload)
   end
 
   #############################################################

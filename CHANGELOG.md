@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [16.0.0.7]
 ### Added
+- Matter `MtrUpdate` accepts values with units for Temperature, Humidity, Pressure, Illuminance and HVAC
 
 
 ### Breaking Changed

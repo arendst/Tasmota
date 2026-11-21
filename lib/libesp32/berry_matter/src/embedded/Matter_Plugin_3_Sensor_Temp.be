@@ -86,6 +86,8 @@
 # - Temperature is multiplied by 100 to convert to Matter's 0.01°C units
 # - Typical range: -50°C to 150°C (-5000 to 15000 in Matter units)
 # - Sensor readings are filtered and matched from Tasmota's JSON sensor data
+# - Virtual (`v_temp`) MtrUpdate: numbers are raw 0.01°C, strings may carry
+#   a `C`/`F` suffix ("22.5C", "72.5F") and are converted (see update_virtual)
 #################################################################################
 
 import matter
@@ -123,6 +125,24 @@ class Matter_Plugin_Sensor_Temp : Matter_Plugin_Sensor
       end
       return val != nil ? int(val * 100) : nil
     end
+  end
+
+  #############################################################
+  # update_virtual
+  #
+  # Parse values received from `MtrUpdate {"Name":"...", "Temperature":...}`
+  # - number: raw Matter value in hundredths of °C (`2250` is 22.50 °C)
+  # - string with `C` or `F` suffix: value in that unit (`"22.5C"`, `"72.5F"`)
+  # - string without suffix: raw hundredths of °C (`"2250"`)
+  # Returns an error string if the value is not a number or out of range.
+  def update_virtual(payload)
+    var val = payload.find(self.JSON_NAME)
+    if val != nil
+      val = self._parse_virtual_temperature(val)
+      if val == nil   return f"Invalid '{self.JSON_NAME}'"   end
+      payload[self.JSON_NAME] = val
+    end
+    return super(self).update_virtual(payload)
   end
 
   #############################################################

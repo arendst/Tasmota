@@ -227,6 +227,70 @@ class Matter_Plugin_Device : Matter_Plugin
   end
 
   #############################################################
+  # Helpers to parse numeric values received from `MtrUpdate`
+  # for virtual devices
+  #############################################################
+  # _parse_virtual_number
+  #
+  # Args
+  #   val: number or string from the MtrUpdate JSON payload
+  #   units: list of accepted unit suffixes, like `["C", "F"]`, or nil
+  #
+  # Returns `nil` if `val` is not a number, or `[number, unit]`
+  # where `unit` is the matching entry of `units`, or `nil` if
+  # no unit suffix is present (raw Matter value).
+  # Suffix matching is case-insensitive, spaces before the unit are allowed.
+  def _parse_virtual_number(val, units)
+    var unit = nil
+    if type(val) == 'string'
+      import string
+      import json
+      var sz = size(val)
+      if units != nil
+        for u: units
+          var usz = size(u)
+          if (sz > usz) && string.endswith(val, u, true)
+            unit = u
+            val = val[0 .. sz - usz - 1]
+            break
+          end
+        end
+      end
+      val = json.load(val)                        # nil if not a valid JSON value
+    end
+    if type(val) != 'int' && type(val) != 'real'    return nil    end
+    return [val, unit]
+  end
+
+  #############################################################
+  # _round_virtual
+  #
+  # Round to nearest int, return `nil` if nil, NaN or outside `min_val..max_val`
+  def _round_virtual(val, min_val, max_val)
+    if val == nil || val != val                   return nil    end   # nil or NaN
+    if val <= min_val - 0.5 || val >= max_val + 0.5   return nil    end
+    return int(val + (val >= 0 ? 0.5 : -0.5))
+  end
+
+  #############################################################
+  # _parse_virtual_temperature
+  #
+  # Number or string without unit: hundredths of °C (`2250` is 22.50 °C)
+  # String with `C` or `F` suffix: degrees in that unit (`"22.5C"`, `"72.5F"`)
+  #
+  # Returns int in hundredths of °C, or `nil` if invalid
+  # or outside the range of Matter `temperature` type
+  def _parse_virtual_temperature(val)
+    var r = self._parse_virtual_number(val, ["C", "F"])
+    if r == nil   return nil   end
+    val = r[0]
+    if   r[1] == "F"    val = (val - 32) / 1.8 * 100
+    elif r[1] == "C"    val = val * 100
+    end
+    return self._round_virtual(val, -27315, 32767)
+  end
+
+  #############################################################
   # read an attribute
   #
   def read_attribute(session, ctx, tlv_solo)
