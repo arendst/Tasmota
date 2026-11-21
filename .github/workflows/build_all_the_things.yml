@@ -39,7 +39,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
       - name: Run PlatformIO
         env:
           PYTHONIOENCODING: utf-8
@@ -71,7 +71,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
       - name: Run PlatformIO
         env:
           PYTHONIOENCODING: utf-8
@@ -106,6 +106,7 @@ jobs:
           - tasmota32c6
           - tasmota32c61
           - tasmota32p4
+#          - tasmota32s31
           - tasmota32s2
           - tasmota32s2cdc
           - tasmota32s3
@@ -126,6 +127,7 @@ jobs:
           - tasmota32c6-safeboot
           - tasmota32c61-safeboot
           - tasmota32p4-safeboot
+          - tasmota32s31-safeboot
     steps:
       - uses: actions/checkout@v6
       - name: Set up Python
@@ -139,7 +141,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Run PlatformIO
         env:
@@ -172,7 +174,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
       - name: Run PlatformIO
         env:
           PYTHONIOENCODING: utf-8
