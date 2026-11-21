@@ -41,6 +41,8 @@ jobs:
           - tasmota32p4ser-safeboot
           - tasmota32p4r3-safeboot
           - tasmota32p4r3ser-safeboot
+          - tasmota32s31-safeboot
+          - tasmota32s31ser-safeboot
     steps:
       - uses: actions/checkout@v6
         with:
@@ -56,7 +58,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add SHA to footer
         run: |
@@ -106,7 +108,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
       - name: Add SHA to footer
         run: |
           COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
@@ -146,6 +148,7 @@ jobs:
           - tasmota32c61
           - tasmota32p4
           - tasmota32p4r3
+          - tasmota32s31
           - tasmota32s2
           - tasmota32s2cdc
           - tasmota32s3
@@ -165,7 +168,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v8
@@ -214,7 +217,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
       - name: Add SHA to footer
         run: |
           COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
@@ -254,7 +257,7 @@ jobs:
           enable-cache: false
       - name: Install dependencies
         run: |
-          uv pip install --system pioarduino==6.2.0.post1
+          uv pip install --system pioarduino
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v8
