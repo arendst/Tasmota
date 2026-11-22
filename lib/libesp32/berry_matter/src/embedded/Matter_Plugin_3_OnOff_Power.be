@@ -93,7 +93,6 @@ class Matter_Plugin_OnOff_Power : Matter_Plugin_OnOff
   static var TYPE = "relay_power"                   # name of the plug-in in json
   static var DISPLAY_NAME = "Relay + Power"         # display name of the plug-in
 
-  static var UPDATE_CMD = "Status 10"               # command to send for updates (bridge mode)
   static var UPDATE_TIME = 5000                     # update sensor every 5s
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x009C: [],                                          # Power Topology (NODE feature, no attributes)

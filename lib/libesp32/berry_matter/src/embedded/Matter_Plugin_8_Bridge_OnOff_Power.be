@@ -31,10 +31,14 @@
 # - BRIDGE flag: true (enables HTTP remote device mode)
 # - TYPE: "http_relay_power" (JSON configuration identifier)
 # - DISPLAY_NAME: "Relay + Power" (user-friendly name)
-# - Polls the remote Tasmota device with `Status 10` (UPDATE_CMD, inherited)
-#   and reads its (non-indexed) `ENERGY` object the same way the local
-#   plugin reads `tasmota.read_sensors()` - see `parse_status()` in the
-#   base class for the shared parsing logic.
+# - Polls the remote Tasmota device with two HTTP schedules:
+#   - `Status 11` (UPDATE_CMD, inherited from Matter_Plugin_Device) for the
+#     relay state, also used for synchronous refresh on OnOff reads
+#   - `Status 10` (UPDATE_CMD_ENERGY) for the (non-indexed) `ENERGY` object,
+#     parsed the same way the local plugin reads `tasmota.read_sensors()` -
+#     see `parse_status()` in the base class for the shared parsing logic.
+# - In MQTT bridge mode, no HTTP schedule is used: the MQTT remote already
+#   requests both Status 10 and Status 11.
 #
 # CONFIGURATION:
 # - Requires "url" parameter for remote device address
@@ -57,5 +61,19 @@ class Matter_Plugin_Bridge_OnOff_Power : Matter_Plugin_OnOff_Power
   static var BRIDGE = true                          # flag as bridged device
   static var TYPE = "http_relay_power"               # name of the plug-in in json
   static var DISPLAY_NAME = "Relay + Power"          # display name of the plug-in
+  static var UPDATE_CMD_ENERGY = "Status 10"         # energy poll, in addition to inherited UPDATE_CMD "Status 11"
+
+  #############################################################
+  # register_cmd_cb
+  #
+  # Register both the relay state poll (`Status 11`, inherited)
+  # and the energy poll (`Status 10`) for HTTP bridge mode
+  def register_cmd_cb()
+    super(self).register_cmd_cb()                   # Status 11 -> relay state (or MQTT callbacks)
+    if self.http_remote && !self.mqtt_remote
+      self.http_remote.add_schedule(self.UPDATE_CMD_ENERGY, self.UPDATE_TIME,
+                                    / status,payload,cmd -> self.parse_http_response(status,payload,cmd))
+    end
+  end
 end
 matter.Plugin_Bridge_OnOff_Power = Matter_Plugin_Bridge_OnOff_Power
