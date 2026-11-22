@@ -23,6 +23,12 @@
 #ifdef ESP8266
 #include <ESP8266WebServer.h>
 
+// ms to wait for the request on an idle connection when another client
+// already sent data or the pending queue is full (same as esp8266/Arduino#8216)
+#ifndef HTTP_MAX_DATA_AVAILABLE_WAIT
+#define HTTP_MAX_DATA_AVAILABLE_WAIT 30
+#endif
+
 class TasmotaWebServer : public ESP8266WebServer
 {
 public:
@@ -31,6 +37,28 @@ public:
 	}
 
   bool isChunked(void) const { return _chunked; }
+
+  // Hides ESP8266WebServer::handleClient() (not virtual, callers use TasmotaWebServer*).
+  // The core serves one client at a time and waits up to HTTP_MAX_DATA_WAIT (5 s)
+  // for the request on the current connection. Browsers open idle speculative
+  // connections, so a request ready on another connection can wait 5 s.
+  // Backport of esp8266/Arduino#8216: drop the idle connection after
+  // HTTP_MAX_DATA_AVAILABLE_WAIT when another client is waiting with data.
+  void handleClient(void) {
+    if ((HC_WAIT_READ == _currentStatus) &&
+        !_currentClient.available() &&
+        (millis() - _statusChange > HTTP_MAX_DATA_AVAILABLE_WAIT) &&
+        otherClientReady()) {
+      _currentClient = ClientType();
+      _currentStatus = HC_NONE;
+      _currentUpload.reset();
+    }
+    ESP8266WebServer::handleClient();
+  }
+
+protected:
+  // true if a queued client already sent data, or the pending queue is full
+  bool otherClientReady(void);
 };
 #endif // ESP8266
 
