@@ -244,6 +244,7 @@ enum UserSelectablePins {
   GPIO_MIEL_HVAC_MB_TX, GPIO_MIEL_HVAC_MB_RX, GPIO_MIEL_HVAC_MB_TXEN,  // Mitsubishi Electric HVAC Modbus RTU slave
 #endif
   GPIO_CC1101_CS,                       // CC1101 SPI chip select
+  GPIO_SPS30_TX, GPIO_SPS30_RX,         // Sensirion SPS30 Serial interface (SHDLC)
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -529,6 +530,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MIEL_HVAC_MB_TX "|" D_SENSOR_MIEL_HVAC_MB_RX "|" D_SENSOR_MIEL_HVAC_MB_TXEN "|"
 #endif
   D_SENSOR_CC1101_CS "|"
+  D_SENSOR_SPS30_TX "|" D_SENSOR_SPS30_RX "|"
 ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -1085,6 +1087,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_PMS5003
   AGPIO(GPIO_PMS5003_TX),                        // Plantower PMS5003 Serial interface
   AGPIO(GPIO_PMS5003_RX),                        // Plantower PMS5003 Serial interface
+#endif
+#ifdef USE_SPS30_SHDLC
+  AGPIO(GPIO_SPS30_TX),                          // Sensirion SPS30 Serial interface (SHDLC)
+  AGPIO(GPIO_SPS30_RX),                          // Sensirion SPS30 Serial interface (SHDLC)
 #endif
 #ifdef USE_VINDRIKTNING
   AGPIO(GPIO_VINDRIKTNING_RX),                   // Ikea Vindriktning

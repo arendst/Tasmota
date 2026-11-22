@@ -1007,6 +1007,7 @@
 //#define USE_DALI                                 // Add support for DALI gateway (+7k6 code)
 //  #define DALI_POWER_OFF_NO_FADE                 // Power off immediatly without fading (+0k1 code)
 //  #define DALI_LIGHT_NO_READ_AFTER_WRITE         // Use no DTR read-after-write for smooth color transitions saving 55ms / channel (-0k1 code)
+//#define USE_SPS30_SHDLC                          // Enable SPS30 serial protocol (SHDLC), disables possible SP30 I2C (+3k0 code)
 
 // -- Power monitoring sensors --------------------
 #define USE_ENERGY_SENSOR                        // Add support for Energy Monitors (+14k code)
