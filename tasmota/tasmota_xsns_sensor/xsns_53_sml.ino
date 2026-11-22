@@ -297,6 +297,12 @@ void sml_callRxRead(void *self) { ((SML_ESP32_SERIAL*)self)->rxRead(); };
 SML_ESP32_SERIAL::SML_ESP32_SERIAL(uint32_t index) {
   uart_index = index;
   m_valid = true;
+  hws = nullptr;
+  m_buffer = nullptr;
+  m_rx_pin = -1;
+  m_in_pos = m_out_pos = 0;
+  ss_index = 0;
+  serial_buffer_size = 0;
 }
 
 SML_ESP32_SERIAL::~SML_ESP32_SERIAL(void) {
@@ -322,6 +328,7 @@ void SML_ESP32_SERIAL::setbaud(uint32_t speed) {
 void SML_ESP32_SERIAL::end(void) {
   if (m_buffer) {
     free(m_buffer);
+    m_buffer = nullptr;
   }
 }
 
@@ -344,22 +351,35 @@ void SML_ESP32_SERIAL::rx_intr_enable(void) {
 bool SML_ESP32_SERIAL::begin(uint32_t speed, uint32_t smode, int32_t recpin, int32_t trxpin, int32_t invert) {
   if (!m_valid) { return false; }
 
-  m_buffer = 0;
   if (recpin < 0) {
+    if (m_buffer) {
+      // begin() called again (e.g. sml(-1 ...)): keep the buffer and its size, stop the RX interrupt
+      detachInterrupt(m_rx_pin);
+    } else {
+      serial_buffer_size = ESP32_SWS_BUFFER_SIZE;
+      m_buffer = (uint8_t*)malloc(serial_buffer_size);
+      if (m_buffer == NULL) return false;
+    }
     setbaud(speed);
     m_rx_pin = -recpin;
-    serial_buffer_size = ESP32_SWS_BUFFER_SIZE;
-    m_buffer = (uint8_t*)malloc(serial_buffer_size);
-    if (m_buffer == NULL) return false;
+    // reset the indexes before the RX interrupt can write to the buffer
+    m_in_pos = m_out_pos = 0;
+    ss_index = 0;
     pinMode(m_rx_pin, INPUT_PULLUP);
     attachInterruptArg(m_rx_pin, sml_callRxRead, this, CHANGE);
-    m_in_pos = m_out_pos = 0;
     hws = nullptr;
   } else {
     cfgmode = smode;
     m_rx_pin = recpin;
     m_tx_pin = trxpin;
-    hws = new HardwareSerial(uart_index);
+    // create the HardwareSerial object once, later calls (e.g. sml(-1 ...)) reuse it
+    if (hws) {
+      // end() first, so that begin() sets the default RX FIFO full threshold again
+      // (a second begin() on a running object keeps the IDF default of 120 bytes)
+      hws->end();
+    } else {
+      hws = new HardwareSerial(uart_index);
+    }
     if (hws) {
       hws->begin(speed, cfgmode, m_rx_pin, m_tx_pin, invert);
     }
@@ -5074,6 +5094,9 @@ uint32_t SML_Write(int32_t meter, char *hstr) {
     if (sml_globs.mp[meter].so_flags.SO_DISS_PULL) {
       gpio_pullup_dis((gpio_num_t)sml_globs.mp[meter].srcpin);
     }
+#ifdef USE_SML_EBUS_ARB
+    Eba_AttachRx(meter);   // begin() restarts the UART: attach the per-byte RX event and FIFO full threshold again
+#endif
 #endif
   }
   return 1;
