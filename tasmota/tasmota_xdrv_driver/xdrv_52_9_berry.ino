@@ -795,6 +795,7 @@ void HandleBerryConsole(void)
     BerryInit();
     Webserver->sendHeader("Location", "/bc", true);
     Webserver->send(302, "text/plain", "");
+    return;                               // Don't send the console page after the redirect
   }
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Berry " D_CONSOLE));
