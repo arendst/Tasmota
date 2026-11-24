@@ -31,6 +31,12 @@ public:
 	}
 
   bool isChunked(void) const { return _chunked; }
+
+  // Issue #25321: single owner of the terminal chunk. The core (tasmota/Arduino gcc153)
+  // sends it as one checked 5-byte write and clears _chunked (#25320).
+  void endChunked(void) {
+    if (_chunked) { sendContent(emptyString); }
+  }
 };
 #endif // ESP8266
 
@@ -46,6 +52,25 @@ public:
 	}
 
   bool isChunked(void) const { return _chunked; }
+
+  // Issue #25321: single owner of the terminal chunk, sent in one write.
+  // _chunked is cleared first so the core _finalizeResponse() does not resend it.
+  void endChunked(void) {
+    if (!_chunked) { return; }
+    _chunked = false;
+    if (_currentMethod == HTTP_HEAD) { return; }
+    const char *p = "0\r\n\r\n";
+    size_t len = 5;
+    while (len > 0) {
+      size_t n = _currentClient.write((const uint8_t*)p, len);
+      if ((n == 0) || (n > len)) {
+        _currentClient.stop();                         // incomplete response
+        return;
+      }
+      p += n;
+      len -= n;
+    }
+  }
 
   // Basic authentication only. These hide WebServer::authenticate() and
   // WebServer::requestAuthentication(), which also implement Digest auth.
