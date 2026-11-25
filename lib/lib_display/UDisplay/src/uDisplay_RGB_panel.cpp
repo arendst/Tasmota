@@ -114,7 +114,14 @@ extern void AddLog(uint32_t loglevel, const char* formatP, ...);
 #include "freertos/FreeRTOS.h"              // portSET_INTERRUPT_MASK_FROM_ISR()
 #if CONFIG_IDF_TARGET_ESP32S3
 #include "soc/gdma_reg.h"                   // GDMA FIFO status, to confirm a dead DMA after a restart
+#if __has_include("soc/gdma_channel.h")
 #include "soc/gdma_channel.h"
+#define RGBG_GDMA_PAIRS_PER_GROUP SOC_GDMA_PAIRS_PER_GROUP
+#else
+#include "hal/gdma_channel.h"
+#include "hal/gdma_ll.h"
+#define RGBG_GDMA_PAIRS_PER_GROUP GDMA_LL_GET(PAIRS_PER_INST)
+#endif
 #define RGBG_GDMA_STRIDE    (GDMA_OUT_CONF0_CH1_REG - GDMA_OUT_CONF0_CH0_REG)
 #ifndef UDISPLAY_RGB_GUARD_IDF_RESTART
 #define RGBG_OWN_RESTART                    // GDMA restart without the LCD FIFO reset, see above
@@ -662,7 +669,7 @@ static void rgbg_init(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_conf
     rgbg_panel = panel;
 #if CONFIG_IDF_TARGET_ESP32S3
     rgbg_dma_ch = -1;
-    for (uint32_t ch = 0; ch < SOC_GDMA_PAIRS_PER_GROUP; ch++) {
+    for (uint32_t ch = 0; ch < RGBG_GDMA_PAIRS_PER_GROUP; ch++) {
         if ((REG_READ(GDMA_OUT_PERI_SEL_CH0_REG + ch * RGBG_GDMA_STRIDE) & GDMA_PERI_OUT_SEL_CH0_V) == SOC_GDMA_TRIG_PERIPH_LCD0) {
             rgbg_dma_ch = ch;
             break;
