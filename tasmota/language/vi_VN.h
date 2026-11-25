@@ -384,7 +384,7 @@
 #define D_CONFIGURATION_SAVED "Cấu hình đã được lưu"
 #define D_CONFIGURATION_RESET "Xóa cấu hình"
 
-#define D_PROGRAM_VERSION "Phiên bản trương chình"
+#define D_PROGRAM_VERSION "Phiên bản chương trình"
 #define D_BUILD_DATE_AND_TIME "Ngày giờ tạo"
 #define D_CORE_AND_SDK_VERSION "Phiên bản lõi SDK "
 #define D_HOSTED_MCU "Hosted MCU"
