@@ -163,6 +163,7 @@ public:
  *   The messages are then passed to Tasmota during the next tick (event loop).
 \*********************************************************************************************/
 
+void IRAM_ATTR CEC_Run(void *self);   // IRAM attribute declared here; the auto-generated prototype cannot carry it twice
 class CEC_Device
 {
 public:
@@ -716,7 +717,7 @@ void CEC_Device::runTransmit() {
 /// It is mainly driven by ISR,
 /// except when sending ACK, it blocks for 2ms
 ///
-void IRAM_ATTR CEC_Device::runReceiveISR() {
+void CEC_Device::runReceiveISR() {
   if (isTransmitting()) { return; }         // ignore any interrupt caused or during active transmission
 
   // update timing information for new iteration
@@ -1080,13 +1081,13 @@ uint16_t CEC_Device::discoverPhysicalAddress() {
   return addr;
 }
 
-bool IRAM_ATTR CEC_Device::lineState()
+bool CEC_Device::lineState()
 {
 	int state = digitalRead(_gpio);
 	return state != LOW;
 }
 
-bool IRAM_ATTR CEC_Device::setLineState(bool state, bool check)
+bool CEC_Device::setLineState(bool state, bool check)
 {
   // Using the following states, we can connect directly the GPIO to CEC pin without any transistor:
   //   - for high, configure as input + pullup, there is also a pull-up in the TV
