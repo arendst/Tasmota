@@ -1066,6 +1066,9 @@ void MqttPublishLoggingAsync(bool refresh) {
   static uint32_t index = 1;
 
   if (!Settings->mqttlog_level || !Settings->flag.mqtt_enabled || !Mqtt.connected) { return; }  // SetOption3 - Enable MQTT
+#ifdef USE_TASMESH
+  if (MESHroleNode()) { return; }        // A node sends its mqtt messages as packets which are logged too: publishing the log would loop until out of memory
+#endif  // USE_TASMESH
   if (refresh && !NeedLogRefresh(Settings->mqttlog_level, index)) { return; }
 
   char* line;
