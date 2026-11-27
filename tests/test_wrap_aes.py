@@ -30,8 +30,8 @@ class WrapAesTest(unittest.TestCase):
 
     def test_esp8266_wraps_without_printf_dependency(self):
         env = self.run_script("esp8266", ["-DUSE_FULL_PRINTF"])
-        self.assertEqual(env.link_flags, ["-Wl,--wrap=rijndaelKeySetupEnc"])
-        self.assertEqual(env.sources[0][2], ["-<*>", "+<aes_rom.cpp>"])
+        self.assertEqual(env.link_flags, ["-Wl,--wrap=rijndaelKeySetupEnc", "-Wl,--wrap=aes_encrypt"])
+        self.assertEqual(env.sources[0][2], ["-<*>", "+<aes_rom.cpp>", "+<aes_encrypt.cpp>"])
 
     def test_opt_out(self):
         for flag in ("-DUSE_FULL_AES_KEY_SETUP", "-DUSE_FULL_AES_KEY_SETUP=1", "-D USE_FULL_AES_KEY_SETUP"):
