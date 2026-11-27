@@ -1260,7 +1260,19 @@
 /** When enabled, FreeType will use LVGL's memory allocator and file system
  *  abstraction instead of the platform defaults.
  */
-#define LV_FREETYPE_USE_LVGL_PORT 0
+#define LV_FREETYPE_USE_LVGL_PORT 1                 // TASMOTA - FreeType allocates via lv_malloc (PSRAM) and reads files via lv_fs ('A:' drive)
+                                                    // requires `base/ftsystem.c` to be excluded from `freetype/library.json` srcFilter
+#if LV_FREETYPE_USE_LVGL_PORT                       // TASMOTA - lv_ftsystem.c is FreeType system code compiled outside the FreeType library
+#ifndef FT2_BUILD_LIBRARY                           // keeps FT_ERR_PREFIX defined for FT_THROW(), no other effect with gcc and a static FreeType
+#define FT2_BUILD_LIBRARY
+#endif
+#ifndef FT_INTERNAL_DEBUG_H                         // FreeType 2.13 no longer defines the FT_INTERNAL_*_H macros still used by lv_ftsystem.c
+#define FT_INTERNAL_DEBUG_H   <freetype/internal/ftdebug.h>
+#endif
+#ifndef FT_INTERNAL_STREAM_H
+#define FT_INTERNAL_STREAM_H  <freetype/internal/ftstream.h>
+#endif
+#endif /*LV_FREETYPE_USE_LVGL_PORT*/
 
 /** Glyph cache size (glyphs) */
 #define LV_FREETYPE_CACHE_FT_GLYPH_CNT 256
