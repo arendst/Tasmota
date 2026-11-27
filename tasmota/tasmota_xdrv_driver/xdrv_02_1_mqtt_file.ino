@@ -34,6 +34,8 @@
 
 #include <PubSubClient.h>
 #include <base64.hpp>
+#include <libb64/cencode.h>
+extern "C" int base64_encode_chars(const char* plaintext_in, int length_in, char* code_out);
 
 extern PubSubClient MqttClient;
 
@@ -539,13 +541,18 @@ void CmndFileDownload(void) {
         MqttPublishPayloadPrefixTopic_P(STAT, XdrvMailbox.command, (const char*)buffer, write_bytes);
       } else {
         // {"Id":117,"Data":"CRJcTQ9fYGF ... OT1BRUlNUVVZXWFk="}
-        char* base64_data = (char*)malloc(encode_base64_length(write_bytes) +2);
+#ifdef base64_encode_expected_len_nonewlines
+        size_t base64_len = base64_encode_expected_len_nonewlines(write_bytes) + 1;
+#else
+        size_t base64_len = base64_encode_expected_len(write_bytes) + 1;
+#endif
+        char* base64_data = (char*)malloc(base64_len);
         if (base64_data) {
           Response_P(PSTR("{\"Id\":%d,\"Data\":\""), FMqtt.file_id);  // FileTransferHeaderSize
 
           SHOW_FREE_MEM(PSTR("CmndFileDownload"));
 
-          encode_base64((unsigned char*)buffer, write_bytes, (unsigned char*)base64_data);
+          base64_encode_chars((const char*)buffer, write_bytes, base64_data);
           ResponseAppend_P(base64_data);
           ResponseAppend_P("\"}");
           MqttPublishPrefixTopic_P(STAT, XdrvMailbox.command);
