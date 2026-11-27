@@ -637,10 +637,22 @@ const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
           "sn=t.scrollTop;"
           "clearTimeout(ft);"
           "lt=setTimeout(l,ltm);" // webrefresh timer....
+        "}else if(x.readyState==4&&x.status>0){"  // HTTP error (status 0 is abort/network, ignored)
+          "var t1=document.createElement('div');"
+          "t1.classList.add('br1');"
+          "t1.style.color='#f44';"
+          "t1.innerText='HTTP error '+x.status+' '+x.statusText;"
+          "t.appendChild(t1);"
+          "t.scrollTop=1e8;"
+          "sn=t.scrollTop;"
+          "clearTimeout(ft);"
+          "lt=setTimeout(l,ltm);" // keep polling
         "}"
       "};"
-      "x.open('GET','bc?c2='+id+o,true);"  // Related to Webserver->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
-      "x.send();"
+      // POST body has no request-target length limit (WebServer WEBSERVER_MAX_URI_LEN, 414 URI Too Long)
+      "x.open('POST','bc',true);"
+      "x.setRequestHeader('Content-Type','application/x-www-form-urlencoded');"
+      "x.send('c2='+id+o);"  // Related to Webserver->hasArg("c2") and Webserver->arg("c1")
       "ft=setTimeout(l,2e4);" // fail timeout, triggered 20s after asking for XHR
     "}else{"
       "lt=setTimeout(l,ltm);" // webrefresh timer....

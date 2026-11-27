@@ -12,7 +12,6 @@
   "platforms": "espressif32",
   "build": {
     "srcFilter": [
-        "+<base/ftsystem.c>",
         "+<base/ftinit.c>",
         "+<base/ftdebug.c>",
         "+<base/ftbitmap.c>",

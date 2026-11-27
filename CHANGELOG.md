@@ -17,6 +17,10 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Removed migration steps from v9.1.0 to v9.5.0.9 as regression from v16.0.0.3 (#25286)
 - Matter bridge remote Relay + Power always reporting OFF
+- WebUI incomplete or corrupt HTTP responses after a short TCP write
+- Berry `USE_BERRY_IRAM` no longer consumes internal heap on ESP32-S3 and other unified-RAM targets
+- LVGL FreeType fonts allocate memory in PSRAM instead of internal RAM
+- Berry console failing silently on code larger than about 2KB
 
 ### Removed
 

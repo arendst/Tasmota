@@ -860,6 +860,22 @@ void WSSend(int code, int ctype, const String& content)
   Webserver->send(code, GetTextIndexed(ct, sizeof(ct), ctype, kContentTypes), content);
 }
 
+// Write all of buf to client. A short write only happens after a send timeout
+// without progress or when the connection closes, so the remainder is retried
+// while progress is made. Returns false, with the client stopped, if incomplete.
+bool WSClientWrite(WiFiClient &client, const uint8_t *buf, size_t len) {
+  while (len > 0) {
+    size_t n = client.write(buf, len);
+    if ((0 == n) || (n > len)) {
+      client.stop();                               // Incomplete response
+      return false;
+    }
+    buf += n;
+    len -= n;
+  }
+  return true;
+}
+
 /*********************************************************************************************\
  * HTTP Content Chunk handler
 \*********************************************************************************************/
@@ -875,6 +891,7 @@ void WSContentBegin(int code, int ctype) {
 /*-------------------------------------------------------------------------------------------*/
 
 void _WSContentSend(const char* content, size_t size) {  // Lowest level sendContent for all core versions
+  if (0 == size) { return; }                       // Empty content would end a chunked response, WSContentEnd() owns that
   Webserver->sendContent(content, size);
 
   SHOW_FREE_MEM(PSTR("WSContentSend"));
@@ -901,7 +918,12 @@ void WSContentFlush(void) {
 void _WSContentSendBufferChunk_P(const char* content) {
   int len = strlen_P(content);
   if (len < CHUNKED_BUFFER_SIZE) {                 // Append chunk buffer with small content
-    Web.chunk_buffer += (const __FlashStringHelper *)content;
+    if (!Web.chunk_buffer.concat((const __FlashStringHelper *)content)) {
+      // Out of heap: buffer is unchanged, send both directly instead of losing content
+      WSContentFlush();
+      _WSContentSend(content, len);
+      return;
+    }
     len = Web.chunk_buffer.length();
   }
   if (len >= CHUNKED_BUFFER_SIZE) {                // Either content or chunk buffer is oversize
@@ -925,11 +947,13 @@ void WSContentSendRaw_P(const char* content) {     // Content sent without forma
 /*-------------------------------------------------------------------------------------------*/
 
 void WSContentSend(const char* content, size_t size) {
-  // To speed up transmission use chunked buffer if possible
-  if (size < CHUNKED_BUFFER_SIZE) {
+  if (0 == size) { return; }
+  // To speed up transmission use chunked buffer if possible, unless content is binary (contains '\0')
+  if ((size < CHUNKED_BUFFER_SIZE) && (nullptr == memchr(content, '\0', size))) {
     // Terminate non-terminated content
     char buffer[size +1];
-    strlcpy(buffer, content, sizeof(buffer));      // Terminate with '\0'
+    memcpy(buffer, content, size);                 // Content may not be terminated (log lines end with '\1')
+    buffer[size] = '\0';                           // Terminate with '\0'
     _WSContentSendBufferChunk_P(buffer);
   } else {
     WSContentFlush();                              // Flush chunk buffer
@@ -1225,9 +1249,21 @@ void WSContentEnd(void) {
 
   // Fix UDP response #23613
   if (Webserver->isChunked()) {
-    const char *footer_empty = "0\r\n\r\n";
-    Webserver->client().write(footer_empty, 5);      // Signal end of chunked content in one write (doesn't clear core _chunked)
-    delay(5);
+    Webserver->endChunked();                         // Signal end of chunked content in one checked write, clears core _chunked (#25321)
+#ifdef ESP32
+    delay(5);                                      // ESP32 stop() closes at once, ESP8266 stop() already waits for ACK
+#endif  // ESP32
+  }
+
+  // Discard unread request data (e.g. a CRLF after a POST body). lwIP sends a RST instead
+  // of a FIN when closing with unread received data, and the client then drops the end
+  // of the response. Bounded so a client that keeps sending cannot hold us here.
+  uint8_t discard[32];
+  uint32_t discarded = 0;
+  while ((discarded < 1024) && (Webserver->client().available() > 0)) {
+    int n = Webserver->client().read(discard, sizeof(discard));
+    if (n <= 0) { break; }
+    discarded += n;
   }
 
   Webserver->client().stop();
@@ -3033,7 +3069,9 @@ void HandleBackupConfiguration(void) {
   Webserver->sendHeader(F("Content-Disposition"), attachment);
 
   WSSend(200, CT_APP_STREAM, "");
-  myClient.write((const char*)settings_buffer, config_len);
+  if (!WSClientWrite(myClient, settings_buffer, config_len)) {
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP "Backup configuration incomplete"));
+  }
 
   SettingsBufferFree();
 }
@@ -4120,8 +4158,8 @@ bool CaptivePortal(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_REDIRECTED));
 
     Webserver->sendHeader(F("Location"), String(F("http://")) + IPGetListeningAddressStr(), true);
-    WSSend(302, CT_PLAIN, "");  // Empty content inhibits Content-length header so we have to close the socket ourselves.
-    Webserver->client().stop();  // Stop is needed because we sent no content length
+    WSSend(302, CT_PLAIN, "");  // Sends "Content-Length: 0"
+    Webserver->client().stop();  // Close now instead of waiting for the client to close
     return true;
   }
   return false;
