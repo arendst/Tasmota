@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [16.0.0.7]
 ### Added
 - Matter `MtrUpdate` accepts values with units for Temperature, Humidity, Pressure, Illuminance and HVAC
-
+- Add support for SPS30 particle sensor serial protocol SHDLC (`#define USE_SPS30_SHDLC`)
 
 ### Breaking Changed
 

@@ -393,7 +393,7 @@ constexpr uint32_t feature[] = {
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ADE7953)
   0x01000000 |  // xnrg_07_ade7953.ino
 #endif
-#if defined(USE_I2C) && defined(USE_SPS30)
+#if defined(USE_SPS30_SHDLC) || (defined(USE_I2C) && defined(USE_SPS30))
   0x02000000 |  // xsns_44_sps30.ino
 #endif
 #if defined(USE_I2C) && defined(USE_VL53L0X)
