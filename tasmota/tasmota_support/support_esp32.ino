@@ -32,6 +32,7 @@ extern "C" {
 }
 #include "esp_system.h"
 #include "esp_flash.h"
+#include "esp_memory_utils.h"
 
 #include "bootloader_common.h"
 
@@ -640,8 +641,23 @@ void *special_calloc(size_t num, size_t size) {
 }
 
 // Variants for IRAM heap, which need all accesses to be 32 bits aligned
+// Returns a block only if it lands in IRAM that is not byte-accessible (i.e. not counted in heap_free),
+// otherwise returns NULL so that the caller keeps its data where it is (PSRAM or DRAM)
 void *special_malloc32(uint32_t size) {
-  return heap_caps_malloc(size, MALLOC_CAP_32BIT);
+#ifdef CONFIG_IDF_TARGET_ESP32
+  // ESP32 has a dedicated 32 bits only IRAM heap tried first, but when it is full
+  // MALLOC_CAP_32BIT falls back to DRAM then PSRAM, which we reject
+  void *ptr = heap_caps_malloc(size, MALLOC_CAP_32BIT);
+  if (ptr && esp_ptr_byte_accessible(ptr)) {
+    heap_caps_free(ptr);
+    ptr = nullptr;
+  }
+  return ptr;
+#else
+  // Other targets (S2, S3, C2, C3, C5, C6, P4...) have unified D/IRAM:
+  // MALLOC_CAP_32BIT would allocate from the main internal heap
+  return nullptr;
+#endif
 }
 
 float CpuTemperature(void) {

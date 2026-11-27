@@ -1309,7 +1309,7 @@
   #ifndef BERRY_MAX_BYTES_SIZE_PSRAM
     #define BERRY_MAX_BYTES_SIZE_PSRAM  (1024 * 1024) // Max size in bytes for Berry bytes() objects when PSRAM is available
   #endif
-  #define USE_BERRY_IRAM                         // Allocate some data structures in IRAM (which is usually unused) when possible and if no PSRAM is available
+  #define USE_BERRY_IRAM                         // (ESP32 only) Move compiled bytecode to the 32 bits only IRAM heap (which is usually unused) when it fits, no effect on other targets
   #define USE_BERRY_FAST_LOOP_SLEEP_MS  5        // Minimum time in milliseconds to before calling again `tasmota.fast_loop()`, a smaller value will consume more CPU (min 1ms)
   // #define USE_BERRY_DEBUG                        // Compile Berry bytecode with line number information, makes exceptions easier to debug. Adds +8% of memory consumption for compiled code
   //   #define UBE_BERRY_DEBUG_GC                   // Print low-level GC metrics
