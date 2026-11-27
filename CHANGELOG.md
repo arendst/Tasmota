@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - WebUI incomplete or corrupt HTTP responses after a short TCP write
 - Berry `USE_BERRY_IRAM` no longer consumes internal heap on ESP32-S3 and other unified-RAM targets
 - LVGL FreeType fonts allocate memory in PSRAM instead of internal RAM
+- Berry console failing silently on code larger than about 2KB
 
 ### Removed
 
