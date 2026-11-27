@@ -204,8 +204,9 @@ extern "C" {
   // FILE * fopen ( const char * filename, const char * mode );
   lvbe_FILE * lvbe_fopen(const char * filename, const char * mode ) {
 
-    // Add "/" prefix
-    String file_path = "/";
+    // Add "/" prefix if not already present
+    String file_path;
+    if (filename[0] != '/') { file_path = "/"; }
     file_path += filename;
 
     File f = lv_zip_ufsp.open(file_path, mode);
