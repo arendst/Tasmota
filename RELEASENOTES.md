@@ -166,6 +166,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Security issues caused by buffer overflows
 - OTA and file upload security issue
 - Function `subStr()` possible buffer overflow
+- Rules MQTT event exception on `Subscribe` or `Unsubscribe`
 - TuyaV1 and TuyaV2 out-of-bounds accessing `tuya_fnid_map[]` [#25222](https://github.com/arendst/Tasmota/issues/25222)
 - WebUI incomplete or corrupt HTTP responses after a short TCP write [#25335](https://github.com/arendst/Tasmota/issues/25335)
 - Boot loop when using a literal WIFI_DEFAULT_HOSTNAME [#25205](https://github.com/arendst/Tasmota/issues/25205)

@@ -33,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - TasMesh forward commands from the broker to the nodes again, regression from v15.4.0.2 (#25342)
 - TasMesh do not publish the log of a node as MQTT (#25349)
 - TasMesh do not run on the broker a command that is too long for its node (#25351)
+- Rules MQTT event exception on `Subscribe` or `Unsubscribe`
 
 ### Removed
 

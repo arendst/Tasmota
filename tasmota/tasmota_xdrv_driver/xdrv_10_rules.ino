@@ -192,6 +192,7 @@ struct RULES {
   bool teleperiod = false;
   bool busy = false;
   bool no_execute = false;   // Don't actually execute rule commands
+  bool rules_mqtt_data_loop = false;
 } Rules;
 
 char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
@@ -1126,7 +1127,9 @@ bool RulesMqttData(void) {
         Trim(value);
         bool quotes = (value[0] != '{');
         Response_P(PSTR("{\"Event\":{\"%s\":%s%s%s}}"), event_item.event, (quotes)?"\"":"", value, (quotes)?"\"":"");
+        Rules.rules_mqtt_data_loop = true;     // GHSA-x8r3-f8jp-c9q4 - do not allow subscribe/unsubscribe in this loop
         RulesProcessEvent(ResponseData());
+        Rules.rules_mqtt_data_loop = false;    // GHSA-x8r3-f8jp-c9q4 - do not allow subscribe/unsubscribe in this loop
       }
     }
   }
@@ -1174,6 +1177,11 @@ bool RuleUnsubscribe(const char* event) {
  *      A string include subscribed event, topic and key.
  */
 void CmndSubscribe(void) {
+  if (Rules.rules_mqtt_data_loop) {            // GHSA-x8r3-f8jp-c9q4 - do not allow subscribe/unsubscribe in this loop
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Command not allowed at this time"));
+    ResponseCmndFailed();
+    return;
+  }
   if (XdrvMailbox.data_len > 0) {
     char* event = Trim(strtok(XdrvMailbox.data, ","));
     char* topic = Trim(strtok(nullptr, ","));
@@ -1237,6 +1245,11 @@ void CmndSubscribe(void) {
  *      list all the events unsubscribed.
  */
 void CmndUnsubscribe(void) {
+  if (Rules.rules_mqtt_data_loop) {            // GHSA-x8r3-f8jp-c9q4 - do not allow subscribe/unsubscribe in this loop
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Command not allowed at this time"));
+    ResponseCmndFailed();
+    return;
+  }
   if (XdrvMailbox.data_len > 0) {
     char* event = Trim(XdrvMailbox.data);
     if (RuleUnsubscribe(event)) {
