@@ -495,6 +495,51 @@
 #endif  // FIRMWARE_TASMOTA_LVGL *******************************************************************
 
 /*********************************************************************************************\
+ * [tasmota32-donglem]
+ * Provide an image for SONOFF Dongle Max (Dongle-M)
+\*********************************************************************************************/
+
+#ifdef FIRMWARE_DONGLEM
+
+#ifndef CODE_IMAGE_STR
+  #define CODE_IMAGE_STR "donglemax"
+#endif
+
+#undef MODULE
+#define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
+#undef FALLBACK_MODULE
+#define FALLBACK_MODULE        WEMOS             // [Module2] Select default module on fast reboot where USER_MODULE is user template
+
+#undef USE_DOMOTICZ
+#undef USE_HOME_ASSISTANT
+#undef USE_TASMOTA_DISCOVERY                     // Use Dongle-M custom MQTT discovery only
+
+#define USE_DONGLE_M                             // Enable SONOFF Dongle Max hardware support
+#define USE_TCP_BRIDGE                           // Enable serial to TCP bridge
+  #define TCP_BRIDGE_CONNECTIONS  1              // MG24 UART must have only one controlling client
+  #define TCP_BRIDGE_BUF_SIZE     1024           // Accommodate high baudrate MG24 traffic
+#define USE_ETHERNET                             // Enable IP101 Ethernet support
+#define USE_DISCOVERY                            // Advertise the configured hostname using mDNS
+
+#undef USE_ZIGBEE                                // MG24 is exposed only through the TCP bridge
+#undef USE_SERIAL_BRIDGE
+#undef USE_MODBUS_BRIDGE
+#undef USE_INFLUXDB
+#undef USE_KNX
+#undef USE_DALI
+#undef USE_ENERGY_SENSOR
+#undef USE_SHUTTER
+#undef USE_IR_REMOTE
+#undef USE_DEVICE_GROUPS
+#undef USE_EMULATION_HUE
+#undef USE_EMULATION_WEMO
+#undef USE_EMULATION_SHELLY
+#undef USE_MI_ESP32
+#undef USE_BLE_ESP32
+
+#endif  // FIRMWARE_DONGLEM
+
+/*********************************************************************************************\
  * [tasmota32-zbbrdgpro]
  * Provide an image for Sonoff Zigbee Bridge Pro
 \*********************************************************************************************/
