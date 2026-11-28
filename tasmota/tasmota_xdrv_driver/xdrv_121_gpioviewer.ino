@@ -194,6 +194,10 @@ int GetPinMode(uint32_t pin) {
 #include "hal/adc_periph.h"
 #endif
 
+#ifndef SOC_ADC_MAX_CHANNEL_NUM
+#define SOC_ADC_MAX_CHANNEL_NUM ADC_LL_MAX_CHANNEL_NUM
+#endif
+
 int8_t GVDigitalPinToAnalogChannel(uint8_t pin) {
   uint8_t channel = 0;
   if (pin < SOC_GPIO_PIN_COUNT) {

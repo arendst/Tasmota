@@ -75,7 +75,7 @@ Historical binaries can be downloaded from
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
-### ESP32, ESP32-C2, ESP32-C3, ESP32-C5, ESP32-C6, ESP32-C61, ESP32-P4, ESP32-P4R3, ESP32-S2 and ESP32-S3 based
+### ESP32, ESP32-C2, ESP32-C3, ESP32-C5, ESP32-C6, ESP32-C61, ESP32-P4, ESP32-P4R3, ESP32-S2, ESP32-S3 and ESP32-S31 based
 The following binary downloads have been compiled with ESP32/Arduino library core version **v3.3.12**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
@@ -90,6 +90,7 @@ The following binary downloads have been compiled with ESP32/Arduino library cor
 - **tasmota32s2.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-S2 with serial and 4M+ flash.
 - **tasmota32s2cdc.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-S2 with serial over embedded USB CDC only and 4M+ flash.
 - **tasmota32s3.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-S3 with USB HWCDC and fallback to serial and 4M+ flash.
+- **tasmota32s31.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-S31 with USB HWCDC and fallback to serial and 4M+ flash.
 - **tasmota32-AD.bin** to **tasmota32-VN.bin** = The Tasmota version in different languages for 4M+ flash.
 - **tasmota32-bluetooth.bin** = The Bluetooth version adds BLE support for 4M+ flash.
 - **tasmota32-display.bin** = The Display version without Energy Monitoring but adds display support for 4M+ flash.
@@ -116,6 +117,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v16.0.0.7
 ### Added
+- Support for ESP32-S31
 - Heap Map optional feature fur detailed memory usage at boot [#25186](https://github.com/arendst/Tasmota/issues/25186)
 - Device location and local pose with commands `Location`, `LocationRot`, `LocationScale`, `LocationClear` and `SetOption166` stored as JSON in file system or packed in ESP8266 settings [#25244](https://github.com/arendst/Tasmota/issues/25244)
 - BME680 IAQ (air quality index) to BMP sensor driver [#25175](https://github.com/arendst/Tasmota/issues/25175)
@@ -126,6 +128,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - uDisplay support for SPI QSPI displays [#25156](https://github.com/arendst/Tasmota/issues/25156)
 - Zigbee support EZSP V13 [#25225](https://github.com/arendst/Tasmota/issues/25225)
 - TLS support for SHA384 and Letsencrypt Root X2 CA [#25302](https://github.com/arendst/Tasmota/issues/25302)
+- TLS handshake timeout configurable [#25309](https://github.com/arendst/Tasmota/issues/25309)
 - BLE timeout and eQ3 TRV enhancements [#25173](https://github.com/arendst/Tasmota/issues/25173)
 - Support MAC OUI wildcard for command MI32Keys in case multiple devices use same bindkey like IoTorero: `mi32keys 0C3D5EFFFFFF=48656c6c6f204254486f6d65210d0a00`
 - LVGL add logging before crash when heap allocation fails [#25170](https://github.com/arendst/Tasmota/issues/25170)
@@ -134,6 +137,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `crypto.SHA384` hash class [#25311](https://github.com/arendst/Tasmota/issues/25311)
 - Matter Boolean State StateChange event for Contact, Rain and Water Leak sensors [#25286](https://github.com/arendst/Tasmota/issues/25286)
 - Matter Doorbell (0x0148) device type mapped to a Button, with fabric-scoped Binding storage (Chime client not yet implemented) [#25187](https://github.com/arendst/Tasmota/issues/25187)
+- Matter `MtrUpdate` accepts values with units for Temperature, Humidity, Pressure, Illuminance and HVAC [#25322](https://github.com/arendst/Tasmota/issues/25322)
 
 ### Breaking Changed
 - Reduce max number of ZCDimmer PWM channels to 5 due to allocated persistent data size [#25222](https://github.com/arendst/Tasmota/issues/25222)
@@ -144,11 +148,14 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP8266 platform update from 2026.09.00 to 2026.11.00 [#25097](https://github.com/arendst/Tasmota/issues/25097)
 - ESP32 Platform from 2026.09.50 to 2026.11.51, Framework (Arduino Core) from v3.3.12 to v3.3.12-3 and IDF v5.5.5 [#25275](https://github.com/arendst/Tasmota/issues/25275)
 - JPEGDEC library from v1.8.4 to v1.8.5 [#25282](https://github.com/arendst/Tasmota/issues/25282)
+- GPIO pin definitions for new camera models
+- Modify command args in settings.json for upload port
 - OTA give up on a stalled OTA after 30s, not 300 reads [#25177](https://github.com/arendst/Tasmota/issues/25177)
 - HttpClientLight keep read timeouts longer than 65s [#25180](https://github.com/arendst/Tasmota/issues/25180)
 - GUI allow `;` or `{` in a password saved from the settings page [#25184](https://github.com/arendst/Tasmota/issues/25184)
 - Refactor JPEG size retrieval function [#25226](https://github.com/arendst/Tasmota/issues/25226)
 - OpenTherm use RMT on ESP32, add command `ot_report` [#25254](https://github.com/arendst/Tasmota/issues/25254)
+- ESP32 compile NimBLE lib only when needed [#25330](https://github.com/arendst/Tasmota/issues/25330)
 - ESP32 web login uses own Basic auth instead Arduino [#25210](https://github.com/arendst/Tasmota/issues/25210)
 - Allow larger AsyncHttpClientLight response bodies [#25291](https://github.com/arendst/Tasmota/issues/25291)
 - BLE EQ3-TRV avoid sending of empty status [#25182](https://github.com/arendst/Tasmota/issues/25182)
@@ -159,14 +166,18 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - OTA and file upload security issue
 - Function `subStr()` possible buffer overflow
 - TuyaV1 and TuyaV2 out-of-bounds accessing `tuya_fnid_map[]` [#25222](https://github.com/arendst/Tasmota/issues/25222)
+- WebUI incomplete or corrupt HTTP responses after a short TCP write [#25335](https://github.com/arendst/Tasmota/issues/25335)
 - Boot loop when using a literal WIFI_DEFAULT_HOSTNAME [#25205](https://github.com/arendst/Tasmota/issues/25205)
 - Configure Wi-Fi page hang when the Wi-Fi scan cannot start [#25267](https://github.com/arendst/Tasmota/issues/25267)
 - WifiManager name the setup AP as it is turned on [#25169](https://github.com/arendst/Tasmota/issues/25169)
+- Filelog correct filesystem use and checks if both flash and SDCard is present [#25208](https://github.com/arendst/Tasmota/issues/25208)
+- SDCard detection on systems using berry to control SDCard power supply [#25208](https://github.com/arendst/Tasmota/issues/25208)
 - VEML7700 lux/white rounding, add new command [#25150](https://github.com/arendst/Tasmota/issues/25150)
 - MPR121 sizeof [#25203](https://github.com/arendst/Tasmota/issues/25203)
 - AHT20/AHT30 stale readings when used with deep sleep, with optional `#define USE_AHT_DIAG` [#25258](https://github.com/arendst/Tasmota/issues/25258)
 - OpenTherm no silent cooldown after a lost connection (default 0) [#25296](https://github.com/arendst/Tasmota/issues/25296)
 - SML ESP8266 serial mode [#25201](https://github.com/arendst/Tasmota/issues/25201)
+- SML ESP32 memory leak when serial mode is changed with sml(-1 ...) [#25327](https://github.com/arendst/Tasmota/issues/25327)
 - TashMesh and WizMote ESP-NOW support for IDF v5.5.5 [#25289](https://github.com/arendst/Tasmota/issues/25289)
 - Display palette colors on monochrome universal displays [#25260](https://github.com/arendst/Tasmota/issues/25260)
 - DisplayText [pN] command now works when followed by another [pN] [#25188](https://github.com/arendst/Tasmota/issues/25188)
@@ -182,14 +193,18 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32-S3 RGB display permanent image shift after flash writes, DMA sync guard [#25194](https://github.com/arendst/Tasmota/issues/25194)
 - Wireguard reconnect when a dynamic DNS `Endpoint` changes IP [#25204](https://github.com/arendst/Tasmota/issues/25204)
 - WebAsync rare crash and race conditions [#25209](https://github.com/arendst/Tasmota/issues/25209)
+- Berry console failing silently on code larger than about 2KB [#25346](https://github.com/arendst/Tasmota/issues/25346)
 - Berry `lv.start()` raises an error instead of crashing when the display can't start [#25193](https://github.com/arendst/Tasmota/issues/25193)
+- Berry `USE_BERRY_IRAM` no longer consumes internal heap on ESP32-S3 and other unified-RAM targets [#25334](https://github.com/arendst/Tasmota/issues/25334)
 - Matter event EpochTimestamp sent as seconds instead of milliseconds, using new Berry `tasmota.rtc_utc_ms()` [#25234](https://github.com/arendst/Tasmota/issues/25234)
 - Matter Fan advertising the unsupported Auto mode [#25293](https://github.com/arendst/Tasmota/issues/25293)
 - Matter Air Quality PM1, PM2.5 and PM10 reported in ppm instead of µg/m³, and TVOC in ppm instead of ppb [#25294](https://github.com/arendst/Tasmota/issues/25294)
 - Matter MRP sending unacknowledged messages 7 times instead of 5 [#25295](https://github.com/arendst/Tasmota/issues/25295)
+- Matter bridge remote Relay + Power always reporting OFF [#25328](https://github.com/arendst/Tasmota/issues/25328)
 - LVGL Panel extension crash [#25165](https://github.com/arendst/Tasmota/issues/25165)
 - LVGL Panel improved click handling [#25171](https://github.com/arendst/Tasmota/issues/25171)
 - LVGL touch more responsive [#25172](https://github.com/arendst/Tasmota/issues/25172)
+- LVGL FreeType fonts allocate memory in PSRAM instead of internal RAM [#25345](https://github.com/arendst/Tasmota/issues/25345)
 
 ### Removed
 - Support for migration from versions below v9.1

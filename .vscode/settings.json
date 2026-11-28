@@ -22,7 +22,7 @@
           "esp-decoder.disconnect",
           {
             "id": "platformio-ide.runPIOCoreCommand",
-            "args": "pio run -t nobuild -t factory_flash -e ${command:platformio-ide.activeEnvironment}"
+            "args": "pio run -t nobuild -t factory_flash -e ${command:platformio-ide.activeEnvironment} --upload-port ${command:platformio-ide.activePort}"
           }
         ]
       },
@@ -38,7 +38,7 @@
           "esp-decoder.disconnect",
           {
             "id": "platformio-ide.runPIOCoreCommand",
-            "args": "pio run -t erase_upload -e ${command:platformio-ide.activeEnvironment}"
+            "args": "pio run -t erase_upload -e ${command:platformio-ide.activeEnvironment} --upload-port ${command:platformio-ide.activePort}"
           }
         ]
       },
@@ -49,7 +49,7 @@
           "esp-decoder.disconnect",
           {
             "id": "platformio-ide.runPIOCoreCommand",
-            "args": "pio run -t nobuild -t erase -e ${command:platformio-ide.activeEnvironment}"
+            "args": "pio run -t nobuild -t erase -e ${command:platformio-ide.activeEnvironment} --upload-port ${command:platformio-ide.activePort}"
           }
         ]
       },

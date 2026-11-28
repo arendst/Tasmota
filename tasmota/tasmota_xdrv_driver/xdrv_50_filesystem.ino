@@ -1273,12 +1273,11 @@ public:
         uint32_t cnt = 0;
         while (f.available()) {
           bread = f.read(buff, sizeof(buff));
-          cnt += bread;
 #ifdef SERVING_DEBUG
           //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UFS "::handler sending %d/%d"), cnt, flen);
 #endif          
-          uint32_t bw = download_Client.write((const char*)buff, bread);
-          if (!bw) { break; }
+          if (!WSClientWrite(download_Client, buff, bread)) { break; }
+          cnt += bread;
           yield();
         }
 #ifdef SERVING_DEBUG
@@ -1730,8 +1729,7 @@ uint8_t UfsDownloadFile(char *file) {
   uint32_t cnt = 0;
   while (download_file.available()) {
     bread = download_file.read(buff, sizeof(buff));
-    uint32_t bw = download_Client.write((const char*)buff, bread);
-    if (!bw) { break; }
+    if (!WSClientWrite(download_Client, buff, bread)) { break; }
     cnt++;
     if (cnt > 7) {
       cnt = 0;
@@ -1805,8 +1803,7 @@ void download_task(void *path) {
     uint32_t bread;
     while (download_file.available()) {
       bread = download_file.read(buff, DOWNLOAD_SIZE);
-      uint32_t bw = download_Client.write((const char*)buff, bread);
-      if (!bw) { break; }
+      if (!WSClientWrite(download_Client, buff, bread)) { break; }
     }
     free(buff);
   }

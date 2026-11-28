@@ -94,7 +94,7 @@ void HdmiCecInit(void)
  * Interrupt management
 \*********************************************************************************************/
 
-void IRAM_ATTR CEC_Run(void *self) {
+void CEC_Run(void *self) {
   CEC_Device *cec_device = (CEC_Device*)self;
   cec_device->serviceGpioISR();
 }

@@ -10297,8 +10297,7 @@ uint8_t DownloadFile(char *file) {
     uint8_t cnt = 0;
     while (download_file.available()) {
       bread = download_file.read(buff, sizeof(buff));
-      uint16_t bw = download_Client.write((const char*)buff, bread);
-      if (!bw) break;
+      if (!WSClientWrite(download_Client, buff, bread)) break;
       cnt++;
       if (cnt>7) {
         cnt = 0;
