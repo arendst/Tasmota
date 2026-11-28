@@ -20,8 +20,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Removed migration steps from v9.1.0 to v9.5.0.9 as regression from v16.0.0.3 (#25286)
-- Matter bridge remote Relay + Power always reporting OFF
-- Fix Flowratemeter usage on ESP32
+- Flowratemeter usage on ESP32 (#25334)
 - Filelog correct filesystem use and checks if both flash and SDCard is present (#25208)
 - SDCard detection on systems using berry to control SDCard power supply (#25208)
 - SML ESP32 memory leak when serial mode is changed with sml(-1 ...) (#25327)
@@ -30,6 +29,8 @@ All notable changes to this project will be documented in this file.
 - Berry `USE_BERRY_IRAM` no longer consumes internal heap on ESP32-S3 and other unified-RAM targets (#25334)
 - LVGL FreeType fonts allocate memory in PSRAM instead of internal RAM (#25345)
 - Berry console failing silently on code larger than about 2KB (#25346)
+- TasMesh forward commands from the broker to the nodes again, regression from v15.4.0.2 (#25342)
+- TasMesh do not publish the log of a node as MQTT (#25349)
 
 ### Removed
 
@@ -61,7 +62,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - GPIOViewer fails to execute, regression from platform 2026.11.50 with Framework v3.3.12-2 (#25275)
 - Display palette colors on monochrome universal displays (#25260)
-- TashMesh and WizMote ESP-NOW support for IDF v5.5.5 (#25289)
+- TasMesh and WizMote ESP-NOW support for IDF v5.5.5 (#25289)
 - Matter Fan advertising the unsupported Auto mode (#25293)
 - Matter Air Quality PM1, PM2.5 and PM10 reported in ppm instead of µg/m³, and TVOC in ppm instead of ppb (#25294)
 - Matter MRP sending unacknowledged messages 7 times instead of 5 (#25295)
