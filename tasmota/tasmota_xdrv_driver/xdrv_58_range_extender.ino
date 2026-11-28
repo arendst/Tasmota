@@ -155,11 +155,18 @@ bool RgxApUp()
   return RgxSettings.status == RGX_CONFIGURED || RgxSettings.status == RGX_SETUP_NAPT;
 }
 
-// Uplink available for the AP clients: WiFi station connected or, on ESP32 with USE_ETHERNET, Ethernet with an IPv4 address
+// Ethernet is usable as uplink when it has an IPv4 address AND the link is up. With a static IP address
+// EthernetHasIPv4() is true even without a cable, so also check eth_down (set until ETH_GOT_IP and on disconnect)
 // EthernetHasIPv4() returns false when Ethernet is not compiled in
+bool RgxEthernetUp(void)
+{
+  return EthernetHasIPv4() && !TasmotaGlobal.global_state.eth_down;
+}
+
+// Uplink available for the AP clients: WiFi station connected or, on ESP32 with USE_ETHERNET, Ethernet up
 bool RgxUplinkUp(void)
 {
-  return (Wifi.status == WL_CONNECTED) || EthernetHasIPv4();
+  return (Wifi.status == WL_CONNECTED) || RgxEthernetUp();
 }
 
 // IPv4 address of the uplink. WiFi station has priority, so nothing changes when it is connected
@@ -423,6 +430,12 @@ void rngxSetup()
     if (esp_netif_ETH) { esp_netif_uplink = esp_netif_ETH; }
   }
   esp_netif_t* esp_netif_AP = get_esp_interface_netif(ESP_IF_WIFI_AP);
+  if (NULL == esp_netif_AP) {
+    // Ethernet uplink with the WiFi off: the AP interface does not exist yet (the WiFi driver destroys it
+    // when switched off), so the DNS below would be lost. softAPConfig() creates it and waits until it started.
+    WiFi.softAPConfig(Settings->ipv4_rgx_address, Settings->ipv4_rgx_address, Settings->ipv4_rgx_subnetmask);
+    esp_netif_AP = get_esp_interface_netif(ESP_IF_WIFI_AP);
+  }
   esp_netif_dns_info_t ip_dns;
 
   err = esp_netif_dhcps_stop(esp_netif_AP);
@@ -518,7 +531,7 @@ bool Xdrv58(uint32_t function)
       if (RgxSettings.status == RGX_NOT_CONFIGURED && RgxUplinkUp())
       {
         AddLog(LOG_LEVEL_DEBUG, PSTR("RGX: Uplink up (WiFi %d, Ethernet %d), WiFi mode %d"),
-               Wifi.status == WL_CONNECTED, EthernetHasIPv4(), WiFi.getMode());
+               Wifi.status == WL_CONNECTED, RgxEthernetUp(), WiFi.getMode());
         // Setup only if WiFi in STA only mode (or off when the uplink is Ethernet)
         if ((WiFi.getMode() == WIFI_STA) || (WiFi.getMode() == WIFI_OFF))
         {
