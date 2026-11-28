@@ -442,6 +442,13 @@ void MESHstartBroker(void) {       // Must be called after WiFi is initialized!!
   esp_now_register_send_cb(CB_MESHDataSent);
   esp_now_register_recv_cb(CB_MESHDataReceived);
   MESHsetKey(MESH.key);
+  for (auto &_peer : MESH.peers) {  // esp_now_deinit() emptied the ESP-NOW peer table, but known nodes are kept in MESH.peers
+    esp_now_peer_info_t _info = {};
+    _info.channel = MESH.channel;
+    _info.ifidx = (wifi_interface_t)ESP_IF_WIFI_AP;
+    memcpy(_info.peer_addr, _peer.MAC, 6);
+    esp_now_add_peer(&_info);
+  }
   MESHcountPeers();
   memcpy(MESH.sendPacket.sender, MESH.broker, 6);
   MESH.role = ROLE_BROKER;
