@@ -5,22 +5,29 @@ All notable changes to this project will be documented in this file.
 
 ## [16.0.0.7]
 ### Added
-- Matter `MtrUpdate` accepts values with units for Temperature, Humidity, Pressure, Illuminance and HVAC
-
+- Matter `MtrUpdate` accepts values with units for Temperature, Humidity, Pressure, Illuminance and HVAC (#25322)
+- TLS handshake timeout configurable (#25309)
+- Support for ESP32-S31
 
 ### Breaking Changed
 
 
 ### Changed
+- ESP32 compile NimBLE lib only when needed (#25330)
+- Modify command args in settings.json for upload port
+- GPIO pin definitions for new camera models
 
 
 ### Fixed
 - Removed migration steps from v9.1.0 to v9.5.0.9 as regression from v16.0.0.3 (#25286)
-- Matter bridge remote Relay + Power always reporting OFF
-- WebUI incomplete or corrupt HTTP responses after a short TCP write
-- Berry `USE_BERRY_IRAM` no longer consumes internal heap on ESP32-S3 and other unified-RAM targets
-- LVGL FreeType fonts allocate memory in PSRAM instead of internal RAM
-- Berry console failing silently on code larger than about 2KB
+- Filelog correct filesystem use and checks if both flash and SDCard is present (#25208)
+- SDCard detection on systems using berry to control SDCard power supply (#25208)
+- SML ESP32 memory leak when serial mode is changed with sml(-1 ...) (#25327)
+- Matter bridge remote Relay + Power always reporting OFF (#25328)
+- WebUI incomplete or corrupt HTTP responses after a short TCP write (#25335)
+- Berry `USE_BERRY_IRAM` no longer consumes internal heap on ESP32-S3 and other unified-RAM targets (#25334)
+- LVGL FreeType fonts allocate memory in PSRAM instead of internal RAM (#25345)
+- Berry console failing silently on code larger than about 2KB (#25346)
 
 ### Removed
 
