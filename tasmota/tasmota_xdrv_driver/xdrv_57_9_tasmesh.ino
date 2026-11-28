@@ -253,8 +253,8 @@ bool MESHinterceptMQTTonBroker(char* _topic, uint8_t* _data, unsigned int data_l
       MESH.sendPacket.chunkSize = strlen(_topic) +1;
 
       if (MESH.sendPacket.chunkSize + data_len > MESH_PAYLOAD_SIZE) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: Intercept payload oversized %d"), data_len);
-        return false;
+        AddLog(LOG_LEVEL_INFO, PSTR("MSH: Intercept payload oversized %d, dropped"), data_len);
+        return true;   // message is for the node: never let the broker execute it
       }
 
       memcpy(MESH.sendPacket.receiver, _peer.MAC, 6);
