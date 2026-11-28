@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Matter `MtrUpdate` accepts values with units for Temperature, Humidity, Pressure, Illuminance and HVAC (#25322)
 - TLS handshake timeout configurable (#25309)
 - Support for ESP32-S31
+- TasMesh keep known nodes reachable when MeshBroker is run again (#25352)
 
 ### Breaking Changed
 
@@ -31,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Berry console failing silently on code larger than about 2KB (#25346)
 - TasMesh forward commands from the broker to the nodes again, regression from v15.4.0.2 (#25342)
 - TasMesh do not publish the log of a node as MQTT (#25349)
+- TasMesh do not run on the broker a command that is too long for its node (#25351)
 
 ### Removed
 
