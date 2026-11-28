@@ -2,7 +2,7 @@
   vi-VN.h - localization for Vietnam for Tasmota
 
   Copyright (C) 2021  Tâm.NT
-
+  Copyright (C) 2026  LeChungDung
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -52,18 +52,18 @@
 
 // Common
 #define D_ABSOLUTE_HUMIDITY "Abs Humidity"
-#define D_ADDRESS "Address"
+#define D_ADDRESS "Địa chỉ"
 #define D_ADMIN "Quản trị"
 #define D_AIR_QUALITY "Chất lượng không khí"
 #define D_AP "Mạng wifi"                    // Access Point
-#define D_AS "với tên gọi"
+#define D_AS "là"
 #define D_AT "at"
 #define D_AUTO "AUTO"
-#define D_AUTO_UPDATE "Auto Update"
-#define D_AUTOMATIC "Automatic"
+#define D_AUTO_UPDATE "Cập nhật tự động"
+#define D_AUTOMATIC "Tự động"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY "Battery"
-#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
+#define D_BATTERY_CHARGE "Sạc"   // Battery charge in %
 #define D_BLINK "Blink"
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOST "Boost"
@@ -71,7 +71,7 @@
 #define D_BRIGHTLIGHT "Bright"
 #define D_BSSID "BSSId"
 #define D_BUTTON "Nút"
-#define D_BY "bởi"                    // Written by me
+#define D_BY "do"                    // Written by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Độ C"
 #define D_CHANNEL "Kênh"
@@ -181,8 +181,8 @@
 #define D_RESTART "Khởi động lại"
 #define D_RESTART_REASON "Lý do khởi động lại"
 #define D_RESTARTING "Đang khởi động"
-#define D_RETAINED "lưu giữ"
-#define D_RULE "Quy luật"
+#define D_RETAINED "được giữ lại"
+#define D_RULE "Luật"
 #define D_SAVE "Lưu"
 #define D_SENSOR "Cảm biến"
 #define D_SOC "State of Charge"
@@ -232,7 +232,7 @@
 #define D_WATER_DEPTH "Độ sâu nước"
 #define D_WEB_SERVER "Máy chủ Web"
 #define D_WEIGHT "Cân nặng"
-#define D_WINDOW_OPEN "Window open"
+#define D_WINDOW_OPEN "Cửa sổ đang mở"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "Cảnh báo phiên bản này không hỗ trợ các cài đặt vĩnh viễn"
@@ -243,7 +243,7 @@
 
 #define D_SET_BAUDRATE_TO "Đặt Baudrate bằng"
 #define D_RECEIVED_TOPIC "Received Topic"
-#define D_DATA_SIZE "Kích thước data"
+#define D_DATA_SIZE "Kích thước dữ liệu"
 #define D_ANALOG_INPUT "Analog"
 
 // support.ino
@@ -257,8 +257,8 @@
 #define D_IN_MODE "in mode"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Kết nối thất bại do không được cấp địa chỉ IP"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Kết nối thất bại do không tìm thấy điểm truy cập"
-#define D_CONNECT_FAILED_WRONG_PASSWORD "Kết nối thất bại"
-#define D_CONNECT_FAILED_AP_TIMEOUT "Kết nối đến điểm truy cập thất bại do quá thời hạn"
+#define D_CONNECT_FAILED_WRONG_PASSWORD "Kết nối thất bại do sai mật khẩu"
+#define D_CONNECT_FAILED_AP_TIMEOUT "Kết nối đến điểm truy cập thất bại do quá thời gian"
 #define D_ATTEMPTING_CONNECTION "Đang thử kết nối..."
 #define D_CHECKING_CONNECTION "Đang kiểm tra kết nối..."
 #define D_QUERY_DONE "Hoàn thành truy vấn. Đã tìm thấy dịch vụ MQTT"
@@ -303,16 +303,16 @@
 #define D_CONFIGURE_DOMOTICZ "Cấu hình Domoticz"
 #define D_CONFIGURE_LOGGING "Cấu hình ghi chép dữ liệu"
 #define D_CONFIGURE_OTHER "Cấu hình khác"
-#define D_CONFIRM_RESET_CONFIGURATION "Xác nhận khôi xóa cấu hình"
+#define D_CONFIRM_RESET_CONFIGURATION "Xác nhận xóa cấu hình"
 #define D_RESET_CONFIGURATION "Xóa cấu hình"
 #define D_BACKUP_CONFIGURATION "Tạo bản lưu cấu hình"
 #define D_RESTORE_CONFIGURATION "Khôi phục cấu hình"
-#define D_START_RESTORE "Start restore"
+#define D_START_RESTORE "Bắt đầu khôi phục"
 #define D_MAIN_MENU "Màn hình chính"
 
 #define D_MODULE_PARAMETERS "Các thông số mô đun"
 #define D_MODULE_TYPE "Loại mô đun"
-#define D_PULLUP_ENABLE "Không nút bấm/Công tắc pull-up"
+#define D_PULLUP_ENABLE "Nút bấm/Công tắc có điện trở kéo lên"
 #define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
@@ -397,13 +397,13 @@
 #define D_MQTT_TOPIC "MQTT Topic"
 #define D_MQTT_GROUP_TOPIC "MQTT Group Topic"
 #define D_MQTT_FULL_TOPIC "MQTT Full Topic"
-#define D_MQTT_NO_RETAIN "Không lưu giữ MQTT"
+#define D_MQTT_NO_RETAIN "Không giữ lại MQTT"
 #define D_MDNS_DISCOVERY "Khám phá mDNS"
 #define D_MDNS_ADVERTISE "Thông báo mDNS"
 #define D_ESP_CHIP_ID "ESP Chip Id"
 #define D_FLASH_CHIP_ID "Flash Chip Id"
-#define D_FLASH_CHIP_SIZE "Kích thước bộ nhớ Flash"
-#define D_FREE_PROGRAM_SPACE "Bộ nhớ chưa sử dụng"
+#define D_FLASH_CHIP_SIZE "Dung lượng bộ nhớ Flash"
+#define D_FREE_PROGRAM_SPACE "Dung lượng chương trình còn trống"
 
 #define D_UPGRADE_BY_WEBSERVER "Nâng cấp thông qua máy chủ web"
 #define D_OTA_URL "Đường dẫn OTA"
@@ -416,11 +416,11 @@
 #define D_UPLOAD_TRANSFER "Tải lên và truyền tải"
 #define D_TRANSFER_STARTED "Bắt đầu truyền tải"
 #define D_UPLOAD_ERR_1 "Không có tệp được chọn"
-#define D_UPLOAD_ERR_2 "Không đủ bộ nhớ"
+#define D_UPLOAD_ERR_2 "Không đủ dung lượng bộ nhớ"
 #define D_UPLOAD_ERR_3 "Invalid file signature"
-#define D_UPLOAD_ERR_4 "Chương trình nâng cấp kích thước lớn hơn bộ nhớ thực tế"
+#define D_UPLOAD_ERR_4 "Dung lượng chương trình lớn hơn dung lượng bộ nhớ"
 #define D_UPLOAD_ERR_5 "Bộ nhớ đệm tải lên không đủ"
-#define D_UPLOAD_ERR_6 "Tải lên thất bại. Bật bản ghi hệ thống mức 3"
+#define D_UPLOAD_ERR_6 "Tải lên thất bại. Bật nhật ký hệ thống ở mức 3"
 #define D_UPLOAD_ERR_7 "Hủy tải lên"
 #define D_UPLOAD_ERR_8 "Không đúng loại tệp"
 #define D_UPLOAD_ERR_9 "Dung lượng file quá lớn"
@@ -447,7 +447,7 @@
 #define D_MULTICAST_DISABLED "Vô hiệu hóa Multicast"
 #define D_MULTICAST_REJOINED "Đã kết nối lại vào Multicast"
 #define D_MULTICAST_JOIN_FAILED "Kết nối Multicast Thất bại"
-#define D_FAILED_TO_SEND_RESPONSE "Thất bại khi gửi phản hồi"
+#define D_FAILED_TO_SEND_RESPONSE "Gửi phản hồi thất bại"
 
 #define D_WEMO "WeMo"
 #define D_WEMO_BASIC_EVENT "Sự kiên WeMo cơ bản"
@@ -498,7 +498,7 @@
 #define D_KNX_PARAMETERS "Thông số KNX "
 #define D_KNX_GENERAL_CONFIG "Thông thường"
 #define D_KNX_PHYSICAL_ADDRESS "Địa chỉ vật lý"
-#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Phải là duy nhât trong mạng KNX)"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "( Phải là duy nhất trong mạng KNX)"
 #define D_KNX_ENABLE "Enable KNX"
 #define D_KNX_GROUP_ADDRESS_TO_WRITE "Dữ liệu gửi đến địa chỉ nhóm"
 #define D_ADD "Thêm"
@@ -1136,9 +1136,9 @@
 //SOLAXX1
 #define D_PV1_VOLTAGE     "Điện áp PV1"
 #define D_PV1_CURRENT     "Dòng PV1"
-#define D_PV1_POWER       "Nguồn PV1 "
+#define D_PV1_POWER       "Nguồn PV1"
 #define D_PV2_VOLTAGE     "Điện áp PV2"
-#define D_PV2_CURRENT     "Dòng PV2 "
+#define D_PV2_CURRENT     "Dòng PV2"
 #define D_PV2_POWER       "Nguồn PV2"
 #define D_SOLAR_POWER     "Nguồn năng lượng mặt trời"
 #define D_INVERTER_POWER  "Nguồn Inverter"
@@ -1147,14 +1147,14 @@
 #define D_SOLAX_MODE_1    "Đang kiểm tra"
 #define D_SOLAX_MODE_2    "Đang làm việc"
 #define D_SOLAX_MODE_3    "Bị lỗi"
-#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
-#define D_SOLAX_MODE_5    "Software Update"  // to be translated
-#define D_SOLAX_MODE_6    "Selftest"  // to be translated
+#define D_SOLAX_MODE_4    "Lỗi vĩnh viễn"  
+#define D_SOLAX_MODE_5    "Cập nhật phần mềm"  
+#define D_SOLAX_MODE_6    "Tự kiểm tra"  
 #define D_SOLAX_ERROR_0   "Không có mã lỗi"
 #define D_SOLAX_ERROR_1   "Lỗi mất lưới điện"
 #define D_SOLAX_ERROR_2   "Điện áp điện lưới bị lỗi"
 #define D_SOLAX_ERROR_3   "Tần số điện lưới bị lỗi"
-#define D_SOLAX_ERROR_4   "Điện áp Pv lỗi "
+#define D_SOLAX_ERROR_4   "Điện áp Pv lỗi"
 #define D_SOLAX_ERROR_5   "Lỗi cách ly"
 #define D_SOLAX_ERROR_6   "Lỗi quá nhiệt"
 #define D_SOLAX_ERROR_7   "Lỗi quạt"
@@ -1197,8 +1197,8 @@
 #define D_AS3935_ABOVE "đèn phía trên"
 #define D_AS3935_NOISE "phát hiện nhiễu"
 #define D_AS3935_DISTDET "phát hiện nhiễu"
-#define D_AS3935_INTNOEV "Interrupt with no Event!"
-#define D_AS3935_FLICKER "IRQ Pin flicker!"
+#define D_AS3935_INTNOEV "Ngắt nhưng không có sự kiện!"
+#define D_AS3935_FLICKER "Chân IRQ bị rung!"
 #define D_AS3935_POWEROFF "Tắt nguồn"
 #define D_AS3935_NOMESS "đang lắng nghe..."
 #define D_AS3935_ON "Bật"
@@ -1206,7 +1206,7 @@
 #define D_AS3935_INDOORS "Trong nhà"
 #define D_AS3935_OUTDOORS "Ngoài trời"
 #define D_AS3935_CAL_FAIL "hiệu chỉnh thất bại"
-#define D_AS3935_CAL_OK "hiệu chỉnh thiết lập về giá trị:"
+#define D_AS3935_CAL_OK "hiệu chỉnh đặt lại thành giá trị:"
 
 //xsns_68_opentherm.ino
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
@@ -1264,8 +1264,8 @@
 
 // xsns_96_flowratemeter.ino
 #define D_FLOWRATEMETER_NAME "Flowrate"
-#define D_FLOWRATEMETER_AMOUNT_TODAY "Amount Today"
-#define D_FLOWRATEMETER_DURATION_TODAY "Duration Today"
+#define D_FLOWRATEMETER_AMOUNT_TODAY "Lượng hôm nay"
+#define D_FLOWRATEMETER_DURATION_TODAY "Thời lượng hôm nay"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
@@ -1324,8 +1324,8 @@
 #define D_NEOPOOL_LOW                     "Low"
 #define D_NEOPOOL_FLOW1                   "FL1"
 #define D_NEOPOOL_FLOW2                   "FL2"
-#define D_NEOPOOL_PH_HIGH                 "too high"          // ph Alarms
-#define D_NEOPOOL_PH_LOW                  "too low"
+#define D_NEOPOOL_PH_HIGH                 "quá cao"          // ph Alarms
+#define D_NEOPOOL_PH_LOW                  "quá thấp"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
 
 // xsns_106_gdk101.ino
