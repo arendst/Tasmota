@@ -20,6 +20,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Removed migration steps from v9.1.0 to v9.5.0.9 as regression from v16.0.0.3 (#25286)
+- Matter bridge remote Relay + Power always reporting OFF
+- Fix Flowratemeter usage on ESP32
 - Filelog correct filesystem use and checks if both flash and SDCard is present (#25208)
 - SDCard detection on systems using berry to control SDCard power supply (#25208)
 - SML ESP32 memory leak when serial mode is changed with sml(-1 ...) (#25327)

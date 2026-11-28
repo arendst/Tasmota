@@ -40,14 +40,14 @@
 
 #define FLOWRATEMETER_INVALID (uint32_t)-1
 
-int32_t flowratemeter_period[MAX_FLOWRATEMETER] = {0};
+volatile int32_t flowratemeter_period[MAX_FLOWRATEMETER] = {0};
 float   flowratemeter_period_avg[MAX_FLOWRATEMETER] = {0};
 uint32_t flowratemeter_count[MAX_FLOWRATEMETER] = {0};
-volatile uint32_t flowratemeter_last_irq[MAX_FLOWRATEMETER] = {FLOWRATEMETER_INVALID};
+volatile uint32_t flowratemeter_last_irq[MAX_FLOWRATEMETER];
 
-int32_t flowratemeter_period_sum[MAX_FLOWRATEMETER];
-int32_t flowratemeter_period_sum_dT[MAX_FLOWRATEMETER];
-int32_t flowratemeter_period_duration[MAX_FLOWRATEMETER];
+volatile int32_t flowratemeter_period_sum[MAX_FLOWRATEMETER];
+volatile int32_t flowratemeter_period_sum_dT[MAX_FLOWRATEMETER];
+volatile int32_t flowratemeter_period_duration[MAX_FLOWRATEMETER];
 
 
 bool flowratemeter_raw_value = false;
@@ -55,7 +55,8 @@ bool flowratemeter_raw_value = false;
 
 #define FlowRateMeterIsValid(time, meter) flowratemeter_last_irq[meter] != FLOWRATEMETER_INVALID && flowratemeter_last_irq[meter] < time
 
-void IRAM_ATTR FlowRateMeterIR(uint16_t irq)
+void IRAM_ATTR FlowRateMeterIR(uint16_t irq);
+void FlowRateMeterIR(uint16_t irq)
 {
   uint32_t time = micros();
 #if defined(ESP8266)
@@ -77,11 +78,13 @@ void IRAM_ATTR FlowRateMeterIR(uint16_t irq)
   }
 }
 // GPIO_STATUS is always 0 (?), so can only determine the IR source using this way
-void IRAM_ATTR FlowRateMeter1IR(void)
+void IRAM_ATTR FlowRateMeter1IR(void);
+void FlowRateMeter1IR(void)
 {
   FlowRateMeterIR(0);
 }
-void IRAM_ATTR FlowRateMeter2IR(void)
+void IRAM_ATTR FlowRateMeter2IR(void);
+void FlowRateMeter2IR(void)
 {
   FlowRateMeterIR(1);
 }
@@ -125,6 +128,7 @@ void FlowRateMeterInit(void)
 
   FlowRateMeterMidnightReset();
   for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
+    flowratemeter_last_irq[i] = FLOWRATEMETER_INVALID;
     if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
       pinMode(Pin(GPIO_FLOWRATEMETER_IN, i), INPUT);
       attachInterrupt(Pin(GPIO_FLOWRATEMETER_IN, i), irq_service[i], RISING);
