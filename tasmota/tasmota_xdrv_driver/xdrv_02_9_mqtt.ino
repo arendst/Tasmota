@@ -2013,7 +2013,7 @@ void CmndPublish(void) {
       strlcpy(stemp1, mqtt_part, sizeof(stemp1));
       ReplaceChar(stemp1, '#', ' ');
       if ((payload_part != nullptr) && strlen(payload_part)) {
-        Response_P(payload_part);
+        Response_P(PSTR("%s"), payload_part);  // GHSA-mqvf-h9rf-m9j5 - remove possible format information resulting in exception
       } else {
         ResponseClear();
       }
