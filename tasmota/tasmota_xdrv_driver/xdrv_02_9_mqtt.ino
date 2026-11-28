@@ -40,6 +40,8 @@ WiFiClient EspClient;                     // Wifi Client - non-TLS
   int httpsClientReturn;
 #endif // USE_MQTT_AZURE_DPS_SCOPEID
   #include <base64.hpp>
+  #include <libb64/cencode.h>
+  extern "C" int base64_encode_chars(const char* plaintext_in, int length_in, char* code_out);
   #include <t_bearssl.h>
   #include <JsonParser.h>
 #endif  // USE_MQTT_AZURE_IOT
@@ -353,8 +355,8 @@ void MqttInit(void) {
     br_hmac_update(&hmac_context, dataToSignChar, sizeof(dataToSignChar)-1);
     br_hmac_out(&hmac_context, encryptedSignature);
 
-    // base64 decode the HMAC to a char
-    encode_base64(encryptedSignature, br_hmac_size(&hmac_context), encodedSignature);
+    // base64 encode the HMAC to a char
+    base64_encode_chars((const char*)encryptedSignature, br_hmac_size(&hmac_context), (char*)encodedSignature);
 
     // creating the real SAS Token
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "sha256 signature is '%s'"), String((char*)encodedSignature).c_str());
