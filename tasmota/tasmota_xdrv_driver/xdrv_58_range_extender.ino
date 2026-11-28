@@ -37,6 +37,15 @@ If you want to support NAPT (removing the need for routes on a core router):
 
 List AP clients (MAC, IP and RSSI) with command RgxClients on ESP32
 
+On ESP32 built with USE_ETHERNET, Ethernet can be the uplink: the AP also starts when
+the WiFi station is not connected. A connected station keeps priority for the DNS
+server and for the RgxPort address.
+With Ethernet as the uplink, turn the station off with command Wifi 0. If it stays on
+and cannot reach its network, its retries disturb the AP and, depending on WifiConfig,
+the WiFi manager replaces it.
+With the station and Ethernet both up, client traffic can leave through WiFi: this
+driver does not choose the outgoing interface.
+
 
 An example full static configuration:
 #define USE_WIFI_RANGE_EXTENDER
