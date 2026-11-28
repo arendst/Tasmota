@@ -246,8 +246,8 @@ bool MESHinterceptMQTTonBroker(char* _topic, uint8_t* _data, unsigned int data_l
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: Intercept topic %s"), _topic);
   for (auto &_peer : MESH.peers) {
     GetTopic_P(stopic, CMND, _peer.topic, PSTR("")); //cmnd/topic/
-    if (strlen(_topic) != strlen(stopic)) {
-      return false; // prevent false result when _topic is the leading substring of stopic
+    if (strlen(_topic) <= strlen(stopic)) {
+      continue;     // _topic must be stopic followed by a command, check next peer
     }
     if (memcmp(_topic, stopic, strlen(stopic)) == 0) {
       MESH.sendPacket.chunkSize = strlen(_topic) +1;
